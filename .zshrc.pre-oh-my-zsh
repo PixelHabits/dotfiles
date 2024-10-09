@@ -1,0 +1,103 @@
+# Add EdgeDB completion path
+fpath+=~/.zfunc
+
+# Initialize the completion system
+autoload -Uz compinit
+compinit
+
+
+export PATH=/opt/homebrew/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+alias gitwf='bash /Users/devinalsup/Developer/coding-projects/git-workflow-automation/git_workflow.sh'
+alias cdcode='cd /Users/devinalsup/Developer'
+
+alias pn=pnpm
+
+# # Set color_prompt to yes for colored prompts
+# color_prompt=yes
+
+# # Configure the prompt based on the value of color_prompt
+# if [[ "$color_prompt" == "yes" ]]; then
+#     # Using colors
+#     PROMPT='%F{green}%n%f:%F{blue}$(basename "$(dirname "$PWD")")/$(basename "$PWD")%f$ '
+# else
+#     # No colors
+#     PROMPT='%n:$(basename "$(dirname "$PWD")")/$(basename "$PWD")$ '
+# fi
+
+
+
+
+
+# function parse_git_branch() {
+#     git branch 2> /dev/null | sed -n -e 's/^\* \(.*\)/[\1]/p'
+# }
+
+# COLOR_DEF=$'\e[0m'
+# COLOR_USR=$'\e[38;5;243m'
+# COLOR_DIR=$'\e[38;5;197m'
+# COLOR_GIT=$'\e[38;5;39m'
+
+# PROMPT='%F{cyan}%n%f %F{green}%1:/%2~%f'
+# PROMPT+='${COLOR_GIT}$(parse_git_branch)${COLOR_DEF} %# '
+
+# function parse_git_branch() {
+#     git branch 2> /dev/null | sed -n -e 's/^\* \(.*\)/[\1]/p'
+# }
+
+# COLOR_DEF=$'\e[0m'
+# COLOR_USR=$'\e[38;5;243m'
+# COLOR_DIR=$'\e[38;5;197m'
+# COLOR_GIT=$'\e[38;5;39m'
+# setopt PROMPT_SUBST
+# export PROMPT='${COLOR_USR}%n ${COLOR_DIR}%~ ${COLOR_GIT}$(parse_git_branch)${COLOR_DEF} $ 
+
+
+function parse_git_branch() {
+    git branch 2> /dev/null | sed -n -e 's/^\* \(.*\)/[\1]/p'
+}
+
+setopt PROMPT_SUBST
+# export PROMPT='%F{cyan}%n%f %F{green}%1 /%2~ %F{g}$(parse_git_branch)%f %F{normal}$%f '
+
+export PROMPT='%F{cyan}%n%f %F{green}%1 /%2~ %F{purple}$(parse_git_branch)%f %F{normal}$%f '
+
+
+
+
+
+
+
+# Define the prompt appearance
+# PROMPT='%F{cyan}%n%f %F{green}%1 /%2~%f %# '
+
+
+
+
+# # Optionally, add a custom styling for commands you type
+# precmd() {
+#     printf "\033[0;36m" # Cyan color
+# }
+
+# # Reset text color after each command
+# preexec() {
+#     printf "\033[0m" # Reset color
+# }
+
+# export CLICOLOR=1
+# export LSCOLORS=ExFxBxDxCxegedabagacad
+
+# PS1="\[\e[0;93m\]\u\[\e[m\]"
+
+
+# pnpm
+export PNPM_HOME="/Users/devinalsup/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
