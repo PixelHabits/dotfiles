@@ -91,6 +91,12 @@
       "homepage": "https://nmap.org/"
     },
     {
+      "name": "ollama",
+      "tap": "homebrew/core",
+      "desc": "Create, run, and share large language models (LLMs)",
+      "homepage": "https://ollama.com/"
+    },
+    {
       "name": "postgresql@14",
       "tap": "homebrew/core",
       "desc": "Object-relational database system",
