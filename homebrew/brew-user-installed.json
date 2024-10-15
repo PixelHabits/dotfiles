@@ -1,0 +1,258 @@
+{
+  "formulae": [
+    {
+      "name": "arp-scan",
+      "tap": "homebrew/core",
+      "desc": "ARP scanning and fingerprinting tool",
+      "homepage": "https://github.com/royhills/arp-scan"
+    },
+    {
+      "name": "bat",
+      "tap": "homebrew/core",
+      "desc": "Clone of cat(1) with syntax highlighting and Git integration",
+      "homepage": "https://github.com/sharkdp/bat"
+    },
+    {
+      "name": "biome",
+      "tap": "homebrew/core",
+      "desc": "Toolchain of the web",
+      "homepage": "https://biomejs.dev/"
+    },
+    {
+      "name": "bun",
+      "tap": "oven-sh/bun",
+      "desc": "Incredibly fast JavaScript runtime, bundler, transpiler and package manager - all in one.",
+      "homepage": "https://bun.sh/"
+    },
+    {
+      "name": "cocoapods",
+      "tap": "homebrew/core",
+      "desc": "Dependency manager for Cocoa projects",
+      "homepage": "https://cocoapods.org/"
+    },
+    {
+      "name": "edgedb-cli",
+      "tap": "edgedb/tap",
+      "desc": "Latest release of the EdgeDB command-line client (edgedb)",
+      "homepage": "https://github.com/edgedb/edgedb-cli"
+    },
+    {
+      "name": "eza",
+      "tap": "homebrew/core",
+      "desc": "Modern, maintained replacement for ls",
+      "homepage": "https://github.com/eza-community/eza"
+    },
+    {
+      "name": "fzf",
+      "tap": "homebrew/core",
+      "desc": "Command-line fuzzy finder written in Go",
+      "homepage": "https://github.com/junegunn/fzf"
+    },
+    {
+      "name": "gh",
+      "tap": "homebrew/core",
+      "desc": "GitHub command-line tool",
+      "homepage": "https://cli.github.com/"
+    },
+    {
+      "name": "git",
+      "tap": "homebrew/core",
+      "desc": "Distributed revision control system",
+      "homepage": "https://git-scm.com"
+    },
+    {
+      "name": "git-lfs",
+      "tap": "homebrew/core",
+      "desc": "Git extension for versioning large files",
+      "homepage": "https://git-lfs.github.com/"
+    },
+    {
+      "name": "lazygit",
+      "tap": "jesseduffield/lazygit",
+      "desc": "A simple terminal UI for git commands, written in Go",
+      "homepage": "https://github.com/jesseduffield/lazygit/"
+    },
+    {
+      "name": "mas",
+      "tap": "homebrew/core",
+      "desc": "Mac App Store command-line interface",
+      "homepage": "https://github.com/mas-cli/mas"
+    },
+    {
+      "name": "neofetch",
+      "tap": "homebrew/core",
+      "desc": "Fast, highly customisable system info script",
+      "homepage": "https://github.com/dylanaraps/neofetch"
+    },
+    {
+      "name": "nmap",
+      "tap": "homebrew/core",
+      "desc": "Port scanning utility for large networks",
+      "homepage": "https://nmap.org/"
+    },
+    {
+      "name": "postgresql@14",
+      "tap": "homebrew/core",
+      "desc": "Object-relational database system",
+      "homepage": "https://www.postgresql.org/"
+    },
+    {
+      "name": "sqlite",
+      "tap": "homebrew/core",
+      "desc": "Command-line interface for SQLite",
+      "homepage": "https://sqlite.org/index.html"
+    },
+    {
+      "name": "watchman",
+      "tap": "homebrew/core",
+      "desc": "Watch files and take action when they change",
+      "homepage": "https://github.com/facebook/watchman"
+    }
+  ],
+  "casks": [
+    {
+      "name": [
+        "1Password"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Password manager that keeps all passwords secure behind one password",
+      "homepage": "https://1password.com/"
+    },
+    {
+      "name": [
+        "1Password CLI"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Command-line interface for 1Password",
+      "homepage": "https://developer.1password.com/docs/cli"
+    },
+    {
+      "name": [
+        "AltTab"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Enable Windows-like alt-tab",
+      "homepage": "https://alt-tab-macos.netlify.app/"
+    },
+    {
+      "name": [
+        "Etcher"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Tool to flash OS images to SD cards & USB drives",
+      "homepage": "https://balena.io/etcher"
+    },
+    {
+      "name": [
+        "Discord"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Voice and text chat software",
+      "homepage": "https://discord.com/"
+    },
+    {
+      "name": [
+        "Elgato Stream Deck"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Assign keys, and then decorate and label them",
+      "homepage": "https://www.elgato.com/ww/en/s/downloads"
+    },
+    {
+      "name": [
+        "JetBrains Mono"
+      ],
+      "tap": "homebrew/cask",
+      "desc": null,
+      "homepage": "https://www.jetbrains.com/lp/mono"
+    },
+    {
+      "name": [
+        "Git Credential Manager"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Cross-platform Git credential storage for multiple hosting providers",
+      "homepage": "https://aka.ms/gcm"
+    },
+    {
+      "name": [
+        "iTerm2"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Terminal emulator as alternative to Apple's Terminal app",
+      "homepage": "https://iterm2.com/"
+    },
+    {
+      "name": [
+        "pgAdmin4"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Administration and development platform for PostgreSQL",
+      "homepage": "https://www.pgadmin.org/"
+    },
+    {
+      "name": [
+        "Postman"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Collaboration platform for API development",
+      "homepage": "https://www.postman.com/"
+    },
+    {
+      "name": [
+        "Raspberry Pi Imager"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Imaging utility to install operating systems to a microSD card",
+      "homepage": "https://www.raspberrypi.org/downloads/"
+    },
+    {
+      "name": [
+        "Raycast"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Control your tools with a few keystrokes",
+      "homepage": "https://raycast.com/"
+    },
+    {
+      "name": [
+        "Slack"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Team communication and collaboration software",
+      "homepage": "https://slack.com/"
+    },
+    {
+      "name": [
+        "Stats"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "System monitor for the menu bar",
+      "homepage": "https://github.com/exelban/stats"
+    },
+    {
+      "name": [
+        "The Unarchiver"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Unpacks archive files",
+      "homepage": "https://theunarchiver.com/"
+    },
+    {
+      "name": [
+        "Unraid USB Creator"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Utility for installing Unraid on a USB drive",
+      "homepage": "https://unraid.net/"
+    },
+    {
+      "name": [
+        "Warp"
+      ],
+      "tap": "homebrew/cask",
+      "desc": "Rust-based terminal",
+      "homepage": "https://www.warp.dev/"
+    }
+  ]
+}
