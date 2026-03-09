@@ -1,0 +1,5 @@
+# zshrc.d/22-atuin.zsh — atuin shell history
+require_cmd atuin || return 0
+zlog "init atuin"
+
+eval "$(atuin init zsh)"

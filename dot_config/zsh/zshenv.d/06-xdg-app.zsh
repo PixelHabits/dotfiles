@@ -1,0 +1,42 @@
+# zshenv.d/06-xdg-apps.zsh — redirect tool dotfiles into XDG directories
+# Prevents pollution of $HOME with scattered dotdirs and state files.
+
+# GPG
+export GNUPGHOME="$XDG_DATA_HOME/gnupg"
+
+# Rust
+export CARGO_HOME="$XDG_DATA_HOME/cargo"
+export RUSTUP_HOME="$XDG_DATA_HOME/rustup"
+
+# Go
+export GOPATH="$XDG_DATA_HOME/go"
+export GOMODCACHE="$XDG_CACHE_HOME/go/mod"
+
+# Node / npm
+export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
+export NODE_REPL_HISTORY="$XDG_STATE_HOME/node/node_repl_history"
+
+# Bun
+export BUN_INSTALL="$XDG_DATA_HOME/bun"
+
+# .NET
+export DOTNET_CLI_HOME="$XDG_DATA_HOME/dotnet"
+
+# Docker
+export DOCKER_CONFIG="$XDG_CONFIG_HOME/docker"
+
+# Less
+export LESSHISTFILE="$XDG_STATE_HOME/less/history"
+
+# Wakatime
+export WAKATIME_HOME="$XDG_CONFIG_HOME/wakatime"
+
+# SQLite
+export SQLITE_HISTORY="$XDG_STATE_HOME/sqlite/history"
+
+# Java
+export _JAVA_OPTIONS="-Djava.util.prefs.userRoot=$XDG_CONFIG_HOME/java"
+
+# CMake
+export CMAKE_HOME="$XDG_DATA_HOME/cmake"

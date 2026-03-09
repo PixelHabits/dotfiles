@@ -1,0 +1,5 @@
+# ~/.config/zsh/.zprofile
+# Runs for LOGIN shells only
+
+source_dir "$ZDOTDIR/zprofile.d"
+

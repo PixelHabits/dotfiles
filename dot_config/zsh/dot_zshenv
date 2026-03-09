@@ -1,0 +1,11 @@
+# ~/.config/zsh/.zshenv
+# Runs for ALL shells (interactive, login, non-interactive)
+
+# Helper to source numbered drop-ins.
+source_dir() {
+  for f in "$1"/*.zsh(N-.r); do
+    source "$f"
+  done
+}
+
+source_dir "$ZDOTDIR/zshenv.d"

@@ -1,0 +1,4 @@
+# ~/.config/zsh/zshrc
+# Runs for INTERACTIVE shells only
+
+source_dir "$ZDOTDIR/zshrc.d"
