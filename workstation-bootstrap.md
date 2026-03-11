@@ -16,10 +16,10 @@ see `zsh-dotfile-architecture.md`.
 
 Two tools, strict separation:
 
-| Tool | Responsibility |
-|---|---|
+| Tool        | Responsibility                                                                                                                          |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | **chezmoi** | Dotfile version control, templating, deployment, per-host file presence via `.chezmoiignore`, machine identity via `.chezmoi.toml.tmpl` |
-| **Ansible** | Package installation, infrastructure setup (yay), service configuration, repo cloning (OMZ, p10k) |
+| **Ansible** | Package installation, infrastructure setup (yay), service configuration, repo cloning (OMZ, p10k)                                       |
 
 **They do not overlap.** Chezmoi never installs packages. Ansible
 never touches dotfile contents. The connection point is a chezmoi
@@ -30,12 +30,12 @@ deployment and re-runs whenever Ansible files change.
 
 ## Target Platforms
 
-| Platform | Role | Status |
-|---|---|---|
-| Arch Linux | Desktop workstation or SSH server | Active, fully tested |
-| macOS / Darwin | Desktop (always desktop, never headless) | Active |
-| Ubuntu | SSH servers, headless boxes | Framework ready, needs package validation |
-| Fedora | Future | Framework ready, needs package validation |
+| Platform       | Role                                     | Status                                    |
+| -------------- | ---------------------------------------- | ----------------------------------------- |
+| Arch Linux     | Desktop workstation or SSH server        | Active, fully tested                      |
+| macOS / Darwin | Desktop (always desktop, never headless) | Active                                    |
+| Ubuntu         | SSH servers, headless boxes              | Framework ready, needs package validation |
+| Fedora         | Future                                   | Framework ready, needs package validation |
 
 **Ubuntu/Fedora note:** `common_packages` entries like `bottom`,
 `eza`, `rustup`, and `fnm` may not exist in default repos.
@@ -71,13 +71,13 @@ drive `.chezmoiignore` gating and the Ansible run script.
   profile = {{ $profile | quote }}
 ```
 
-| Field | Source | Values | Purpose |
-|---|---|---|---|
-| `osid` | Auto-detected | `arch`, `ubuntu`, `fedora`, `darwin` | Distro-specific Ansible install commands |
-| `hostname` | Auto-detected | Machine hostname | Host-gated files (use sparingly) |
-| `email` | User prompt | Any email | Git config, tool registration |
-| `desktop` | User prompt | `hyprland`, `none` | Desktop vs CLI gating |
-| `profile` | User prompt | `work`, `personal` | Corporate vs personal tool configs |
+| Field      | Source        | Values                               | Purpose                                  |
+| ---------- | ------------- | ------------------------------------ | ---------------------------------------- |
+| `osid`     | Auto-detected | `arch`, `ubuntu`, `fedora`, `darwin` | Distro-specific Ansible install commands |
+| `hostname` | Auto-detected | Machine hostname                     | Host-gated files (use sparingly)         |
+| `email`    | User prompt   | Any email                            | Git config, tool registration            |
+| `desktop`  | User prompt   | `hyprland`, `none`                   | Desktop vs CLI gating                    |
+| `profile`  | User prompt   | `work`, `personal`                   | Corporate vs personal tool configs       |
 
 To re-prompt all values: `chezmoi init --prompt`
 
@@ -85,11 +85,11 @@ To re-prompt all values: `chezmoi init --prompt`
 
 ## Bootstrap — Two Commands
 
-| Platform | Commands |
-|---|---|
-| Arch | `sudo pacman -S --needed git chezmoi && chezmoi init --apply PixelHabits` |
-| macOS | `brew install chezmoi && chezmoi init --apply PixelHabits` |
-| Ubuntu | `sudo apt install git chezmoi && chezmoi init --apply PixelHabits` |
+| Platform | Commands                                                                  |
+| -------- | ------------------------------------------------------------------------- |
+| Arch     | `sudo pacman -S --needed git chezmoi && chezmoi init --apply PixelHabits` |
+| macOS    | `brew install chezmoi && chezmoi init --apply PixelHabits`                |
+| Ubuntu   | `sudo apt install git chezmoi && chezmoi init --apply PixelHabits`        |
 
 Chezmoi prompts for `email`, `desktop`, and `profile` during
 `chezmoi init`. It then deploys dotfiles and
@@ -228,9 +228,8 @@ dot_config/zsh/zshenv.d/11-homebrew.zsh
 # ── Hyprland desktop only ───────────────────────────────────
 {{- if ne .desktop "hyprland" }}
 dot_config/zsh/zprofile.d/10-tty-hyprland.zsh
-# dot_config/hyprland/
+# dot_config/hypr/
 # dot_config/waybar/
-# dot_config/mako/
 {{- end }}
 
 # ── Any desktop (exclude from CLI/server) ───────────────────
@@ -285,13 +284,13 @@ gating is a last resort for truly unique machines.
 
 ### Gating Matrix
 
-| Machine | `.osid` | `.desktop` | `.profile` | Gets |
-|---|---|---|---|---|
-| Work Arch laptop | `arch` | `hyprland` | `work` | Full desktop + work aliases, kubectl, proxy |
-| Home gaming PC | `arch` | `hyprland` | `personal` | Full desktop + gaming aliases |
-| Work Ubuntu server | `ubuntu` | `none` | `work` | CLI only + work aliases, server aliases |
-| College Mac laptop | `darwin` | `none` | `personal` | Full run (macOS always desktop) + personal aliases |
-| Work Arch SSH server | `arch` | `none` | `work` | CLI only + work aliases, server aliases |
+| Machine              | `.osid`  | `.desktop` | `.profile` | Gets                                               |
+| -------------------- | -------- | ---------- | ---------- | -------------------------------------------------- |
+| Work Arch laptop     | `arch`   | `hyprland` | `work`     | Full desktop + work aliases, kubectl, proxy        |
+| Home gaming PC       | `arch`   | `hyprland` | `personal` | Full desktop + gaming aliases                      |
+| Work Ubuntu server   | `ubuntu` | `none`     | `work`     | CLI only + work aliases, server aliases            |
+| College Mac laptop   | `darwin` | `none`     | `personal` | Full run (macOS always desktop) + personal aliases |
+| Work Arch SSH server | `arch`   | `none`     | `work`     | CLI only + work aliases, server aliases            |
 
 ### `run_onchange_after_ansible.sh.tmpl`
 
@@ -398,14 +397,14 @@ roles:
 
 ### Tags
 
-| Tag | What runs |
-|---|---|
-| `ansible-playbook site.yml` | Everything |
-| `--tags cli` | base + zsh + dev (no desktop) |
-| `--tags base` | Packages and infrastructure only |
-| `--tags desktop` | Hyprland role only |
-| `--tags zsh` | Shell setup only |
-| `--tags dev` | Toolchain setup only |
+| Tag                         | What runs                        |
+| --------------------------- | -------------------------------- |
+| `ansible-playbook site.yml` | Everything                       |
+| `--tags cli`                | base + zsh + dev (no desktop)    |
+| `--tags base`               | Packages and infrastructure only |
+| `--tags desktop`            | Hyprland role only               |
+| `--tags zsh`                | Shell setup only                 |
+| `--tags dev`                | Toolchain setup only             |
 
 ---
 
@@ -825,6 +824,8 @@ roles:
       - xdg-desktop-portal-hyprland
       - uwsm
       - hyprpolkitagent
+      - hyprlock
+      - hypridle
 
       # Terminal & fonts
       - ghostty
@@ -835,9 +836,25 @@ roles:
       - wl-clipboard
       - brightnessctl
       - playerctl
-      - grim
-      - slurp
+      - hyprshot
+      - hyprpicker
+      - hyprsunset
+      - hyprlauncher
+      - hyprpwcenter
     state: present
+- name: Enable and start Hyprland user services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    scope: user
+  loop:
+    - hypridle.service
+    - hyprsunset.service
+    - hyprpolkitagent.service
+  environment:
+    # Required for Ansible to interact with user-level systemd daemons
+    XDG_RUNTIME_DIR: "/run/user/{{ ansible_user_uid }}"
 ```
 
 ---
@@ -850,12 +867,12 @@ misbehaves (broken display, missing colors, curses errors).
 
 ### How each platform resolves this
 
-| Platform | Method |
-|---|---|
-| Arch | `ghostty-terminfo` package via pacman (in `distro_packages`) |
-| Fedora | `ghostty-terminfo` package via dnf (in `distro_packages`) |
-| macOS | Full `ghostty` cask includes terminfo |
-| Ubuntu | Compiled from vendored `ansible/files/ghostty.terminfo` in Phase 5 |
+| Platform | Method                                                             |
+| -------- | ------------------------------------------------------------------ |
+| Arch     | `ghostty-terminfo` package via pacman (in `distro_packages`)       |
+| Fedora   | `ghostty-terminfo` package via dnf (in `distro_packages`)          |
+| macOS    | Full `ghostty` cask includes terminfo                              |
+| Ubuntu   | Compiled from vendored `ansible/files/ghostty.terminfo` in Phase 5 |
 
 ### Vendored terminfo source
 
@@ -884,12 +901,12 @@ installed alongside other AUR packages in the base role.
 `linux-headers` is first in every package list so DKMS modules
 can build during driver installation.
 
-| Generation | Detection regex | AUR packages |
-|---|---|---|
-| blackwell | `RTX [5-9]0` | linux-headers, nvidia-open-beta-dkms, nvidia-utils-beta, nvidia-settings-beta, libva-nvidia-driver |
-| turing_ada | `RTX [2-4]0\|GTX 16` | linux-headers, nvidia-beta-dkms, nvidia-utils-beta, nvidia-settings-beta, libva-nvidia-driver |
-| pascal | `GTX 10` | linux-headers, nvidia-580xx-dkms, nvidia-580xx-utils |
-| none | no match | (nothing appended) |
+| Generation | Detection regex      | AUR packages                                                                                       |
+| ---------- | -------------------- | -------------------------------------------------------------------------------------------------- |
+| blackwell  | `RTX [5-9]0`         | linux-headers, nvidia-open-beta-dkms, nvidia-utils-beta, nvidia-settings-beta, libva-nvidia-driver |
+| turing_ada | `RTX [2-4]0\|GTX 16` | linux-headers, nvidia-beta-dkms, nvidia-utils-beta, nvidia-settings-beta, libva-nvidia-driver      |
+| pascal     | `GTX 10`             | linux-headers, nvidia-580xx-dkms, nvidia-580xx-utils                                               |
+| none       | no match             | (nothing appended)                                                                                 |
 
 On macOS and non-Nvidia Linux, detection runs but produces
 `nvidia_generation: none` and `aur_packages` is unchanged.
@@ -924,12 +941,12 @@ Each role guards itself with `meta: end_role` so it's safe to
 leave multiple listed. Or comment out the inactive one:
 
 ```yaml
-  roles:
-    - { role: base, tags: [base, cli] }
-    - { role: zsh, tags: [zsh, cli] }
-    - { role: dev, tags: [dev, cli] }
-    # - { role: hyprland, tags: [desktop] }
-    - { role: kde, tags: [desktop] }
+roles:
+  - { role: base, tags: [base, cli] }
+  - { role: zsh, tags: [zsh, cli] }
+  - { role: dev, tags: [dev, cli] }
+  # - { role: hyprland, tags: [desktop] }
+  - { role: kde, tags: [desktop] }
 ```
 
 When adding a new desktop environment, add it as a valid value for
@@ -940,18 +957,18 @@ the `desktop` prompt in `.chezmoi.toml.tmpl` and update
 
 ## Separation of Concerns
 
-| Concern | Owner | NOT owned by |
-|---|---|---|
-| Machine identity (OS, desktop, profile) | chezmoi `.chezmoi.toml.tmpl` | Ansible |
-| Which files exist on a host | chezmoi `.chezmoiignore` | Ansible |
-| Dotfile contents | chezmoi source files | Ansible |
-| Package installation | Ansible | chezmoi |
-| Infrastructure (yay) | Ansible `base/tasks/arch.yml` | — |
-| Homebrew | User prerequisite (pre-chezmoi) | Ansible |
-| Nvidia driver selection | Ansible `site.yml` pre_tasks | Hyprland role |
-| Nvidia env vars | `hyprland.conf` | zsh dotfiles |
-| Shell runtime behavior | zsh drop-in dirs | Ansible |
-| Ansible re-run triggers | chezmoi `run_onchange_` hash comments | — |
+| Concern                                 | Owner                                 | NOT owned by  |
+| --------------------------------------- | ------------------------------------- | ------------- |
+| Machine identity (OS, desktop, profile) | chezmoi `.chezmoi.toml.tmpl`          | Ansible       |
+| Which files exist on a host             | chezmoi `.chezmoiignore`              | Ansible       |
+| Dotfile contents                        | chezmoi source files                  | Ansible       |
+| Package installation                    | Ansible                               | chezmoi       |
+| Infrastructure (yay)                    | Ansible `base/tasks/arch.yml`         | —             |
+| Homebrew                                | User prerequisite (pre-chezmoi)       | Ansible       |
+| Nvidia driver selection                 | Ansible `site.yml` pre_tasks          | Hyprland role |
+| Nvidia env vars                         | `hyprland.conf`                       | zsh dotfiles  |
+| Shell runtime behavior                  | zsh drop-in dirs                      | Ansible       |
+| Ansible re-run triggers                 | chezmoi `run_onchange_` hash comments | —             |
 
 ---
 
@@ -1241,20 +1258,20 @@ ANSIBLE:
 
 ## Common Workstation Tasks
 
-| Task | How |
-|---|---|
-| Add a CLI tool | Add to `common_packages` or `distro_packages` in `site.yml`. If it needs shell init, also add `zshrc.d/2x-tool.zsh`. Run `chezmoi apply`. |
-| Add an AUR-only package | Add to `aur_packages` in `site.yml`. Run `chezmoi apply`. |
-| Add a macOS cask | Add to `macos_casks` in `site.yml`. Run `chezmoi apply`. |
-| Add a new XDG redirect | Add export to `zshenv.d/06-xdg-apps.zsh` AND to `xdg_environment` in `site.yml`. |
-| Add a new desktop environment | Create `roles/newde/tasks/main.yml` with `meta: end_role` guard. Add to `site.yml` roles. Add as valid `desktop` value. Update `.chezmoiignore`. |
-| Support a new distro | Add to `distro_packages`. Add package manager task to `base/tasks/main.yml`. Create fixup file if needed. Update `run_onchange_after_ansible.sh.tmpl`. |
-| Re-run Ansible manually | `cd ~/.local/share/chezmoi/ansible && ansible-playbook site.yml --ask-become-pass` |
-| Re-run CLI packages only | `ansible-playbook site.yml --tags cli --ask-become-pass` |
-| Re-run desktop only | `ansible-playbook site.yml --tags desktop --ask-become-pass` |
-| Change machine type | `chezmoi init --prompt` then `chezmoi apply` |
-| Refresh ghostty terminfo | `infocmp -x xterm-ghostty > ~/.local/share/chezmoi/ansible/files/ghostty.terminfo` then `chezmoi apply` on target servers |
-| Add a host-specific file | Create file in chezmoi source, add gating block in `.chezmoiignore` using `.desktop`, `.profile`, `.chezmoi.os`, or `.hostname` |
+| Task                          | How                                                                                                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Add a CLI tool                | Add to `common_packages` or `distro_packages` in `site.yml`. If it needs shell init, also add `zshrc.d/2x-tool.zsh`. Run `chezmoi apply`.              |
+| Add an AUR-only package       | Add to `aur_packages` in `site.yml`. Run `chezmoi apply`.                                                                                              |
+| Add a macOS cask              | Add to `macos_casks` in `site.yml`. Run `chezmoi apply`.                                                                                               |
+| Add a new XDG redirect        | Add export to `zshenv.d/06-xdg-apps.zsh` AND to `xdg_environment` in `site.yml`.                                                                       |
+| Add a new desktop environment | Create `roles/newde/tasks/main.yml` with `meta: end_role` guard. Add to `site.yml` roles. Add as valid `desktop` value. Update `.chezmoiignore`.       |
+| Support a new distro          | Add to `distro_packages`. Add package manager task to `base/tasks/main.yml`. Create fixup file if needed. Update `run_onchange_after_ansible.sh.tmpl`. |
+| Re-run Ansible manually       | `cd ~/.local/share/chezmoi/ansible && ansible-playbook site.yml --ask-become-pass`                                                                     |
+| Re-run CLI packages only      | `ansible-playbook site.yml --tags cli --ask-become-pass`                                                                                               |
+| Re-run desktop only           | `ansible-playbook site.yml --tags desktop --ask-become-pass`                                                                                           |
+| Change machine type           | `chezmoi init --prompt` then `chezmoi apply`                                                                                                           |
+| Refresh ghostty terminfo      | `infocmp -x xterm-ghostty > ~/.local/share/chezmoi/ansible/files/ghostty.terminfo` then `chezmoi apply` on target servers                              |
+| Add a host-specific file      | Create file in chezmoi source, add gating block in `.chezmoiignore` using `.desktop`, `.profile`, `.chezmoi.os`, or `.hostname`                        |
 
 ---
 
