@@ -29,9 +29,8 @@ dot_config/zsh/zshenv.d/11-homebrew.zsh
 # ── Hyprland desktop only ───────────────────────────────────
 {{- if ne .desktop "hyprland" }}
 dot_config/zsh/zprofile.d/10-tty-hyprland.zsh
-# dot_config/hyprland/
+dot_config/hypr/
 # dot_config/waybar/
-# dot_config/mako/
 {{- end }}
 
 # ── Any desktop (exclude from CLI/server) ───────────────────

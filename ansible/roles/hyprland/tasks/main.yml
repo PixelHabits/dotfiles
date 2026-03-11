@@ -25,6 +25,8 @@
       - xdg-desktop-portal-hyprland
       - uwsm
       - hyprpolkitagent
+      - hyprlock
+      - hypridle
 
       # Terminal & fonts
       - ghostty
@@ -35,6 +37,22 @@
       - wl-clipboard
       - brightnessctl
       - playerctl
-      - grim
-      - slurp
+      - hyprshot
+      - hyprpicker
+      - hyprsunset
+      - hyprlauncher
+      - hyprpwcenter
     state: present
+- name: Enable and start Hyprland user services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    scope: user
+  loop:
+    - hypridle.service
+    - hyprsunset.service
+    - hyprpolkitagent.service
+  environment:
+    # Required for Ansible to interact with user-level systemd daemons
+    XDG_RUNTIME_DIR: "/run/user/{{ ansible_user_uid }}"
