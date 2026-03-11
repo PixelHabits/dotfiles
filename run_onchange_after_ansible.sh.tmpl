@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ── Ansible file hashes (triggers re-run on change) ─────────
+# site.yml hash: {{ include "ansible/site.yml" | sha256sum }}
+# base/main hash: {{ include "ansible/roles/base/tasks/main.yml" | sha256sum }}
+# base/arch hash: {{ include "ansible/roles/base/tasks/arch.yml" | sha256sum }}
+# base/ubuntu hash: {{ include "ansible/roles/base/tasks/ubuntu.yml" | sha256sum }}
+# zsh hash: {{ include "ansible/roles/zsh/tasks/main.yml" | sha256sum }}
+# dev hash: {{ include "ansible/roles/dev/tasks/main.yml" | sha256sum }}
+# hyprland hash: {{ include "ansible/roles/hyprland/tasks/main.yml" | sha256sum }}
+# ghostty-terminfo hash: {{ include "ansible/files/ghostty.terminfo" | sha256sum }}
+
+# ── Install Ansible if missing ───────────────────────────────
+if ! command -v ansible-playbook &>/dev/null; then
+{{- if eq .osid "arch" }}
+  sudo pacman -S --needed --noconfirm ansible
+{{- else if eq .osid "ubuntu" }}
+  sudo apt update && sudo apt install -y ansible
+{{- else if eq .osid "fedora" }}
+  sudo dnf install -y ansible
+{{- else if eq .osid "darwin" }}
+  brew install ansible
+{{- end }}
+fi
+
+# ── Setup Logging ────────────────────────────────────────────
+LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/ansible"
+mkdir -p "$LOG_DIR"
+export ANSIBLE_LOG_PATH="$LOG_DIR/run.log"
+
+# ── Run Ansible ──────────────────────────────────────────────
+cd {{ .chezmoi.sourceDir }}/ansible
+
+{{- if eq .desktop "none" }}
+echo "[chezmoi] Running Ansible (CLI mode — {{ .profile }})"
+ansible-playbook site.yml --tags cli --ask-become-pass
+{{- else }}
+echo "[chezmoi] Running Ansible (desktop: {{ .desktop }} — {{ .profile }})"
+ansible-playbook site.yml --ask-become-pass
+{{- end }}

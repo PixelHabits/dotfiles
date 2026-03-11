@@ -1,0 +1,39 @@
+# ── AUR helper (yay) ────────────────────────────────────────
+# Pure infrastructure — no packages installed here.
+# Must complete before Phase 3 installs AUR packages.
+
+- name: Check if yay is installed
+  ansible.builtin.command: which yay
+  register: yay_check
+  changed_when: false
+  failed_when: false
+
+- name: Install yay from AUR
+  when: yay_check.rc != 0
+  block:
+    - name: Install base-devel
+      become: true
+      community.general.pacman:
+        name: base-devel
+        state: present
+
+    - name: Clone and build yay
+      ansible.builtin.shell: |
+        set -euo pipefail
+        git clone https://aur.archlinux.org/yay.git /tmp/yay-build
+        cd /tmp/yay-build
+        makepkg -si --noconfirm
+      args:
+        executable: /bin/bash
+        creates: /usr/bin/yay
+
+    - name: Clean up build directory
+      ansible.builtin.file:
+        path: /tmp/yay-build
+        state: absent
+
+- name: Configure yay devel database
+  ansible.builtin.shell: |
+    yay -Y --gendb
+    yay -Y --devel --save
+  changed_when: false

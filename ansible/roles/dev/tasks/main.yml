@@ -1,0 +1,15 @@
+# rustup and fnm are installed via package managers in the base
+# role. This role handles post-install toolchain/runtime setup.
+
+- name: Install default Rust stable toolchain
+  ansible.builtin.command: rustup default stable
+  args:
+    creates: "{{ xdg_data_home }}/rustup/toolchains/stable-*"
+
+- name: Install latest LTS Node via fnm
+  ansible.builtin.shell: |
+    eval "$(fnm env)"
+    fnm install --lts
+  args:
+    executable: /bin/zsh
+    creates: "{{ xdg_data_home }}/fnm/node-versions"

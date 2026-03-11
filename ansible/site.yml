@@ -1,0 +1,159 @@
+---
+- name: Workstation bootstrap
+  hosts: localhost
+  connection: local
+  become: false
+
+  vars:
+    # ── XDG Base Directories ────────────────────────────────
+    xdg_config_home: "{{ ansible_env.HOME }}/.config"
+    xdg_cache_home: "{{ ansible_env.HOME }}/.cache"
+    xdg_data_home: "{{ ansible_env.HOME }}/.local/share"
+    xdg_state_home: "{{ ansible_env.HOME }}/.local/state"
+    local_bin: "{{ ansible_env.HOME }}/.local/bin"
+
+    xdg_dirs:
+      - "{{ xdg_config_home }}"
+      - "{{ xdg_cache_home }}"
+      - "{{ xdg_data_home }}"
+      - "{{ xdg_state_home }}"
+      - "{{ local_bin }}"
+      - "{{ xdg_state_home }}/zsh"
+      - "{{ xdg_cache_home }}/zsh"
+
+    # ── XDG environment for subprocesses ────────────────────
+    # Mirrors zshenv.d/06-xdg-apps.zsh so Ansible operations
+    # and shell runtime use identical paths. When adding a new
+    # redirect in 06-xdg-apps.zsh, add it here too.
+    xdg_environment:
+      XDG_CONFIG_HOME: "{{ xdg_config_home }}"
+      XDG_CACHE_HOME: "{{ xdg_cache_home }}"
+      XDG_DATA_HOME: "{{ xdg_data_home }}"
+      XDG_STATE_HOME: "{{ xdg_state_home }}"
+      CARGO_HOME: "{{ xdg_data_home }}/cargo"
+      RUSTUP_HOME: "{{ xdg_data_home }}/rustup"
+      GOPATH: "{{ xdg_data_home }}/go"
+      GOMODCACHE: "{{ xdg_cache_home }}/go/mod"
+      BUN_INSTALL: "{{ xdg_data_home }}/bun"
+      DOTNET_CLI_HOME: "{{ xdg_data_home }}/dotnet"
+      NPM_CONFIG_CACHE: "{{ xdg_cache_home }}/npm"
+      GNUPGHOME: "{{ xdg_data_home }}/gnupg"
+
+    # ── Oh My Zsh ───────────────────────────────────────────
+    omz_dir: "{{ xdg_data_home }}/oh-my-zsh"
+    p10k_dir: "{{ omz_dir }}/custom/themes/powerlevel10k"
+
+    # ── Packages ────────────────────────────────────────────
+    # All package lists in one place for clear visibility.
+    # neovim is intentionally absent from common — Arch gets
+    # neovim-git via yay, others get it in distro_packages.
+    common_packages:
+      - git
+      - zsh
+      - fzf
+      - ripgrep
+      - eza
+      - zoxide
+      - tmux
+      - curl
+      - wget
+      - unzip
+      - bat
+      - bottom
+      - rustup
+      - fnm
+
+    distro_packages:
+      Archlinux:
+        - fd
+        - openssh
+        - man-db
+        - ghostty-terminfo
+      Ubuntu:
+        - neovim
+        - fd-find
+        - openssh-server
+        - man-db
+      Fedora:
+        - neovim
+        - fd-find
+        - openssh-server
+        - man-db
+        - ghostty-terminfo
+      Darwin:
+        - neovim
+        - fd
+
+    # AUR packages — nvidia packages appended dynamically
+    aur_packages:
+      - neovim-git
+
+    macos_casks:
+      - ghostty
+      - font-jetbrains-mono-nerd-font
+
+  environment: "{{ xdg_environment }}"
+
+  pre_tasks:
+    - name: Fail on unsupported OS
+      ansible.builtin.fail:
+        msg: >-
+          Unsupported: {{ ansible_distribution }}
+          ({{ ansible_os_family }}).
+          Supported: Archlinux, Ubuntu, Fedora, macOS.
+      when: >-
+        ansible_distribution not in distro_packages
+        and ansible_os_family != 'Darwin'
+
+    # ── Nvidia GPU detection ──────────────────────────────
+    #   Blackwell+ (RTX 50xx)          → nvidia-open-beta-dkms
+    #   Turing–Ada (RTX 20–40, GTX 16) → nvidia-beta-dkms
+    #   Pascal (GTX 10xx)              → nvidia-580xx-dkms
+    - name: Detect Nvidia GPU
+      ansible.builtin.shell: |
+        lspci | grep -iE 'vga|3d' | grep -i nvidia
+      register: nvidia_detect
+      changed_when: false
+      failed_when: false
+      when: ansible_system == 'Linux'
+
+    - name: Set Nvidia generation
+      ansible.builtin.set_fact:
+        nvidia_generation: >-
+          {%- set gpu = nvidia_detect.stdout | default('') -%}
+          {%- if gpu is search('RTX [5-9]0') -%}blackwell
+          {%- elif gpu is search('RTX [2-4]0|GTX 16') -%}turing_ada
+          {%- elif gpu is search('GTX 10') -%}pascal
+          {%- else -%}none
+          {%- endif -%}
+
+    - name: Build Nvidia package list and append to AUR packages
+      vars:
+        nvidia_driver_map:
+          blackwell:
+            - linux-headers
+            - nvidia-open-beta-dkms
+            - nvidia-utils-beta
+            - nvidia-settings-beta
+            - libva-nvidia-driver
+          turing_ada:
+            - linux-headers
+            - nvidia-beta-dkms
+            - nvidia-utils-beta
+            - nvidia-settings-beta
+            - libva-nvidia-driver
+          pascal:
+            - linux-headers
+            - nvidia-580xx-dkms
+            - nvidia-580xx-utils
+          none: []
+      ansible.builtin.set_fact:
+        has_nvidia: "{{ nvidia_generation != 'none' }}"
+        nvidia_packages: "{{ nvidia_driver_map[nvidia_generation] }}"
+        aur_packages: "{{ aur_packages + nvidia_driver_map[nvidia_generation] }}"
+
+  roles:
+    - { role: base, tags: [base, cli] }
+    - { role: zsh, tags: [zsh, cli] }
+    - { role: dev, tags: [dev, cli] }
+    - { role: hyprland, tags: [desktop] }

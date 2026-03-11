@@ -1,0 +1,40 @@
+# ============================================================
+# Hyprland + Wayland on Arch
+#
+# Reference: https://wiki.hyprland.org/Nvidia/
+# Last verified: 2025-03-09
+#
+# All Nvidia packages (driver, utils, settings, headers, libva)
+# are installed via yay in the base role. The nvidia_driver_map
+# in site.yml pre_tasks builds the correct list per GPU
+# generation. This role has zero Nvidia awareness.
+#
+# Nvidia env vars belong in hyprland.conf, NOT zsh dotfiles.
+# ============================================================
+
+- name: Skip Hyprland role on non-Arch systems
+  ansible.builtin.meta: end_role
+  when: ansible_distribution != 'Archlinux'
+
+- name: Install Hyprland desktop packages
+  become: true
+  community.general.pacman:
+    name:
+      # Compositor
+      - hyprland
+      - xdg-desktop-portal-hyprland
+      - uwsm
+      - hyprpolkitagent
+
+      # Terminal & fonts
+      - ghostty
+      - ttf-jetbrains-mono-nerd
+
+      # Desktop utilities
+      - mako
+      - wl-clipboard
+      - brightnessctl
+      - playerctl
+      - grim
+      - slurp
+    state: present

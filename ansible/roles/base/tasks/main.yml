@@ -1,0 +1,99 @@
+# ════════════════════════════════════════════════════════════
+# Phase 1: XDG directories — before anything writes to disk
+# ════════════════════════════════════════════════════════════
+
+- name: Create XDG base directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ xdg_dirs }}"
+
+# ════════════════════════════════════════════════════════════
+# Phase 2: Infrastructure — package managers that need setup
+# ════════════════════════════════════════════════════════════
+
+- name: Include Arch infrastructure (yay)
+  ansible.builtin.include_tasks: arch.yml
+  when: ansible_distribution == 'Archlinux'
+
+# Note: Homebrew is a prerequisite on macOS (needed to install
+# chezmoi itself). Ansible does not bootstrap or manage it.
+
+# ════════════════════════════════════════════════════════════
+# Phase 3: Package installation — all platforms
+# ════════════════════════════════════════════════════════════
+
+- name: Install packages (pacman)
+  become: true
+  community.general.pacman:
+    name: "{{ common_packages + distro_packages['Archlinux'] }}"
+    state: present
+    update_cache: true
+  when: ansible_distribution == 'Archlinux'
+
+- name: Install packages (apt)
+  become: true
+  ansible.builtin.apt:
+    name: "{{ common_packages + distro_packages['Ubuntu'] }}"
+    state: present
+    update_cache: true
+  when: ansible_distribution == 'Ubuntu'
+
+- name: Install packages (dnf)
+  become: true
+  ansible.builtin.dnf:
+    name: "{{ common_packages + distro_packages['Fedora'] }}"
+    state: present
+  when: ansible_distribution == 'Fedora'
+
+- name: Install CLI tools (Homebrew formulae)
+  community.general.homebrew:
+    name: "{{ common_packages + distro_packages['Darwin'] }}"
+    state: present
+  when: ansible_os_family == 'Darwin'
+
+- name: Install desktop apps (Homebrew casks)
+  community.general.homebrew_cask:
+    name: "{{ macos_casks }}"
+    state: present
+  when: ansible_os_family == 'Darwin'
+
+- name: Install AUR packages
+  ansible.builtin.command: >-
+    yay -S --needed --noconfirm {{ item }}
+  loop: "{{ aur_packages }}"
+  register: yay_install
+  changed_when: "'there is nothing to do' not in yay_install.stdout"
+  when: >-
+    ansible_distribution == 'Archlinux'
+    and aur_packages | length > 0
+
+# ════════════════════════════════════════════════════════════
+# Phase 4: Post-install fixups
+# ════════════════════════════════════════════════════════════
+
+- name: Include Ubuntu post-install fixups
+  ansible.builtin.include_tasks: ubuntu.yml
+  when: ansible_distribution == 'Ubuntu'
+
+# ════════════════════════════════════════════════════════════
+# Phase 5: Ghostty terminfo (distros without a package)
+# ════════════════════════════════════════════════════════════
+# Arch and Fedora get ghostty-terminfo via package manager
+# in Phase 3. macOS gets it via the full ghostty cask.
+# Ubuntu doesn't package it, so compile from vendored source.
+# Ensures SSH servers accept Ghostty terminal connections.
+
+- name: Check for xterm-ghostty terminfo
+  ansible.builtin.command: infocmp xterm-ghostty
+  register: ghostty_terminfo_check
+  changed_when: false
+  failed_when: false
+  when: ansible_distribution == 'Ubuntu'
+
+- name: Compile ghostty terminfo
+  ansible.builtin.command: tic -x {{ role_path }}/../../files/ghostty.terminfo
+  when:
+    - ansible_distribution == 'Ubuntu'
+    - ghostty_terminfo_check.rc != 0

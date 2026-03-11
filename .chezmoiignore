@@ -1,0 +1,80 @@
+# ════════════════════════════════════════════════════════════
+# Source-only files — never deployed to $HOME
+# ════════════════════════════════════════════════════════════
+ansible/
+README.md
+zsh-dotfile-architecture.md
+workstation-bootstrap.md
+
+# ════════════════════════════════════════════════════════════
+# OS-gated files
+# ════════════════════════════════════════════════════════════
+
+# ── macOS only ──────────────────────────────────────────────
+{{- if ne .chezmoi.os "darwin" }}
+dot_config/zsh/zshenv.d/11-homebrew.zsh
+# dot_config/zsh/zshrc.d/42-macos-aliases.zsh
+{{- end }}
+
+# ── Linux only ──────────────────────────────────────────────
+{{- if ne .chezmoi.os "linux" }}
+# dot_config/zsh/zshrc.d/42-linux-aliases.zsh
+# dot_config/zsh/zshrc.d/24-docker.zsh
+{{- end }}
+
+# ════════════════════════════════════════════════════════════
+# Desktop-gated files
+# ════════════════════════════════════════════════════════════
+
+# ── Hyprland desktop only ───────────────────────────────────
+{{- if ne .desktop "hyprland" }}
+dot_config/zsh/zprofile.d/10-tty-hyprland.zsh
+# dot_config/hyprland/
+# dot_config/waybar/
+# dot_config/mako/
+{{- end }}
+
+# ── Any desktop (exclude from CLI/server) ───────────────────
+{{- if eq .desktop "none" }}
+# dot_config/zsh/zshrc.d/42-desktop-aliases.zsh
+# dot_config/ghostty/
+{{- end }}
+
+# ── CLI/server only (exclude from desktop) ──────────────────
+{{- if ne .desktop "none" }}
+# dot_config/zsh/zshrc.d/42-server-aliases.zsh
+{{- end }}
+
+# ════════════════════════════════════════════════════════════
+# Profile-gated files
+# ════════════════════════════════════════════════════════════
+
+# ── Work profile only ───────────────────────────────────────
+# Corporate proxies, internal tool aliases, k8s configs
+{{- if ne .profile "work" }}
+# dot_config/zsh/zshenv.d/07-work-proxy.zsh
+# dot_config/zsh/zshrc.d/25-kubectl.zsh
+# dot_config/zsh/zshrc.d/42-work-aliases.zsh
+# dot_config/git/config-work
+{{- end }}
+
+# ── Personal profile only ──────────────────────────────────
+# Gaming, personal project shortcuts
+{{- if ne .profile "personal" }}
+# dot_config/zsh/zshrc.d/42-gaming-aliases.zsh
+{{- end }}
+
+# ════════════════════════════════════════════════════════════
+# Host-gated files (use sparingly — prefer profile/desktop)
+# ════════════════════════════════════════════════════════════
+
+# ── Gaming PC only ──────────────────────────────────────────
+# {{- if ne .hostname "gaming-pc" }}
+# dot_config/zsh/zshrc.d/43-gamemode.zsh
+# dot_config/mangohud/
+# {{- end }}
+
+# ── Specific work server ────────────────────────────────────
+# {{- if ne .hostname "prod-1" }}
+# dot_config/zsh/zshrc.d/43-prod-monitoring.zsh
+# {{- end }}

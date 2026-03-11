@@ -1,0 +1,17 @@
+{{- $osid := .chezmoi.os -}}
+{{- if hasKey .chezmoi "osRelease" -}}
+{{-   if hasKey .chezmoi.osRelease "id" -}}
+{{-     $osid = .chezmoi.osRelease.id -}}
+{{-   end -}}
+{{- end -}}
+
+{{- $email := promptStringOnce . "email" "Email address" -}}
+{{- $desktop := promptStringOnce . "desktop" "Desktop environment (hyprland/none)" -}}
+{{- $profile := promptStringOnce . "profile" "Machine profile (work/personal)" -}}
+
+[data]
+  osid = {{ $osid | quote }}
+  hostname = {{ .chezmoi.hostname | quote }}
+  email = {{ $email | quote }}
+  desktop = {{ $desktop | quote }}
+  profile = {{ $profile | quote }}
