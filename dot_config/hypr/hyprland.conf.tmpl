@@ -312,6 +312,12 @@ bindel = ,XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
 bindel = ,XF86MonBrightnessUp, exec, brightnessctl -e4 -n2 set 5%+
 bindel = ,XF86MonBrightnessDown, exec, brightnessctl -e4 -n2 set 5%-
 
+{{ if eq .hostname "GAM-DEV001" -}}
+# Keyboard backlight (Max brightness is 2, so increment/decrement by 1)
+bindel = ,XF86KbdBrightnessUp, exec, brightnessctl -d tpacpi::kbd_backlight set 1+
+bindel = ,XF86KbdBrightnessDown, exec, brightnessctl -d tpacpi::kbd_backlight set 1-
+{{- end }}
+
 # Requires playerctl
 bindl = , XF86AudioNext, exec, playerctl next
 bindl = , XF86AudioPause, exec, playerctl play-pause
