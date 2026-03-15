@@ -39,6 +39,11 @@ dot_config/hypr/
 # dot_config/ghostty/
 {{- end }}
 
+# ── Any linux desktop (exclude from CLI/server) ───────────────────
+{{- if or (ne .chezmoi.os "linux") (eq .desktop "none") }}
+dot_config/fontconfig/
+{{- end }}
+
 # ── CLI/server only (exclude from desktop) ──────────────────
 {{- if ne .desktop "none" }}
 # dot_config/zsh/zshrc.d/42-server-aliases.zsh
