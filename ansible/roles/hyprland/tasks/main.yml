@@ -42,7 +42,25 @@
       - hyprsunset
       - hyprlauncher
       - hyprpwcenter
+      - mpv
+      - waybar
+      - yt-dlp
+      - zathura-pdf-poppler
+
+      # Dev Packages
+      - rustup
+      - fnm
     state: present
+
+- name: Install Hyprland desktop AUR packages
+  ansible.builtin.command: yay -S --needed --noconfirm {{ item }}
+  loop:
+    - 1password
+    - 1password-cli
+    - helium-browser-bin
+  register: yay_desktop_install
+  changed_when: "'there is nothing to do' not in yay_desktop_install.stdout"
+
 - name: Enable and start Hyprland user services
   ansible.builtin.systemd:
     name: "{{ item }}"

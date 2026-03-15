@@ -44,53 +44,66 @@
     p10k_dir: "{{ omz_dir }}/custom/themes/powerlevel10k"
 
     # ── Packages ────────────────────────────────────────────
-    # All package lists in one place for clear visibility.
-    # neovim is intentionally absent from common — Arch gets
-    # neovim-git via yay, others get it in distro_packages.
     common_packages:
-      - git
       - zsh
+      - btop
       - fzf
       - ripgrep
+      - fastfetch
       - eza
+      - gh
       - zoxide
       - tmux
-      - curl
-      - wget
       - unzip
       - bat
-      - bottom
-      - rustup
-      - fnm
+      - zip
+
+    hardware_packages:
+      Linux:
+        - dosfstools # /boot EFI (fwupd)
+        - exfatprogs # USB Flash Drives
+        - fwupd
+        - ntfs-3g # Windows External Drives
+        - udisks2
+        - udisks2-btrfs # BTRFS filesystems
 
     distro_packages:
       Archlinux:
+        - bun
         - fd
-        - openssh
         - man-db
         - ghostty-terminfo
+        - ufw
+        - uv
       Ubuntu:
         - neovim
         - fd-find
-        - openssh-server
         - man-db
+        - ufw
       Fedora:
         - neovim
         - fd-find
-        - openssh-server
         - man-db
         - ghostty-terminfo
+        - ufw
+        - uv
       Darwin:
         - neovim
         - fd
+        - fnm
+        - rustup
+        - uv
 
-    # AUR packages — nvidia packages appended dynamically
     aur_packages:
       - neovim-git
 
     macos_casks:
+      - 1password
+      - 1password-cli
+      - docker
       - ghostty
       - font-jetbrains-mono-nerd-font
+      - helium-browser
 
   environment: "{{ xdg_environment }}"
 
@@ -104,6 +117,20 @@
       when: >-
         ansible_distribution not in distro_packages
         and ansible_os_family != 'Darwin'
+
+    # ── Bare Metal detection ──────────────────────────────
+    - name: Detect if running on bare metal (not a VM/WSL)
+      ansible.builtin.set_fact:
+        is_bare_metal: "{{ ansible_virtualization_role != 'guest' }}"
+
+    - name: Append hardware packages to distro_packages (Linux Bare Metal only)
+      ansible.builtin.set_fact:
+        distro_packages: >-
+          {{ distro_packages | combine({
+               ansible_distribution: distro_packages[ansible_distribution] + hardware_packages['Linux']
+             })
+          }}
+      when: is_bare_metal and ansible_system == 'Linux'
 
     # ── Nvidia GPU detection ──────────────────────────────
     #   Blackwell+ (RTX 50xx)          → nvidia-open-beta-dkms
@@ -155,5 +182,5 @@
   roles:
     - { role: base, tags: [base, cli] }
     - { role: zsh, tags: [zsh, cli] }
-    - { role: dev, tags: [dev, cli] }
     - { role: hyprland, tags: [desktop] }
+    - { role: dev, tags: [dev] }
