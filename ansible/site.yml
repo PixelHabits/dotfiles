@@ -52,7 +52,6 @@
       - ripgrep
       - fastfetch
       - eza
-      - gh
       - zoxide
       - tmux
       - unzip
@@ -72,6 +71,7 @@
       Archlinux:
         - bun
         - fd
+        - github-cli
         - man-db
         - ghostty-terminfo
         - ufw
@@ -79,11 +79,13 @@
       Ubuntu:
         - neovim
         - fd-find
+        - gh
         - man-db
         - ufw
       Fedora:
         - neovim
         - fd-find
+        - gh
         - man-db
         - ghostty-terminfo
         - ufw
@@ -92,6 +94,7 @@
         - neovim
         - fd
         - fnm
+        - gh
         - rustup
         - uv
 
