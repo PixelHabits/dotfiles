@@ -8,6 +8,7 @@
 {{- $email := promptStringOnce . "email" "Email address" -}}
 {{- $desktop := promptStringOnce . "desktop" "Desktop environment (hyprland/none)" -}}
 {{- $profile := promptStringOnce . "profile" "Machine profile (work/personal)" -}}
+{{- $dev := promptBoolOnce . "dev" "Development machine" -}}
 
 [data]
   osid = {{ $osid | quote }}
@@ -15,3 +16,4 @@
   email = {{ $email | quote }}
   desktop = {{ $desktop | quote }}
   profile = {{ $profile | quote }}
+  dev = {{ $dev }}
