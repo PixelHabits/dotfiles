@@ -53,6 +53,8 @@
     state: present
 
 - name: Install Hyprland desktop AUR packages
+  become: true
+  become_user: aur_builder
   ansible.builtin.command: yay -S --needed --noconfirm {{ item }}
   loop:
     - 1password

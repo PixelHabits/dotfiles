@@ -32,6 +32,28 @@
     update_cache: true
   when: ansible_facts['distribution'] == 'Archlinux'
 
+- name: Create aur_builder user
+  become: true
+  ansible.builtin.user:
+    name: aur_builder
+    create_home: true
+    shell: /usr/sbin/nologin
+    group: wheel
+    system: true
+  when: ansible_facts['distribution'] == 'Archlinux'
+
+- name: Allow aur_builder passwordless sudo for pacman
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/10-aur-builder
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/bin/visudo -cf %s
+    content: |
+      aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman
+  when: ansible_facts['distribution'] == 'Archlinux'
+
 - name: Install packages (apt)
   become: true
   ansible.builtin.apt:
@@ -60,6 +82,8 @@
   when: ansible_facts['os_family'] == 'Darwin'
 
 - name: Install AUR packages
+  become: true
+  become_user: aur_builder
   ansible.builtin.command: >-
     yay -S --needed --noconfirm {{ item }}
   loop: "{{ aur_packages }}"
