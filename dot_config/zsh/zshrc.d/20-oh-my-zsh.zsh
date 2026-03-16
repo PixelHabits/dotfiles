@@ -3,6 +3,7 @@
 
 # Path to your Oh My Zsh installation.
 export ZSH="$XDG_DATA_HOME/oh-my-zsh"
+export ZSH_COMPDUMP="$XDG_CACHE_HOME/zsh/zcompdump-${ZSH_VERSION}"
 
 # Bail if OMZ is not installed
 if [[ ! -d "$ZSH" ]]; then
@@ -112,6 +113,7 @@ source $ZSH/oh-my-zsh.sh
 # --- OMZ side-effect corrections ---
 # OMZ sets SHARE_HISTORY which conflicts with INC_APPEND_HISTORY.
 # Our canonical policy is in 10-history.zsh; undo OMZ's override.
+unsetopt share_history
 unsetopt extended_history
 unsetopt hist_expire_dups_first
 unsetopt hist_verify

@@ -2,6 +2,8 @@
 # Source-only files — never deployed to $HOME
 # ════════════════════════════════════════════════════════════
 ansible/
+post-install/
+AGENTS.md
 README.md
 zsh-dotfile-architecture.md
 workstation-bootstrap.md
