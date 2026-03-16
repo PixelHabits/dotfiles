@@ -112,26 +112,26 @@
     - name: Fail on unsupported OS
       ansible.builtin.fail:
         msg: >-
-          Unsupported: {{ ansible_distribution }}
-          ({{ ansible_os_family }}).
+          Unsupported: {{ ansible_facts['distribution'] }}
+          ({{ ansible_facts['os_family'] }}).
           Supported: Archlinux, Ubuntu, Fedora, macOS.
       when: >-
-        ansible_distribution not in distro_packages
-        and ansible_os_family != 'Darwin'
+        ansible_facts['distribution'] not in distro_packages
+        and ansible_facts['os_family'] != 'Darwin'
 
     # ── Bare Metal detection ──────────────────────────────
     - name: Detect if running on bare metal (not a VM/WSL)
       ansible.builtin.set_fact:
-        is_bare_metal: "{{ ansible_virtualization_role != 'guest' }}"
+        is_bare_metal: "{{ ansible_facts['virtualization_role'] != 'guest' }}"
 
     - name: Append hardware packages to distro_packages (Linux Bare Metal only)
       ansible.builtin.set_fact:
         distro_packages: >-
           {{ distro_packages | combine({
-               ansible_distribution: distro_packages[ansible_distribution] + hardware_packages['Linux']
+               ansible_facts['distribution']: distro_packages[ansible_facts['distribution']] + hardware_packages['Linux']
              })
           }}
-      when: is_bare_metal and ansible_system == 'Linux'
+      when: is_bare_metal and ansible_facts['system'] == 'Linux'
 
     # ── Nvidia GPU detection ──────────────────────────────
     #   Blackwell+ (RTX 50xx)          → nvidia-open-beta-dkms
@@ -143,7 +143,7 @@
       register: nvidia_detect
       changed_when: false
       failed_when: false
-      when: ansible_system == 'Linux'
+      when: ansible_facts['system'] == 'Linux'
 
     - name: Set Nvidia generation
       ansible.builtin.set_fact:

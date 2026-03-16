@@ -15,7 +15,7 @@
 
 - name: Include Arch infrastructure (yay)
   ansible.builtin.include_tasks: arch.yml
-  when: ansible_distribution == 'Archlinux'
+  when: ansible_facts['distribution'] == 'Archlinux'
 
 # Note: Homebrew is a prerequisite on macOS (needed to install
 # chezmoi itself). Ansible does not bootstrap or manage it.
@@ -30,7 +30,7 @@
     name: "{{ common_packages + distro_packages['Archlinux'] }}"
     state: present
     update_cache: true
-  when: ansible_distribution == 'Archlinux'
+  when: ansible_facts['distribution'] == 'Archlinux'
 
 - name: Install packages (apt)
   become: true
@@ -38,26 +38,26 @@
     name: "{{ common_packages + distro_packages['Ubuntu'] }}"
     state: present
     update_cache: true
-  when: ansible_distribution == 'Ubuntu'
+  when: ansible_facts['distribution'] == 'Ubuntu'
 
 - name: Install packages (dnf)
   become: true
   ansible.builtin.dnf:
     name: "{{ common_packages + distro_packages['Fedora'] }}"
     state: present
-  when: ansible_distribution == 'Fedora'
+  when: ansible_facts['distribution'] == 'Fedora'
 
 - name: Install CLI tools (Homebrew formulae)
   community.general.homebrew:
     name: "{{ common_packages + distro_packages['Darwin'] }}"
     state: present
-  when: ansible_os_family == 'Darwin'
+  when: ansible_facts['os_family'] == 'Darwin'
 
 - name: Install desktop apps (Homebrew casks)
   community.general.homebrew_cask:
     name: "{{ macos_casks }}"
     state: present
-  when: ansible_os_family == 'Darwin'
+  when: ansible_facts['os_family'] == 'Darwin'
 
 - name: Install AUR packages
   ansible.builtin.command: >-
@@ -66,7 +66,7 @@
   register: yay_install
   changed_when: "'there is nothing to do' not in yay_install.stdout"
   when: >-
-    ansible_distribution == 'Archlinux'
+    ansible_facts['distribution'] == 'Archlinux'
     and aur_packages | length > 0
 
 # ════════════════════════════════════════════════════════════
@@ -75,7 +75,7 @@
 
 - name: Include Ubuntu post-install fixups
   ansible.builtin.include_tasks: ubuntu.yml
-  when: ansible_distribution == 'Ubuntu'
+  when: ansible_facts['distribution'] == 'Ubuntu'
 
 # ════════════════════════════════════════════════════════════
 # Phase 5: Ghostty terminfo (distros without a package)
@@ -90,10 +90,10 @@
   register: ghostty_terminfo_check
   changed_when: false
   failed_when: false
-  when: ansible_distribution == 'Ubuntu'
+  when: ansible_facts['distribution'] == 'Ubuntu'
 
 - name: Compile ghostty terminfo
   ansible.builtin.command: tic -x {{ role_path }}/../../files/ghostty.terminfo
   when:
-    - ansible_distribution == 'Ubuntu'
+    - ansible_facts['distribution'] == 'Ubuntu'
     - ghostty_terminfo_check.rc != 0
