@@ -1,0 +1,6 @@
+# Ghostty config — only overrides where defaults are insufficient.
+# Run `ghostty +show-config --default --docs` for all options.
+
+# Clipboard bridge: Hyprland sends Ctrl/Shift+Insert for universal SUPER+C/V
+keybind = ctrl+insert=copy_to_clipboard
+keybind = shift+insert=paste_from_clipboard

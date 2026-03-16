@@ -1,0 +1,23 @@
+#!/bin/bash
+# Source: https://github.com/basecamp/omarchy
+# File:   bin/omarchy-toggle-nightlight
+# Commit: 7514ae7dcff654ff555862ea95b7033ea740924f (2026-02-21)
+#
+# Local changes: renamed, ON_TEMP 4000->4800, removed emoji from notify-send,
+#                removed waybar restart (we don't have the nightlight module),
+#                removed hyprsunset process guard (we run it as a systemd service)
+
+# Default temperature values
+ON_TEMP=4800  # local: warmer than omarchy default (4000)
+OFF_TEMP=6000
+
+# Query the current temperature
+CURRENT_TEMP=$(hyprctl hyprsunset temperature 2>/dev/null | grep -oE '[0-9]+')
+
+if [[ $CURRENT_TEMP == $OFF_TEMP ]]; then
+  hyprctl hyprsunset temperature $ON_TEMP
+  notify-send "Nightlight screen temperature"
+else
+  hyprctl hyprsunset temperature $OFF_TEMP
+  notify-send "Daylight screen temperature"
+fi

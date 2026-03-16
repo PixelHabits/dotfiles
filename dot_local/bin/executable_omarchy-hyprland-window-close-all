@@ -1,0 +1,14 @@
+#!/bin/bash
+# Source: https://github.com/basecamp/omarchy
+# File:   bin/omarchy-hyprland-window-close-all
+# Commit: e9c40445dd8412cf29c7da56729d0e229370ed5c (2025-10-21)
+#
+# Local changes: renamed
+
+# Close all open windows
+hyprctl clients -j | \
+  jq -r ".[].address" | \
+  xargs -I{} hyprctl dispatch closewindow address:{}
+
+# Move to first workspace
+hyprctl dispatch workspace 1

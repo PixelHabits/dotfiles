@@ -1,0 +1,12 @@
+#!/bin/bash
+# Source: https://github.com/basecamp/omarchy
+# File:   bin/omarchy-toggle-waybar
+# Commit: 2971a25a4fe56e567f9a1dfd36fb9dd6ae1b353b (2025-10-06)
+#
+# Local changes: none
+
+if pgrep -x waybar >/dev/null; then
+  pkill -x waybar
+else
+  uwsm-app -- waybar >/dev/null 2>&1 &
+fi

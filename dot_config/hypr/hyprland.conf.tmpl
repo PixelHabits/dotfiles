@@ -43,7 +43,7 @@ $browser = uwsm-app -- helium-browser --force-dark-mode
 
 exec-once = $terminal
 exec-once = uwsm app -- hyprlauncher -d
-# exec-once = nm-applet &
+exec-once = uwsm app -- 1password --silent
 
 #############################
 ### ENVIRONMENT VARIABLES ###
@@ -236,39 +236,56 @@ device {
 ###################
 
 # See https://wiki.hypr.land/Configuring/Keywords/
-$mainMod = SUPER # Sets "Windows" key as main modifier
+$mainMod = SUPER
 
-# Example binds, see https://wiki.hypr.land/Configuring/Binds/ for more
-bind = $mainMod, Q, exec, $terminal
-bind = $mainMod, C, killactive,
-bind = $mainMod, M, exec, command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit
-bind = $mainMod, E, exec, $fileManager
-bind = $mainMod, V, togglefloating,
-bind = $mainMod, R, exec, $menu
-bind = $mainMod, P, pseudo, # dwindle
-bind = $mainMod, J, layoutmsg, togglesplit # dwindle
-bind = $mainMod, L, exec, loginctl lock-session
-bind = $mainMod, B, exec, $browser
+# Keybind hierarchy:
+#   $mainMod          — core operations (clipboard, close, focus, workspaces)
+#   $mainMod+SHIFT    — movement, app launchers, secondary actions
+#   $mainMod+CTRL     — system controls & panels
+#   $mainMod+ALT      — reserved for future (groups, tmux, etc.)
 
-# --- Hyprsunset (Blue Light Filter) ---
-# Super + Shift + N to turn on the blue light filter (warm color)
-bind = SUPER SHIFT, N, exec, hyprctl hyprsunset temperature 4800
-# Super + Shift + M to turn it off (return to default 6000k)
-bind = SUPER SHIFT, M, exec, hyprctl hyprsunset identity
+# --- $mainMod: Core Operations ---
 
-# --- Hyprshot (Screenshot Utility using grim & slurp) ---
-# Capture a selected region (Freezes screen, copies directly to clipboard)
-bind = SUPER SHIFT, S, exec, hyprshot -m region -z --clipboard-only
-# Capture the entire current monitor (Freezes screen, copies directly to clipboard)
-bind = , Print, exec, hyprshot -m output -z --clipboard-only
+# Clipboard (three-layer bridge: $mainMod -> Ctrl/Shift+Insert -> universal copy/paste)
+# Requires Ghostty keybind: ctrl+insert=copy_to_clipboard, shift+insert=paste_from_clipboard
+bindd = $mainMod, C, Universal copy, sendshortcut, CTRL, Insert,
+bindd = $mainMod, V, Universal paste, sendshortcut, SHIFT, Insert,
+bindd = $mainMod, X, Universal cut, sendshortcut, CTRL, X,
 
-# Move focus with mainMod + arrow keys
-bind = $mainMod, left, movefocus, l
-bind = $mainMod, right, movefocus, r
-bind = $mainMod, up, movefocus, u
-bind = $mainMod, down, movefocus, d
+# Window management
+bindd = $mainMod, W, Close window, killactive,
+bindd = $mainMod, F, Fullscreen toggle, fullscreen, 0
+bindd = $mainMod ALT, F, Full width, fullscreen, 1
+bindd = $mainMod, T, Toggle floating/tiling, togglefloating,
+bindd = $mainMod, P, Pseudo (dwindle), pseudo,
+bindd = $mainMod, J, Toggle split (dwindle), layoutmsg, togglesplit
+bindd = $mainMod, A, Pin window, pin,
+bindd = $mainMod, O, Pop window out (float & pin), exec, omarchy-hyprland-window-pop
+bindd = $mainMod, S, Toggle workspace layout, exec, omarchy-hyprland-workspace-layout-toggle
+# bind = $mainMod, M, exec, command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit
 
-# Switch workspaces with mainMod + [0-9]
+# Applications
+bindd = $mainMod, RETURN, Terminal, exec, $terminal
+bindd = $mainMod, SPACE, App launcher, exec, $menu
+bindd = $mainMod SHIFT, B, Browser, exec, $browser
+bindd = $mainMod SHIFT, F, File manager, exec, $fileManager
+bindd = $mainMod SHIFT, N, Editor, exec, uwsm-app -- $terminal -e nvim
+bindd = $mainMod SHIFT, M, Music, exec, uwsm-app -- xdg-open https://music.youtube.com
+bindd = $mainMod SHIFT, SLASH, Passwords, exec, uwsm-app -- 1password
+bindd = $mainMod, L, Lock session, exec, loginctl lock-session
+
+# Notifications (mako)
+bindd = $mainMod, COMMA, Dismiss last notification, exec, makoctl dismiss
+bindd = $mainMod SHIFT, COMMA, Dismiss all notifications, exec, makoctl dismiss --all
+bindd = $mainMod ALT, COMMA, Restore last notification, exec, makoctl restore
+
+# Focus
+bindd = $mainMod, left, Focus left, movefocus, l
+bindd = $mainMod, right, Focus right, movefocus, r
+bindd = $mainMod, up, Focus up, movefocus, u
+bindd = $mainMod, down, Focus down, movefocus, d
+
+# Workspaces
 bind = $mainMod, 1, workspace, 1
 bind = $mainMod, 2, workspace, 2
 bind = $mainMod, 3, workspace, 3
@@ -279,8 +296,28 @@ bind = $mainMod, 7, workspace, 7
 bind = $mainMod, 8, workspace, 8
 bind = $mainMod, 9, workspace, 9
 bind = $mainMod, 0, workspace, 10
+bindd = $mainMod, TAB, Next workspace, workspace, e+1
+bind = $mainMod, grave, togglespecialworkspace, scratchpad
 
-# Move active window to a workspace with mainMod + SHIFT + [0-9]
+# Resize (horizontal)
+bindd = $mainMod, minus, Shrink window width, resizeactive, -100 0
+bindd = $mainMod, equal, Grow window width, resizeactive, 100 0
+
+# Mouse
+bind = $mainMod, mouse_down, workspace, e+1
+bind = $mainMod, mouse_up, workspace, e-1
+bindm = $mainMod, mouse:272, movewindow
+bindm = $mainMod, mouse:273, resizewindow
+
+# --- $mainMod+SHIFT: Movement & App Launchers ---
+
+# Swap windows
+bindd = $mainMod SHIFT, left, Swap window left, swapwindow, l
+bindd = $mainMod SHIFT, right, Swap window right, swapwindow, r
+bindd = $mainMod SHIFT, up, Swap window up, swapwindow, u
+bindd = $mainMod SHIFT, down, Swap window down, swapwindow, d
+
+# Move window to workspace
 bind = $mainMod SHIFT, 1, movetoworkspace, 1
 bind = $mainMod SHIFT, 2, movetoworkspace, 2
 bind = $mainMod SHIFT, 3, movetoworkspace, 3
@@ -291,20 +328,54 @@ bind = $mainMod SHIFT, 7, movetoworkspace, 7
 bind = $mainMod SHIFT, 8, movetoworkspace, 8
 bind = $mainMod SHIFT, 9, movetoworkspace, 9
 bind = $mainMod SHIFT, 0, movetoworkspace, 10
+bindd = $mainMod SHIFT, TAB, Previous workspace, workspace, e-1
+bind = $mainMod SHIFT, grave, movetoworkspacesilent, special:scratchpad
 
-# Example special workspace (scratchpad)
-bind = $mainMod, grave, togglespecialworkspace, magic
-bind = $mainMod SHIFT, grave, movetoworkspace, special:magic
+# Resize (vertical)
+bindd = $mainMod SHIFT, minus, Shrink window height, resizeactive, 0 -100
+bindd = $mainMod SHIFT, equal, Grow window height, resizeactive, 0 100
 
-# Scroll through existing workspaces with mainMod + scroll
-bind = $mainMod, mouse_down, workspace, e+1
-bind = $mainMod, mouse_up, workspace, e-1
+# Screenshots (Hyprshot)
+bindd = $mainMod SHIFT, S, Screenshot region, exec, hyprshot -m region -z --clipboard-only
+bind = , Print, exec, hyprshot -m output -z --clipboard-only
+bindd = $mainMod, Print, Color picker, exec, pkill hyprpicker || hyprpicker -a
 
-# Move/resize windows with mainMod + LMB/RMB and dragging
-bindm = $mainMod, mouse:272, movewindow
-bindm = $mainMod, mouse:273, resizewindow
+# Aesthetics
+bindd = $mainMod SHIFT, SPACE, Toggle top bar, exec, omarchy-toggle-waybar
 
-# Laptop multimedia keys for volume and LCD brightness
+# --- $mainMod+CTRL: System Controls ---
+
+bindd = $mainMod CTRL, N, Toggle night light, exec, omarchy-toggle-nightlight
+bindd = $mainMod CTRL, T, Activity, exec, uwsm-app -- $terminal -e btop
+
+# --- $mainMod+SHIFT+ALT: Tertiary ---
+
+# Move window silently to workspace (window goes, view stays)
+bind = $mainMod SHIFT ALT, 1, movetoworkspacesilent, 1
+bind = $mainMod SHIFT ALT, 2, movetoworkspacesilent, 2
+bind = $mainMod SHIFT ALT, 3, movetoworkspacesilent, 3
+bind = $mainMod SHIFT ALT, 4, movetoworkspacesilent, 4
+bind = $mainMod SHIFT ALT, 5, movetoworkspacesilent, 5
+bind = $mainMod SHIFT ALT, 6, movetoworkspacesilent, 6
+bind = $mainMod SHIFT ALT, 7, movetoworkspacesilent, 7
+bind = $mainMod SHIFT ALT, 8, movetoworkspacesilent, 8
+bind = $mainMod SHIFT ALT, 9, movetoworkspacesilent, 9
+bind = $mainMod SHIFT ALT, 0, movetoworkspacesilent, 10
+
+# Move workspace to another monitor
+bindd = $mainMod SHIFT ALT, left, Move workspace to left monitor, movecurrentworkspacetomonitor, l
+bindd = $mainMod SHIFT ALT, right, Move workspace to right monitor, movecurrentworkspacetomonitor, r
+bindd = $mainMod SHIFT ALT, up, Move workspace to upper monitor, movecurrentworkspacetomonitor, u
+bindd = $mainMod SHIFT ALT, down, Move workspace to lower monitor, movecurrentworkspacetomonitor, d
+
+# --- Non-modifier ---
+
+bindd = CTRL ALT, DELETE, Close all windows, exec, omarchy-hyprland-window-close-all
+bindld = , XF86PowerOff, Lock session, exec, loginctl lock-session
+
+# --- Hardware / Media Keys ---
+
+# Volume and brightness
 bindel = ,XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+
 bindel = ,XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
 bindel = ,XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
@@ -312,11 +383,17 @@ bindel = ,XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
 bindel = ,XF86MonBrightnessUp, exec, brightnessctl -e4 -n2 set 5%+
 bindel = ,XF86MonBrightnessDown, exec, brightnessctl -e4 -n2 set 5%-
 
-# Keyboard backlight (Max brightness is 2, so increment/decrement by 1)
+# Precise 1% adjustments with Alt modifier
+bindel = ALT, XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 1%+
+bindel = ALT, XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-
+bindel = ALT, XF86MonBrightnessUp, exec, brightnessctl -e4 -n2 set 1%+
+bindel = ALT, XF86MonBrightnessDown, exec, brightnessctl -e4 -n2 set 1%-
+
+# Keyboard backlight
 bindel = ,XF86KbdBrightnessUp, exec, brightnessctl -d '*::kbd_backlight' set 1+
 bindel = ,XF86KbdBrightnessDown, exec, brightnessctl -d '*::kbd_backlight' set 1-
 
-# Requires playerctl
+# Media controls (requires playerctl)
 bindl = , XF86AudioNext, exec, playerctl next
 bindl = , XF86AudioPause, exec, playerctl play-pause
 bindl = , XF86AudioPlay, exec, playerctl play-pause
