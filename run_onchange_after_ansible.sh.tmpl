@@ -34,8 +34,8 @@ cd {{ .chezmoi.sourceDir }}/ansible
 
 {{- if eq .desktop "none" }}
 echo "[chezmoi] Running Ansible (CLI mode — {{ .profile }})"
-ansible-playbook site.yml --tags cli --ask-become-pass
+ansible-playbook -i localhost, site.yml --tags cli --ask-become-pass
 {{- else }}
 echo "[chezmoi] Running Ansible (desktop: {{ .desktop }} — {{ .profile }})"
-ansible-playbook site.yml --ask-become-pass
+ansible-playbook -i localhost, site.yml --ask-become-pass
 {{- end }}
