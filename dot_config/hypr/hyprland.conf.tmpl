@@ -269,9 +269,9 @@ bindd = $mainMod, RETURN, Terminal, exec, $terminal
 bindd = $mainMod, SPACE, App launcher, exec, $menu
 bindd = $mainMod SHIFT, B, Browser, exec, $browser
 bindd = $mainMod SHIFT, F, File manager, exec, $fileManager
-bindd = $mainMod SHIFT, N, Editor, exec, uwsm-app -- $terminal -e nvim
-bindd = $mainMod SHIFT, M, Music, exec, uwsm-app -- xdg-open https://music.youtube.com
-bindd = $mainMod SHIFT, SLASH, Passwords, exec, uwsm-app -- 1password
+bindd = $mainMod SHIFT, N, Editor, exec, uwsm-app -- $terminal -- -e nvim
+bindd = $mainMod SHIFT, M, Music, exec, xdg-open https://music.youtube.com
+bindd = $mainMod SHIFT, SLASH, Passwords, exec, 1password
 bindd = $mainMod, L, Lock session, exec, loginctl lock-session
 
 # Notifications (mako)
@@ -346,7 +346,7 @@ bindd = $mainMod SHIFT, SPACE, Toggle top bar, exec, omarchy-toggle-waybar
 # --- $mainMod+CTRL: System Controls ---
 
 bindd = $mainMod CTRL, N, Toggle night light, exec, omarchy-toggle-nightlight
-bindd = $mainMod CTRL, T, Activity, exec, uwsm-app -- $terminal -e btop
+bindd = $mainMod CTRL, T, Activity, exec, uwsm-app -- $terminal -- -e btop
 
 # --- $mainMod+SHIFT+ALT: Tertiary ---
 
