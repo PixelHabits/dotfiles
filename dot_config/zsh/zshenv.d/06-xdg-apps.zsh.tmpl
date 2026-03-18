@@ -26,6 +26,11 @@ export DOTNET_CLI_HOME="$XDG_DATA_HOME/dotnet"
 # Docker
 export DOCKER_CONFIG="$XDG_CONFIG_HOME/docker"
 
+{{- if ne .desktop "none" }}
+# User directories
+export XDG_PICTURES_DIR="$HOME/Pictures"
+{{- end }}
+
 # Less
 export LESSHISTFILE="$XDG_STATE_HOME/less/history"
 

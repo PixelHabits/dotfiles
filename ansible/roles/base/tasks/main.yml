@@ -9,6 +9,14 @@
     mode: "0755"
   loop: "{{ xdg_dirs }}"
 
+- name: Create desktop user directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ user_desktop_dirs }}"
+  when: chezmoi_desktop != 'none'
+
 # ════════════════════════════════════════════════════════════
 # Phase 2: Infrastructure — package managers that need setup
 # ════════════════════════════════════════════════════════════
