@@ -242,7 +242,7 @@ $mainMod = SUPER
 #   $mainMod          — core operations (clipboard, close, focus, workspaces)
 #   $mainMod+SHIFT    — movement, app launchers, secondary actions
 #   $mainMod+CTRL     — system controls & panels
-#   $mainMod+ALT      — reserved for future (groups, tmux, etc.)
+#   $mainMod+ALT      — secondary (groups, tmux, etc.)
 
 # --- $mainMod: Core Operations ---
 
@@ -265,7 +265,8 @@ bindd = $mainMod, S, Toggle workspace layout, exec, omarchy-hyprland-workspace-l
 # bind = $mainMod, M, exec, command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit
 
 # Applications
-bindd = $mainMod, RETURN, Terminal, exec, uwsm app -- $terminal
+bindd = $mainMod, RETURN, Terminal (tmux), exec, uwsm app -- $terminal -e zsh -c 'tmux attach || tmux new -s main'
+bindd = $mainMod ALT, RETURN, Terminal, exec, uwsm app -- $terminal
 bindd = $mainMod, SPACE, App launcher, exec, uwsm app -- $menu
 bindd = $mainMod SHIFT, B, Browser, exec, uwsm app -- $browser
 bindd = $mainMod SHIFT, F, File manager, exec, uwsm app -- $fileManager

@@ -11,6 +11,11 @@ if [[ -n "${SSH_CONNECTION-}" || -n "${SSH_TTY-}" || -n "${SSH_CLIENT-}" ]]; the
   return 0
 fi
 
+# Skip if inside tmux
+if [[ -n "${TMUX-}" ]]; then
+  return 0
+fi
+
 # Only offer on tty1 so tty2+ stays a rescue shell (recommended)
 if [[ "${XDG_VTNR:-}" != "1" ]]; then
   return 0
