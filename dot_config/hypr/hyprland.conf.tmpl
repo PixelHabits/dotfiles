@@ -29,10 +29,10 @@ monitor=,preferred,auto,auto
 # See https://wiki.hypr.land/Configuring/Keywords/
 
 # Set programs that you use
-$terminal = uwsm-app ghostty
-$fileManager = uwsm-app nautilus
+$terminal = ghostty
+$fileManager = nautilus
 $menu = hyprlauncher
-$browser = uwsm-app -- helium-browser --force-dark-mode
+$browser = helium-browser --force-dark-mode
 
 #################
 ### AUTOSTART ###
@@ -41,7 +41,7 @@ $browser = uwsm-app -- helium-browser --force-dark-mode
 # Autostart necessary processes (like notifications daemons, status bars, etc.)
 # Or execute your favorite apps at launch like this:
 
-exec-once = $terminal
+exec-once = uwsm app -- $terminal
 exec-once = uwsm app -- hyprlauncher -d
 exec-once = uwsm app -- 1password --silent
 
@@ -265,13 +265,13 @@ bindd = $mainMod, S, Toggle workspace layout, exec, omarchy-hyprland-workspace-l
 # bind = $mainMod, M, exec, command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit
 
 # Applications
-bindd = $mainMod, RETURN, Terminal, exec, $terminal
-bindd = $mainMod, SPACE, App launcher, exec, $menu
-bindd = $mainMod SHIFT, B, Browser, exec, $browser
-bindd = $mainMod SHIFT, F, File manager, exec, $fileManager
-bindd = $mainMod SHIFT, N, Editor, exec, uwsm-app -- $terminal -- -e nvim
+bindd = $mainMod, RETURN, Terminal, exec, uwsm app -- $terminal
+bindd = $mainMod, SPACE, App launcher, exec, uwsm app -- $menu
+bindd = $mainMod SHIFT, B, Browser, exec, uwsm app -- $browser
+bindd = $mainMod SHIFT, F, File manager, exec, uwsm app -- $fileManager
+bindd = $mainMod SHIFT, N, Editor, exec, uwsm app -- $terminal -e nvim
 bindd = $mainMod SHIFT, M, Music, exec, xdg-open https://music.youtube.com
-bindd = $mainMod SHIFT, SLASH, Passwords, exec, 1password
+bindd = $mainMod SHIFT, SLASH, Passwords, exec, uwsm app -- 1password
 bindd = $mainMod, L, Lock session, exec, loginctl lock-session
 
 # Notifications (mako)
@@ -346,7 +346,7 @@ bindd = $mainMod SHIFT, SPACE, Toggle top bar, exec, omarchy-toggle-waybar
 # --- $mainMod+CTRL: System Controls ---
 
 bindd = $mainMod CTRL, N, Toggle night light, exec, omarchy-toggle-nightlight
-bindd = $mainMod CTRL, T, Activity, exec, uwsm-app -- $terminal -- -e btop
+bindd = $mainMod CTRL, T, Activity, exec, uwsm app -- $terminal -e btop
 
 # --- $mainMod+SHIFT+ALT: Tertiary ---
 
