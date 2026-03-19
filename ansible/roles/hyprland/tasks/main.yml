@@ -30,6 +30,9 @@
 
       # Terminal & fonts
       - ghostty
+      - noto-fonts
+      - noto-fonts-cjk
+      - noto-fonts-emoji
       - ttf-jetbrains-mono-nerd
 
       # Desktop utilities
