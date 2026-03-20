@@ -73,6 +73,7 @@
     state: started
     scope: user
   loop:
+    - waybar.service
     - hypridle.service
     - hyprsunset.service
     - hyprpolkitagent.service
