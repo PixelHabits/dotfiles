@@ -80,7 +80,18 @@
     and aur_packages | length > 0
 
 # ════════════════════════════════════════════════════════════
-# Phase 4: Post-install fixups
+# Phase 4: System services
+# ════════════════════════════════════════════════════════════
+
+- name: Enable sshd
+  become: true
+  ansible.builtin.systemd:
+    name: sshd
+    enabled: true
+  when: ansible_facts['system'] == 'Linux'
+
+# ════════════════════════════════════════════════════════════
+# Phase 5: Post-install fixups
 # ════════════════════════════════════════════════════════════
 
 - name: Include Ubuntu post-install fixups
@@ -88,7 +99,7 @@
   when: ansible_facts['distribution'] == 'Ubuntu'
 
 # ════════════════════════════════════════════════════════════
-# Phase 5: Ghostty terminfo (distros without a package)
+# Phase 6: Ghostty terminfo (distros without a package)
 # ════════════════════════════════════════════════════════════
 # Arch and Fedora get ghostty-terminfo via package manager
 # in Phase 3. macOS gets it via the full ghostty cask.
