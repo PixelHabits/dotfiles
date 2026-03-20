@@ -40,8 +40,10 @@
     - name: Clone and build yay
       become: true
       become_user: aur_builder
+      become_flags: '-H'
       ansible.builtin.shell: |
         set -euo pipefail
+        rm -rf /tmp/yay-build
         git clone https://aur.archlinux.org/yay.git /tmp/yay-build
         cd /tmp/yay-build
         makepkg -si --noconfirm
@@ -51,6 +53,7 @@
 
   always:
     - name: Clean up yay build directory
+      become: true
       ansible.builtin.file:
         path: /tmp/yay-build
         state: absent
