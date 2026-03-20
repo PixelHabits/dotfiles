@@ -4,3 +4,7 @@
 # Clipboard bridge: Hyprland sends Ctrl/Shift+Insert for universal SUPER+C/V
 keybind = ctrl+insert=copy_to_clipboard
 keybind = shift+insert=paste_from_clipboard
+
+# Theme
+# Tomorrow Night defaults + custom background
+background = 15181d

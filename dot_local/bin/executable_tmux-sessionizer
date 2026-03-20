@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# tmux-sessionizer — FZF-powered project session switcher
+# Inspired by ThePrimeagen's tmux-sessionizer.
+#
+# Usage:
+#   tmux-sessionizer          # interactive FZF picker
+#   tmux-sessionizer <path>   # jump directly to path
+#
+# Searches project roots for directories and presents them via FZF.
+# Creates or switches to a tmux session named after the selected directory.
+
+# Project roots to search
+# Add/remove directories here as your project layout evolves.
+# fd searches one level deep in each root for project directories.
+SEARCH_ROOTS=(
+    ~/repos
+    ~/dotfiles-upgrade-project
+    ~/.local/share/chezmoi
+)
+
+# Select directory
+if [[ -n "$1" ]]; then
+    selected="$1"
+else
+    # Build list: the roots themselves + one level of subdirectories
+    selected=$(
+        {
+            for root in "${SEARCH_ROOTS[@]}"; do
+                root="${root/#\~/$HOME}"
+                [[ -d "$root" ]] && echo "$root"
+                [[ -d "$root" ]] && fd --type d --max-depth 1 --base-directory "$root" \
+                    --exclude .git | while read -r dir; do
+                        echo "$root/$dir"
+                    done
+            done
+        } | fzf --prompt="project> " --reverse --border
+    )
+fi
+
+[[ -z "$selected" ]] && exit 0
+
+# Derive session name
+session_name=$(basename "$selected" | tr '.:/\\' '----')
+
+# Create or switch session
+if ! tmux has-session -t="$session_name" 2>/dev/null; then
+    tmux new-session -ds "$session_name" -c "$selected"
+fi
+
+# If we're inside tmux, switch client. Otherwise, attach.
+if [[ -n "$TMUX" ]]; then
+    tmux switch-client -t "$session_name"
+else
+    tmux attach-session -t "$session_name"
+fi
