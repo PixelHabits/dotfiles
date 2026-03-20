@@ -1,6 +1,26 @@
-# ── AUR helper (yay) ────────────────────────────────────────
-# Pure infrastructure — no packages installed here.
+# ── AUR infrastructure ──────────────────────────────────────
+# Sets up aur_builder user and yay AUR helper.
 # Must complete before Phase 3 installs AUR packages.
+
+- name: Create aur_builder user
+  become: true
+  ansible.builtin.user:
+    name: aur_builder
+    create_home: true
+    shell: /usr/sbin/nologin
+    group: wheel
+    system: true
+
+- name: Allow aur_builder passwordless sudo for pacman
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/10-aur-builder
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/bin/visudo -cf %s
+    content: |
+      aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman
 
 - name: Check if yay is installed
   ansible.builtin.command: which yay
@@ -18,6 +38,8 @@
         state: present
 
     - name: Clone and build yay
+      become: true
+      become_user: aur_builder
       ansible.builtin.shell: |
         set -euo pipefail
         git clone https://aur.archlinux.org/yay.git /tmp/yay-build
@@ -27,7 +49,8 @@
         executable: /bin/bash
         creates: /usr/bin/yay
 
-    - name: Clean up build directory
+  always:
+    - name: Clean up yay build directory
       ansible.builtin.file:
         path: /tmp/yay-build
         state: absent
