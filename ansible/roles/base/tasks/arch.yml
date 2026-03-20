@@ -31,29 +31,32 @@
 - name: Install yay from AUR
   when: yay_check.rc != 0
   block:
-    - name: Install base-devel
+    - name: Install base-devel and yay build dependencies
       become: true
       community.general.pacman:
-        name: base-devel
+        name:
+          - base-devel
+          - go
         state: present
 
     - name: Clone and build yay
-      become: true
-      become_user: aur_builder
-      become_flags: '-H'
       ansible.builtin.shell: |
         set -euo pipefail
         rm -rf /tmp/yay-build
         git clone https://aur.archlinux.org/yay.git /tmp/yay-build
         cd /tmp/yay-build
-        makepkg -si --noconfirm
+        makepkg --noconfirm
       args:
         executable: /bin/bash
-        creates: /usr/bin/yay
+
+    - name: Install built yay package
+      become: true
+      ansible.builtin.shell: pacman -U --noconfirm /tmp/yay-build/yay-*.pkg.tar.zst
+      args:
+        executable: /bin/bash
 
   always:
     - name: Clean up yay build directory
-      become: true
       ansible.builtin.file:
         path: /tmp/yay-build
         state: absent
