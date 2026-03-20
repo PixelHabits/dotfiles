@@ -44,7 +44,6 @@
       BUN_INSTALL: "{{ xdg_data_home }}/bun"
       DOTNET_CLI_HOME: "{{ xdg_data_home }}/dotnet"
       NPM_CONFIG_CACHE: "{{ xdg_cache_home }}/npm"
-      GNUPGHOME: "{{ xdg_data_home }}/gnupg"
 
     # ── Oh My Zsh ───────────────────────────────────────────
     omz_dir: "{{ xdg_data_home }}/oh-my-zsh"
