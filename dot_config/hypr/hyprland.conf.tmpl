@@ -42,7 +42,7 @@ $browser = helium-browser --force-dark-mode
 # Autostart necessary processes (like notifications daemons, status bars, etc.)
 # Or execute your favorite apps at launch like this:
 
-exec-once = uwsm app -- $terminal
+exec-once = uwsm app -- $terminal -e zsh -c 'tmux attach || tmux new -s main'
 exec-once = uwsm app -- hyprlauncher -d
 exec-once = uwsm app -- 1password --silent
 
