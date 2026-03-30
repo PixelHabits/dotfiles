@@ -2,4 +2,4 @@
 # Changes require a session restart (logout/login) to take effect.
 
 # Ensure ~/.local/bin is on PATH for Hyprland exec binds and vendored scripts
-export PATH="$HOME/.local/bin:$PATH"
+# export PATH="$HOME/.local/bin:$PATH"

@@ -1,19 +1,25 @@
 # zshenv.d/10-path.zsh — PATH construction
-typeset -U path PATH
+
+prepend_path() {
+  [[ -d "$1" ]] || return 0
+
+  case ":$PATH:" in
+    *":$1:"*) ;;
+    *) export PATH="$1:$PATH" ;;
+  esac
+}
 
 # User scripts
-[[ -d "$HOME/.local/bin" ]] && path=("$HOME/.local/bin" "${path[@]}")
+prepend_path "$HOME/.local/bin"
 
 # Rust / Cargo
-[[ -d "$CARGO_HOME/bin" ]] && path=("$CARGO_HOME/bin" "${path[@]}")
+[[ -n "$CARGO_HOME" ]] && prepend_path "$CARGO_HOME/bin"
 
 # Go
-[[ -d "$GOPATH/bin" ]] && path=("$GOPATH/bin" "${path[@]}")
+[[ -n "$GOPATH" ]] && prepend_path "$GOPATH/bin"
 
 # Bun
-[[ -d "$BUN_INSTALL/bin" ]] && path=("$BUN_INSTALL/bin" "${path[@]}")
+[[ -n "$BUN_INSTALL" ]] && prepend_path "$BUN_INSTALL/bin"
 
 # .NET tools
-[[ -d "$DOTNET_CLI_HOME/tools" ]] && path=("$DOTNET_CLI_HOME/tools" "${path[@]}")
-
-export PATH
+[[ -n "$DOTNET_CLI_HOME" ]] && prepend_path "$DOTNET_CLI_HOME/tools"
