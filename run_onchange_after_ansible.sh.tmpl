@@ -5,7 +5,10 @@ set -euo pipefail
 # site.yml hash: {{ include "ansible/site.yml" | sha256sum }}
 # base/main hash: {{ include "ansible/roles/base/tasks/main.yml" | sha256sum }}
 # base/arch hash: {{ include "ansible/roles/base/tasks/arch.yml" | sha256sum }}
-# battery-threshold hash: {{ include "ansible/roles/base/templates/battery-threshold.service.j2" | sha256sum }}
+{{- if eq .form_factor "laptop" }}
+# battery/main hash: {{ include "ansible/roles/battery/tasks/main.yml" | sha256sum }}
+# battery-threshold hash: {{ include "ansible/roles/battery/templates/battery-threshold.service.j2" | sha256sum }}
+{{- end }}
 # base/ubuntu hash: {{ include "ansible/roles/base/tasks/ubuntu.yml" | sha256sum }}
 # zsh hash: {{ include "ansible/roles/zsh/tasks/main.yml" | sha256sum }}
 # dev hash: {{ include "ansible/roles/dev/tasks/main.yml" | sha256sum }}
@@ -35,8 +38,8 @@ cd {{ .chezmoi.sourceDir }}/ansible
 
 {{- if eq .desktop "none" }}
 echo "[chezmoi] Running Ansible (CLI mode — {{ .profile }})"
-ansible-playbook -i localhost, site.yml --tags cli --extra-vars "chezmoi_desktop={{ .desktop }}" --ask-become-pass
+ansible-playbook -i localhost, site.yml --tags cli --extra-vars "chezmoi_desktop={{ .desktop }} chezmoi_form_factor={{ .form_factor }}" --ask-become-pass
 {{- else }}
-echo "[chezmoi] Running Ansible (desktop: {{ .desktop }} — {{ .profile }})"
-ansible-playbook -i localhost, site.yml --extra-vars "chezmoi_desktop={{ .desktop }}" --ask-become-pass
+echo "[chezmoi] Running Ansible (desktop: {{ .desktop }}, form: {{ .form_factor }} — {{ .profile }})"
+ansible-playbook -i localhost, site.yml --extra-vars "chezmoi_desktop={{ .desktop }} chezmoi_form_factor={{ .form_factor }}" --ask-become-pass
 {{- end }}

@@ -1,0 +1,61 @@
+# ════════════════════════════════════════════════════════════
+# Battery charge threshold service
+# ════════════════════════════════════════════════════════════
+
+- name: List battery power supply devices
+  ansible.builtin.find:
+    paths: /sys/class/power_supply
+    file_type: link
+    patterns: "BAT*"
+    recurse: false
+  register: battery_devices
+  changed_when: false
+  failed_when: false
+  when:
+    - ansible_facts['system'] == 'Linux'
+    - ansible_facts['service_mgr'] == 'systemd'
+
+- name: Set battery threshold device
+  ansible.builtin.set_fact:
+    battery_device: >-
+      {{ ((battery_devices.files | sort(attribute='path') | first).path | basename) }}
+  when:
+    - ansible_facts['system'] == 'Linux'
+    - ansible_facts['service_mgr'] == 'systemd'
+    - battery_devices is defined and battery_devices.files | default([]) | length > 0
+
+- name: Detect battery charge threshold support
+  ansible.builtin.stat:
+    path: "/sys/class/power_supply/{{ battery_device }}/charge_control_end_threshold"
+  register: battery_threshold_probe
+  changed_when: false
+  when:
+    - ansible_facts['system'] == 'Linux'
+    - ansible_facts['service_mgr'] == 'systemd'
+    - battery_device is defined
+
+- name: Install battery threshold systemd unit
+  become: true
+  ansible.builtin.template:
+    src: battery-threshold.service.j2
+    dest: /etc/systemd/system/battery-threshold.service
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - ansible_facts['system'] == 'Linux'
+    - ansible_facts['service_mgr'] == 'systemd'
+    - battery_device is defined
+    - battery_threshold_probe is defined and battery_threshold_probe.stat.exists | default(false)
+
+- name: Enable battery threshold service
+  become: true
+  ansible.builtin.systemd:
+    name: battery-threshold.service
+    daemon_reload: true
+    enabled: true
+  when:
+    - ansible_facts['system'] == 'Linux'
+    - ansible_facts['service_mgr'] == 'systemd'
+    - battery_device is defined
+    - battery_threshold_probe is defined and battery_threshold_probe.stat.exists | default(false)

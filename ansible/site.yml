@@ -191,5 +191,6 @@
   roles:
     - { role: base, tags: [base, cli] }
     - { role: zsh, tags: [zsh, cli] }
+    - { role: battery, tags: [battery, cli], when: "chezmoi_form_factor == 'laptop'" }
     - { role: hyprland, tags: [desktop] }
     - { role: dev, tags: [dev] }

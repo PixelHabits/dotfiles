@@ -7,6 +7,7 @@
 
 {{- $email := promptStringOnce . "email" "Email address" -}}
 {{- $desktop := promptStringOnce . "desktop" "Desktop environment (hyprland/none)" -}}
+{{- $formFactor := promptStringOnce . "form_factor" "Machine form factor (laptop/desktop/server)" -}}
 {{- $profile := promptStringOnce . "profile" "Machine profile (work/personal)" -}}
 {{- $dev := promptBoolOnce . "dev" "Development machine" -}}
 
@@ -15,5 +16,6 @@
   hostname = {{ .chezmoi.hostname | quote }}
   email = {{ $email | quote }}
   desktop = {{ $desktop | quote }}
+  form_factor = {{ $formFactor | quote }}
   profile = {{ $profile | quote }}
   dev = {{ $dev }}

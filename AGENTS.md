@@ -43,7 +43,7 @@ zwarn "missing: $tool"
 
 ### Templates
 - Use `.tmpl` suffix for templated files
-- Access data via `.chezmoi.os`, `.desktop`, `.profile`, `.dev`, `.osid`
+- Access data via `.chezmoi.os`, `.desktop`, `.form_factor`, `.profile`, `.dev`, `.osid`
 - Gating logic lives in `.chezmoiignore`, not inline in scripts
 
 ### Gating Hierarchy

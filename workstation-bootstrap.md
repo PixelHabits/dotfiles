@@ -5,7 +5,7 @@
 Two tools with strict separation:
 
 | Tool        | Responsibility                                              |
-|-------------|-------------------------------------------------------------|
+| ----------- | ----------------------------------------------------------- |
 | **Chezmoi** | Dotfile deployment, templating, per-host file gating        |
 | **Ansible** | Package installation, infrastructure, service configuration |
 
@@ -13,11 +13,11 @@ They do not overlap. Chezmoi never installs packages. Ansible never touches dotf
 
 ## Bootstrap Commands
 
-| Platform | Command                                                           |
-|----------|-------------------------------------------------------------------|
+| Platform | Command                                                                   |
+| -------- | ------------------------------------------------------------------------- |
 | Arch     | `sudo pacman -S --needed git chezmoi && chezmoi init --apply PixelHabits` |
-| macOS    | `brew install chezmoi && chezmoi init --apply PixelHabits`        |
-| Ubuntu   | `sudo apt install git chezmoi && chezmoi init --apply PixelHabits`|
+| macOS    | `brew install chezmoi && chezmoi init --apply PixelHabits`                |
+| Ubuntu   | `sudo apt install git chezmoi && chezmoi init --apply PixelHabits`        |
 
 Chezmoi prompts for identity, deploys dotfiles, then automatically runs Ansible.
 
@@ -25,50 +25,54 @@ Chezmoi prompts for identity, deploys dotfiles, then automatically runs Ansible.
 
 Set during `chezmoi init`, stored in `~/.config/chezmoi/chezmoi.toml`:
 
-| Field     | Values                       | Purpose                        |
-|-----------|------------------------------|--------------------------------|
-| `osid`    | arch, ubuntu, fedora, darwin | Distro-specific packages       |
-| `desktop` | hyprland, none               | Desktop vs CLI/server gating   |
-| `profile` | work, personal               | Corporate vs personal configs  |
+| Field         | Values                       | Purpose                       |
+| ------------- | ---------------------------- | ----------------------------- |
+| `osid`        | arch, ubuntu, fedora, darwin | Distro-specific packages      |
+| `desktop`     | hyprland, none               | Desktop vs CLI/server gating  |
+| `form_factor` | laptop, desktop, server      | Hardware-specific tasks       |
+| `profile`     | work, personal               | Corporate vs personal configs |
 
 Re-prompt: `chezmoi init --prompt`
 
 ## Gating Matrix
 
-| Machine Type         | desktop    | profile  | Gets                              |
-|----------------------|------------|----------|-----------------------------------|
-| Work Arch laptop     | hyprland   | work     | Full desktop + work configs       |
-| Home gaming PC       | hyprland   | personal | Full desktop + gaming configs     |
-| Work Ubuntu server   | none       | work     | CLI only + work configs           |
-| Personal Mac         | none       | personal | CLI + Homebrew                    |
+| Machine Type       | desktop  | form_factor | profile  | Gets                          |
+| ------------------ | -------- | ----------- | -------- | ----------------------------- |
+| Work Arch laptop   | hyprland | laptop      | work     | Full desktop + work configs   |
+| Home gaming PC     | hyprland | desktop     | personal | Full desktop + gaming configs |
+| Work Ubuntu server | none     | server      | work     | CLI only + work configs       |
+| Personal Mac       | none     | laptop      | personal | CLI + Homebrew                |
 
 ## Ansible Architecture
 
 **Execution order:**
+
 ```
 pre_tasks: validate OS, detect bare metal, detect Nvidia GPU
 roles:
   1. base     <- XDG dirs, yay bootstrap, package installation
   2. zsh      <- default shell, omz, p10k
-  3. hyprland <- compositor, desktop apps (Arch + desktop only)
-  4. dev      <- rust toolchain, node LTS (desktop only)
+  3. battery  <- charge threshold service (laptop only)
+  4. hyprland <- compositor, desktop apps (Arch + desktop only)
+  5. dev      <- rust toolchain, node LTS (desktop only)
 ```
 
 **Tags:**
-| Command                              | What runs                |
-|--------------------------------------|--------------------------|
-| `ansible-playbook site.yml`          | Everything               |
-| `--tags cli`                         | base + zsh (no desktop)  |
-| `--tags desktop`                     | hyprland role only       |
+| Command | What runs |
+|--------------------------------------|---------------------------------|
+| `ansible-playbook site.yml` | Everything |
+| `--tags cli` | base + zsh + battery on laptops |
+| `--tags desktop` | hyprland role only |
 
 ## Separation of Concerns
 
 | Concern                    | Owner                        |
-|----------------------------|------------------------------|
+| -------------------------- | ---------------------------- |
 | Machine identity           | chezmoi `.chezmoi.toml.tmpl` |
 | Which files exist per host | chezmoi `.chezmoiignore`     |
 | Dotfile contents           | chezmoi source files         |
 | Package installation       | Ansible                      |
+| Hardware-specific tasks    | Ansible via `form_factor`    |
 | Nvidia driver selection    | Ansible `site.yml` pre_tasks |
 | Shell runtime behavior     | zsh drop-in dirs             |
 
@@ -86,14 +90,14 @@ Nvidia packages are dynamically appended based on GPU detection.
 
 ## Common Tasks
 
-| Task                     | How                                                |
-|--------------------------|----------------------------------------------------|
-| Add CLI tool             | Add to `common_packages` or `distro_packages`      |
-| Add AUR package          | Add to `aur_packages`                              |
-| Add macOS cask           | Add to `macos_casks`                               |
-| Add XDG redirect         | Add to `06-xdg-apps.zsh` AND `site.yml` xdg_environment |
-| Re-run Ansible manually  | `cd ~/.local/share/chezmoi/ansible && ansible-playbook site.yml --ask-become-pass` |
-| Add host-specific file   | Create file, add gating in `.chezmoiignore`        |
+| Task                    | How                                                                                |
+| ----------------------- | ---------------------------------------------------------------------------------- |
+| Add CLI tool            | Add to `common_packages` or `distro_packages`                                      |
+| Add AUR package         | Add to `aur_packages`                                                              |
+| Add macOS cask          | Add to `macos_casks`                                                               |
+| Add XDG redirect        | Add to `06-xdg-apps.zsh` AND `site.yml` xdg_environment                            |
+| Re-run Ansible manually | `cd ~/.local/share/chezmoi/ansible && ansible-playbook site.yml --ask-become-pass` |
+| Add host-specific file  | Create file, add gating in `.chezmoiignore`                                        |
 
 ## Chezmoi Gating
 
@@ -122,6 +126,7 @@ dot_config/git/config-work
 ## Ansible Trigger Mechanism
 
 `run_onchange_after_ansible.sh.tmpl` contains hash comments for each Ansible file:
+
 ```bash
 # site.yml hash: {{ include "ansible/site.yml" | sha256sum }}
 ```
