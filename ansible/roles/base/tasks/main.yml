@@ -90,6 +90,28 @@
     enabled: true
   when: ansible_facts['system'] == 'Linux'
 
+- name: Install battery threshold systemd unit
+  become: true
+  ansible.builtin.copy:
+    src: battery-threshold.service
+    dest: /etc/systemd/system/battery-threshold.service
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - ansible_facts['system'] == 'Linux'
+    - ansible_facts['hostname'] == 'GAM-DEV001'
+
+- name: Enable battery threshold service
+  become: true
+  ansible.builtin.systemd:
+    name: battery-threshold.service
+    daemon_reload: true
+    enabled: true
+  when:
+    - ansible_facts['system'] == 'Linux'
+    - ansible_facts['hostname'] == 'GAM-DEV001'
+
 # ════════════════════════════════════════════════════════════
 # Phase 5: Post-install fixups
 # ════════════════════════════════════════════════════════════

@@ -5,6 +5,7 @@ set -euo pipefail
 # site.yml hash: {{ include "ansible/site.yml" | sha256sum }}
 # base/main hash: {{ include "ansible/roles/base/tasks/main.yml" | sha256sum }}
 # base/arch hash: {{ include "ansible/roles/base/tasks/arch.yml" | sha256sum }}
+# battery-threshold hash: {{ include "ansible/roles/base/files/battery-threshold.service" | sha256sum }}
 # base/ubuntu hash: {{ include "ansible/roles/base/tasks/ubuntu.yml" | sha256sum }}
 # zsh hash: {{ include "ansible/roles/zsh/tasks/main.yml" | sha256sum }}
 # dev hash: {{ include "ansible/roles/dev/tasks/main.yml" | sha256sum }}
