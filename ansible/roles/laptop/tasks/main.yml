@@ -1,6 +1,8 @@
 # ════════════════════════════════════════════════════════════
-# Battery charge threshold service
+# Laptop hardware services
 # ════════════════════════════════════════════════════════════
+
+# ── Battery charge threshold ───────────────────────────────
 
 - name: List battery power supply devices
   ansible.builtin.find:
@@ -59,3 +61,85 @@
     - ansible_facts['service_mgr'] == 'systemd'
     - battery_device is defined
     - battery_threshold_probe is defined and battery_threshold_probe.stat.exists | default(false)
+
+# ── Fingerprint reader suspend recovery ───────────────────
+# ArchWiki: sleeping while fprintd is still running can break fprintd.
+- name: Detect fprintd systemd unit
+  ansible.builtin.command: systemctl cat fprintd.service
+  register: fprintd_unit_probe
+  changed_when: false
+  failed_when: false
+  when:
+    - ansible_facts['system'] == 'Linux'
+    - ansible_facts['service_mgr'] == 'systemd'
+
+- name: Detect fingerprint reader from sysfs
+  ansible.builtin.shell: |
+    set -eu
+
+    for device in /sys/bus/usb/devices/*; do
+      [ -r "$device/idVendor" ] || continue
+
+      vendor=""
+      product_id=""
+      manufacturer=""
+      product=""
+
+      read -r vendor < "$device/idVendor" || true
+      [ -r "$device/idProduct" ] && read -r product_id < "$device/idProduct" || true
+      [ -r "$device/manufacturer" ] && read -r manufacturer < "$device/manufacturer" || true
+      [ -r "$device/product" ] && read -r product < "$device/product" || true
+
+      haystack="$vendor:$product_id:$manufacturer:$product"
+      case "$haystack" in
+        *06cb:*|*fingerprint*|*Fingerprint*|*FINGERPRINT*|*synaptics*|*Synaptics*|*SYNAPTICS*)
+          printf '%s\n' "$device"
+          exit 0
+          ;;
+      esac
+    done
+
+    exit 1
+  register: fingerprint_reader_probe
+  changed_when: false
+  failed_when: false
+  when:
+    - ansible_facts['system'] == 'Linux'
+    - ansible_facts['service_mgr'] == 'systemd'
+
+- name: Install fprintd pre-sleep kill service
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/kill-fprintd.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Kill fprintd before sleep
+      Documentation=https://wiki.archlinux.org/title/Fprint#Sleeping_while_fprintd_is_still_running_breaks_fprintd
+      Before=sleep.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=-/usr/bin/killall fprintd
+
+      [Install]
+      WantedBy=sleep.target
+  when:
+    - fprintd_unit_probe is defined
+    - fprintd_unit_probe.rc == 0
+    - fingerprint_reader_probe is defined
+    - fingerprint_reader_probe.rc == 0
+
+- name: Enable fprintd pre-sleep kill service
+  become: true
+  ansible.builtin.systemd:
+    name: kill-fprintd.service
+    daemon_reload: true
+    enabled: true
+  when:
+    - fprintd_unit_probe is defined
+    - fprintd_unit_probe.rc == 0
+    - fingerprint_reader_probe is defined
+    - fingerprint_reader_probe.rc == 0

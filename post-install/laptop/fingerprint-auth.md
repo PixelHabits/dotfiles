@@ -62,3 +62,13 @@ auth {
     }
 }
 ```
+
+## Recovery
+
+If the fingerprint reader freezes after sleep and shutdown waits on a 90-second `fprintd` stop job, restart the daemon:
+
+```bash
+sudo systemctl restart fprintd
+```
+
+The laptop Ansible role installs an ArchWiki-style `kill-fprintd.service` only when sysfs reports a fingerprint reader and `fprintd.service` exists. This kills `fprintd` before sleep so it cannot keep the fingerprint reader claimed across suspend/resume.
