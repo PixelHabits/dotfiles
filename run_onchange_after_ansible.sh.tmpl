@@ -6,8 +6,8 @@ set -euo pipefail
 # base/main hash: {{ include "ansible/roles/base/tasks/main.yml" | sha256sum }}
 # base/arch hash: {{ include "ansible/roles/base/tasks/arch.yml" | sha256sum }}
 {{- if eq .form_factor "laptop" }}
-# battery/main hash: {{ include "ansible/roles/battery/tasks/main.yml" | sha256sum }}
-# battery-threshold hash: {{ include "ansible/roles/battery/templates/battery-threshold.service.j2" | sha256sum }}
+# laptop/main hash: {{ include "ansible/roles/laptop/tasks/main.yml" | sha256sum }}
+# laptop battery-threshold hash: {{ include "ansible/roles/laptop/templates/battery-threshold.service.j2" | sha256sum }}
 {{- end }}
 # base/ubuntu hash: {{ include "ansible/roles/base/tasks/ubuntu.yml" | sha256sum }}
 # zsh hash: {{ include "ansible/roles/zsh/tasks/main.yml" | sha256sum }}
