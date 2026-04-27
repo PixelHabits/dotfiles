@@ -4,8 +4,8 @@ if require_cmd rg && require_cmd fzf && require_cmd bat; then
     local result file line
     result=$(fzf --tmux 80%,70% --ansi \
       --disabled \
-      --bind 'start:reload:rg --column --line-number --no-heading --color=always --smart-case "" || true' \
-      --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case {q} || true' \
+      --bind 'start:reload:rg --column --line-number --no-heading --color=always --smart-case --no-ignore "" || true' \
+      --bind 'change:reload:rg --column --line-number --no-heading --color=always --smart-case --no-ignore {q} || true' \
       --delimiter : \
       --prompt 'ripgrep in files > ' \
       --header 'enter: open in editor' \

@@ -16,7 +16,7 @@ export FZF_DEFAULT_OPTS=" \
 
 # Use fd if available
 if require_cmd fd; then
-  export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
+  export FZF_DEFAULT_COMMAND='fd --type f --hidden --no-ignore --exclude .git'
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
   export FZF_ALT_C_COMMAND='fd --type d --hidden --exclude .git'
 fi
@@ -30,7 +30,7 @@ export FZF_ALT_C_OPTS="--tmux --scheme=path \
   --prompt='change directory > ' --preview 'eza --color=always -lha --icons --no-user --git --no-permissions --sort=name {}'"
 
 # Ctrl+R history
-export FZF_CTRL_R_OPTS="--tmux --scheme=history --no-sort \
+export FZF_CTRL_R_OPTS="--tmux \
   --prompt='history > ' \
   --bind 'ctrl-y:execute-silent(echo -n {2..} | wl-copy)+abort' \
   --header='ctrl-y: copy to clipboard'"
