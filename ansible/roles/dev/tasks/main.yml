@@ -8,8 +8,9 @@
 
 - name: Install latest LTS Node via fnm
   ansible.builtin.shell: |
-    eval "$(fnm env)"
-    fnm install --lts
+    eval "$(fnm env --shell zsh)"
+    fnm install --lts --corepack-enabled
+    fnm default lts-latest
   args:
     executable: /bin/zsh
     creates: "{{ xdg_data_home }}/fnm/node-versions"
