@@ -181,9 +181,8 @@ animations {
 #     rounding = 0
 # }
 
-# See https://wiki.hypr.land/Configuring/Dwindle-Layout/ for more
+# See https://wiki.hypr.land/Configuring/Layouts/Dwindle-Layout/ for more
 dwindle {
-    pseudotile = true # Master switch for pseudotiling. Enabling is bound to mainMod + P in the keybinds section below
     preserve_split = true # You probably want this
 }
 
@@ -249,9 +248,9 @@ $mainMod = SUPER
 
 # Clipboard (three-layer bridge: $mainMod -> Ctrl/Shift+Insert -> universal copy/paste)
 # Requires Ghostty keybind: ctrl+insert=copy_to_clipboard, shift+insert=paste_from_clipboard
-bindd = $mainMod, C, Universal copy, sendshortcut, CTRL, Insert,
-bindd = $mainMod, V, Universal paste, sendshortcut, SHIFT, Insert,
-bindd = $mainMod, X, Universal cut, sendshortcut, CTRL, X,
+bindd = $mainMod, C, Universal copy, sendshortcut, CTRL, Insert, active
+bindd = $mainMod, V, Universal paste, sendshortcut, SHIFT, Insert, active
+bindd = $mainMod, X, Universal cut, sendshortcut, CTRL, X, active
 
 # Window management
 bindd = $mainMod, W, Close window, killactive,
