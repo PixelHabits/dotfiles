@@ -4,7 +4,7 @@ if require_cmd fd && require_cmd fzf && require_cmd nvim && require_cmd bat; the
 fi
 
 if require_cmd eza; then
-  alias ls='eza -lha --icons --no-user --git --no-permissions --sort=name'
+  alias ls='eza -lha --git --hyperlink --icons --no-permissions --no-user --sort=name'
 fi
 
 # Tmux: attach to existing session or create 'main'
