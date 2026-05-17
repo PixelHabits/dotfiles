@@ -106,18 +106,18 @@ Nvidia packages are dynamically appended based on GPU detection.
 ```
 # OS gating
 {{- if ne .chezmoi.os "darwin" }}
-dot_config/zsh/zshenv.d/11-homebrew.zsh
+.config/zsh/zshenv.d/11-homebrew.zsh
 {{- end }}
 
 # Desktop gating
 {{- if ne .desktop "hyprland" }}
-dot_config/hypr/
-dot_config/waybar/
+.config/hypr/
+.config/waybar/
 {{- end }}
 
 # Profile gating
 {{- if ne .profile "work" }}
-dot_config/git/config-work
+.config/git/config-work
 {{- end }}
 ```
 

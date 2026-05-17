@@ -52,7 +52,7 @@ Prefer: `profile` > `dev` > `desktop` > `os` > `hostname`
 ```
 # .chezmoiignore example
 {{- if ne .desktop "hyprland" }}
-dot_config/hypr/
+.config/hypr/
 {{- end }}
 ```
 
