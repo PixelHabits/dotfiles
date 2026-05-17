@@ -24,6 +24,11 @@ workstation-bootstrap.md
 # .config/zsh/zshrc.d/24-docker.zsh
 {{- end }}
 
+# ── Linux systemd only ──────────────────────────────────────
+{{- if or (ne .chezmoi.os "linux") (not (lookPath "systemctl")) (not (stat "/run/systemd/system")) }}
+.config/environment.d/
+{{- end }}
+
 # ════════════════════════════════════════════════════════════
 # Desktop-gated files
 # ════════════════════════════════════════════════════════════

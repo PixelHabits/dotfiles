@@ -67,9 +67,10 @@ Prefer: `profile` > `dev` > `desktop` > `os` > `hostname`
 | `XDG_STATE_HOME`  | Persistent non-config      | Config, data, cache    |
 
 ### Adding a New XDG Redirect
-1. Add export to `zshenv.d/06-xdg-apps.zsh`
-2. Add to `xdg_environment` in `ansible/site.yml`
-3. If tool has `bin/`, add PATH entry in `zshenv.d/10-path.zsh`
+1. Add absolute path to `environment.d/10-xdg.conf` as the primary runtime value
+2. Add matching fallback to `zshenv.d/06-xdg-apps.zsh` using `${VAR:-/absolute/path}`
+3. Add to `xdg_environment` in `ansible/site.yml` only when Ansible invokes that tool
+4. If tool has `bin/`, add PATH entry in `zshenv.d/10-path.zsh`
 
 ## Documentation
 

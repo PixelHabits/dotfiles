@@ -99,7 +99,7 @@ Never use a late file to repair an early file.
 
 ## XDG Conventions
 
-The bootstrap `~/.zshenv` exports all XDG variables. Every other file uses bare `$XDG_*` with no fallbacks.
+Linux systemd sessions get primary XDG app redirects from `environment.d/10-xdg.conf` with absolute paths. `zshenv.d/06-xdg-apps.zsh` mirrors those values only as `${VAR:-/absolute/path}` fallback for shells that did not inherit them. Other zsh files use bare `$XDG_*` values with no local fallbacks.
 
 | Variable          | Purpose              | Example contents                    |
 |-------------------|----------------------|-------------------------------------|
@@ -119,6 +119,6 @@ See `workstation-bootstrap.md` for the gating matrix.
 | Task                      | How                                                    |
 |---------------------------|--------------------------------------------------------|
 | Add tool integration      | Create `zshrc.d/2x-tool.zsh`, guard with `require_cmd` |
-| Add XDG redirect          | Add to `06-xdg-apps.zsh` AND `site.yml` xdg_environment|
+| Add XDG redirect          | Add absolute path to `environment.d/10-xdg.conf`; mirror as fallback in `06-xdg-apps.zsh`; update `site.yml` only if Ansible needs it|
 | Disable script            | Rename: `mv foo.zsh foo.zsh.disabled`                  |
 | Debug slow startup        | `ZSH_BOOT_DEBUG=1 zsh`                                 |

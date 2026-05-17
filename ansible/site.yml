@@ -29,9 +29,9 @@
       - "{{ xdg_cache_home }}/zsh"
 
     # ── XDG environment for subprocesses ────────────────────
-    # Mirrors zshenv.d/06-xdg-apps.zsh so Ansible operations
-    # and shell runtime use identical paths. When adding a new
-    # redirect in 06-xdg-apps.zsh, add it here too.
+    # Keep this limited to redirects Ansible actually needs.
+    # The full shell/systemd runtime mirror lives in zshenv.d
+    # and environment.d.
     xdg_environment:
       XDG_CONFIG_HOME: "{{ xdg_config_home }}"
       XDG_CACHE_HOME: "{{ xdg_cache_home }}"

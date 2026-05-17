@@ -95,7 +95,7 @@ Nvidia packages are dynamically appended based on GPU detection.
 | Add CLI tool            | Add to `common_packages` or `distro_packages`                                      |
 | Add AUR package         | Add to `aur_packages`                                                              |
 | Add macOS cask          | Add to `macos_casks`                                                               |
-| Add XDG redirect        | Add to `06-xdg-apps.zsh` AND `site.yml` xdg_environment                            |
+| Add XDG redirect        | Add absolute path to `environment.d/10-xdg.conf`; mirror as `${VAR:-/absolute/path}` fallback in `06-xdg-apps.zsh`; update `site.yml` only if Ansible needs it |
 | Re-run Ansible manually | `cd ~/.local/share/chezmoi/ansible && ansible-playbook site.yml --ask-become-pass` |
 | Add host-specific file  | Create file, add gating in `.chezmoiignore`                                        |
 
@@ -138,5 +138,5 @@ When any included file changes, the rendered script changes, triggering chezmoi 
 1. `ansible/` is in `.chezmoiignore` — never deployed to $HOME
 2. No inventory file — `connection: local` on the play
 3. Homebrew is a user prerequisite on macOS, not managed by Ansible
-4. `xdg_environment` in site.yml must stay in sync with `06-xdg-apps.zsh`
+4. `environment.d/10-xdg.conf` is primary; `06-xdg-apps.zsh` only fills unset values; `xdg_environment` is an Ansible-only subset
 5. The `run_onchange_` script re-runs Ansible only when Ansible files change

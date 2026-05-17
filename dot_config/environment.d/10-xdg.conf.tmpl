@@ -1,0 +1,51 @@
+{{- $home := .chezmoi.homeDir -}}
+# ~/.config/environment.d/10-xdg.conf - managed by chezmoi
+
+# XDG base directories
+XDG_CONFIG_HOME={{ $home }}/.config
+XDG_CACHE_HOME={{ $home }}/.cache
+XDG_DATA_HOME={{ $home }}/.local/share
+XDG_STATE_HOME={{ $home }}/.local/state
+
+# Zsh
+ZDOTDIR={{ $home }}/.config/zsh
+
+# GPG
+GNUPGHOME={{ $home }}/.local/share/gnupg
+
+# Rust
+CARGO_HOME={{ $home }}/.local/share/cargo
+RUSTUP_HOME={{ $home }}/.local/share/rustup
+
+# Go
+GOPATH={{ $home }}/.local/share/go
+GOMODCACHE={{ $home }}/.cache/go/mod
+
+# Node / npm
+NPM_CONFIG_USERCONFIG={{ $home }}/.config/npm/npmrc
+NPM_CONFIG_CACHE={{ $home }}/.cache/npm
+NODE_REPL_HISTORY={{ $home }}/.local/state/node/node_repl_history
+
+# Bun
+BUN_INSTALL={{ $home }}/.local/share/bun
+
+# .NET
+DOTNET_CLI_HOME={{ $home }}/.local/share/dotnet
+
+# Docker
+DOCKER_CONFIG={{ $home }}/.config/docker
+
+# Ansible
+ANSIBLE_HOME={{ $home }}/.local/share/ansible
+
+# Less
+LESSHISTFILE={{ $home }}/.local/state/less/history
+
+# Wakatime
+WAKATIME_HOME={{ $home }}/.config/wakatime
+
+# SQLite
+SQLITE_HISTORY={{ $home }}/.local/state/sqlite/history
+
+# Java
+_JAVA_OPTIONS=-Djava.util.prefs.userRoot={{ $home }}/.local/share/java
