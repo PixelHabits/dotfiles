@@ -142,8 +142,8 @@
       when: is_bare_metal and ansible_facts['system'] == 'Linux'
 
     # ── Nvidia GPU detection ──────────────────────────────
-    #   Blackwell+ (RTX 50xx)          → nvidia-open-beta-dkms
-    #   Turing–Ada (RTX 20–40, GTX 16) → nvidia-beta-dkms
+    #   Blackwell+ (RTX 50xx)          → nvidia-open
+    #   Turing–Ada (RTX 20–40, GTX 16) → nvidia-open
     #   Pascal (GTX 10xx)              → nvidia-580xx-dkms
     - name: Detect Nvidia GPU
       ansible.builtin.shell: |
@@ -151,32 +151,33 @@
       register: nvidia_detect
       changed_when: false
       failed_when: false
-      when: ansible_facts['system'] == 'Linux'
+      when:
+        - ansible_facts['system'] == 'Linux'
+        - ansible_facts['distribution'] == 'Archlinux'
 
     - name: Set Nvidia generation
       ansible.builtin.set_fact:
         nvidia_generation: >-
-          {%- set gpu = nvidia_detect.stdout | default('') -%}
-          {%- if gpu is search('RTX [5-9]0') -%}blackwell
-          {%- elif gpu is search('RTX [2-4]0|GTX 16') -%}turing_ada
-          {%- elif gpu is search('GTX 10') -%}pascal
-          {%- else -%}none
-          {%- endif -%}
+          {%- set gpu = nvidia_detect.stdout | default('') -%} {%- if gpu is
+          search('RTX [5-9]0') -%}blackwell {%- elif gpu is search('RTX
+          [2-4]0|GTX 16') -%}turing_ada {%- elif gpu is search('GTX 10')
+          -%}pascal {%- else -%}none {%- endif -%}
+      when:
+        - ansible_facts['system'] == 'Linux'
+        - ansible_facts['distribution'] == 'Archlinux'
 
     - name: Build Nvidia package list and append to AUR packages
       vars:
         nvidia_driver_map:
           blackwell:
-            - linux-headers
-            - nvidia-open-beta-dkms
-            - nvidia-utils-beta
-            - nvidia-settings-beta
+            - nvidia-open
+            - nvidia-utils
+            - nvidia-settings
             - libva-nvidia-driver
           turing_ada:
-            - linux-headers
-            - nvidia-beta-dkms
-            - nvidia-utils-beta
-            - nvidia-settings-beta
+            - nvidia-open
+            - nvidia-utils
+            - nvidia-settings
             - libva-nvidia-driver
           pascal:
             - linux-headers
