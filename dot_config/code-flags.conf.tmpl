@@ -1,0 +1,8 @@
+{{- $home := .chezmoi.homeDir -}}
+# VS Code launcher flags - managed by chezmoi.
+
+# Keep VS Code auth storage behavior out of ~/.vscode/argv.json.
+--password-store=basic
+
+# Keep extensions out of ~/.vscode.
+--extensions-dir={{ $home }}/.local/share/vscode/extensions
