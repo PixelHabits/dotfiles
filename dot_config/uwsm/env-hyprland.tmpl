@@ -1,0 +1,9 @@
+{{- if eq .hostname "GAM-DEV001" -}}
+# Current boot mapping on GAM-DEV001: Intel = /dev/dri/card1, NVIDIA = /dev/dri/card0.
+# Keep Intel first so Hyprland prefers the iGPU renderer.
+export AQ_DRM_DEVICES="/dev/dri/card1:/dev/dri/card0"
+
+# Prefer the Mesa/Intel userspace stack for apps that still probe GL or VAAPI.
+export __GLX_VENDOR_LIBRARY_NAME=mesa
+export LIBVA_DRIVER_NAME=iHD
+{{- end }}

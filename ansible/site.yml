@@ -12,8 +12,6 @@
     xdg_data_home: "{{ user_home }}/.local/share"
     xdg_state_home: "{{ user_home }}/.local/state"
     local_bin: "{{ user_home }}/.local/bin"
-    chezmoi_desktop: "{{ chezmoi_desktop }}"
-
     user_desktop_dirs:
       - "{{ user_home }}/Documents"
       - "{{ user_home }}/Downloads"
@@ -120,12 +118,12 @@
     - name: Fail on unsupported OS
       ansible.builtin.fail:
         msg: >-
-          Unsupported: {{ ansible_facts['distribution'] }}
-          ({{ ansible_facts['os_family'] }}).
-          Supported: Archlinux, Ubuntu, Fedora, macOS.
+          Unsupported: {{ ansible_facts['distribution'] }} ({{
+          ansible_facts['os_family'] }}). Supported: Archlinux, Ubuntu, Fedora,
+          macOS.
       when: >-
-        ansible_facts['distribution'] not in distro_packages
-        and ansible_facts['os_family'] != 'Darwin'
+        ansible_facts['distribution'] not in distro_packages and
+        ansible_facts['os_family'] != 'Darwin'
 
     # ── Bare Metal detection ──────────────────────────────
     - name: Detect if running on bare metal (not a VM/WSL)
@@ -140,6 +138,32 @@
              })
           }}
       when: is_bare_metal and ansible_facts['system'] == 'Linux'
+
+    # ── Intel GPU detection ───────────────────────────────
+    - name: Detect Intel GPU
+      ansible.builtin.shell: |
+        lspci | grep -iE 'vga|3d' | grep -i intel
+      register: intel_detect
+      changed_when: false
+      failed_when: false
+      when:
+        - ansible_facts['system'] == 'Linux'
+        - ansible_facts['distribution'] == 'Archlinux'
+
+    - name: Append Intel GPU packages to distro packages
+      ansible.builtin.set_fact:
+        distro_packages: >-
+          {{ distro_packages | combine({
+               'Archlinux': distro_packages['Archlinux'] + [
+                 'vulkan-intel',
+                 'intel-media-driver'
+               ]
+             })
+          }}
+      when:
+        - ansible_facts['system'] == 'Linux'
+        - ansible_facts['distribution'] == 'Archlinux'
+        - intel_detect.stdout | default('') | length > 0
 
     # ── Nvidia GPU detection ──────────────────────────────
     #   Blackwell+ (RTX 50xx)          → nvidia-open
@@ -188,10 +212,17 @@
         has_nvidia: "{{ nvidia_generation != 'none' }}"
         nvidia_packages: "{{ nvidia_driver_map[nvidia_generation] }}"
         aur_packages: "{{ aur_packages + nvidia_driver_map[nvidia_generation] }}"
+      when:
+        - ansible_facts['system'] == 'Linux'
+        - ansible_facts['distribution'] == 'Archlinux'
 
   roles:
     - { role: base, tags: [base, cli] }
     - { role: zsh, tags: [zsh, cli] }
-    - { role: laptop, tags: [laptop, cli], when: "chezmoi_form_factor == 'laptop'" }
-    - { role: hyprland, tags: [desktop] }
+    - {
+        role: laptop,
+        tags: [laptop, cli],
+        when: "chezmoi_form_factor == 'laptop'",
+      }
+    - { role: hyprland, tags: [desktop], when: "chezmoi_desktop == 'hyprland'" }
     - { role: dev, tags: [dev] }
