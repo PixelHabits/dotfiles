@@ -60,6 +60,7 @@
       - unzip
       - bat
       - zip
+      - wget
 
     hardware_packages:
       Linux:
