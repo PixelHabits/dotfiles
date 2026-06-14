@@ -23,6 +23,9 @@ sudo dnf install -y git chezmoi
 chezmoi init --apply PixelHabits
 ```
 
+On Arch, Ansible prompts to update pacman repositories with the CachyOS repo
+script when CachyOS repositories are missing.
+
 You'll be prompted for:
 - **Email** — for git config
 - **Desktop** — `hyprland` or `none`

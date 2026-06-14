@@ -77,7 +77,11 @@
         - fd
         - github-cli
         - man-db
+        - neovim-nightly-bin
         - ghostty-terminfo
+        - yay
+        - openai-codex
+        - opencode
         - ufw
         - uv
       Ubuntu:
@@ -101,9 +105,6 @@
         - gh
         - rustup
         - uv
-
-    aur_packages:
-      - neovim-git
 
     macos_casks:
       - 1password
@@ -191,7 +192,7 @@
         - ansible_facts['system'] == 'Linux'
         - ansible_facts['distribution'] == 'Archlinux'
 
-    - name: Build Nvidia package list and append to AUR packages
+    - name: Build Nvidia package list and append to distro packages
       vars:
         nvidia_driver_map:
           blackwell:
@@ -212,7 +213,11 @@
       ansible.builtin.set_fact:
         has_nvidia: "{{ nvidia_generation != 'none' }}"
         nvidia_packages: "{{ nvidia_driver_map[nvidia_generation] }}"
-        aur_packages: "{{ aur_packages + nvidia_driver_map[nvidia_generation] }}"
+        distro_packages: >-
+          {{ distro_packages | combine({
+               'Archlinux': distro_packages['Archlinux'] + nvidia_driver_map[nvidia_generation]
+             })
+          }}
       when:
         - ansible_facts['system'] == 'Linux'
         - ansible_facts['distribution'] == 'Archlinux'

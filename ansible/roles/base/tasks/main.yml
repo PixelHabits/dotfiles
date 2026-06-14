@@ -18,10 +18,10 @@
   when: chezmoi_desktop != 'none'
 
 # ════════════════════════════════════════════════════════════
-# Phase 2: Infrastructure — package managers that need setup
+# Phase 2: Infrastructure — package sources that need setup
 # ════════════════════════════════════════════════════════════
 
-- name: Include Arch infrastructure (yay)
+- name: Include Arch infrastructure (CachyOS)
   ansible.builtin.include_tasks: arch.yml
   when: ansible_facts['distribution'] == 'Archlinux'
 
@@ -66,18 +66,6 @@
     name: "{{ macos_casks }}"
     state: present
   when: ansible_facts['os_family'] == 'Darwin'
-
-- name: Install AUR packages
-  become: true
-  become_user: aur_builder
-  ansible.builtin.command: >-
-    yay -S --needed --noconfirm {{ item }}
-  loop: "{{ aur_packages }}"
-  register: yay_install
-  changed_when: "'there is nothing to do' not in yay_install.stdout"
-  when: >-
-    ansible_facts['distribution'] == 'Archlinux'
-    and aur_packages | length > 0
 
 # ════════════════════════════════════════════════════════════
 # Phase 4: System services

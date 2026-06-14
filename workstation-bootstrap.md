@@ -19,6 +19,18 @@ They do not overlap. Chezmoi never installs packages. Ansible never touches dotf
 | macOS    | `brew install chezmoi && chezmoi init --apply PixelHabits`                |
 | Ubuntu   | `sudo apt install git chezmoi && chezmoi init --apply PixelHabits`        |
 
+On Arch, Ansible prompts to update pacman repositories with the CachyOS repo
+script when CachyOS repositories are missing. The interactive task runs the same
+script as:
+
+```bash
+curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz
+tar xvf cachyos-repo.tar.xz
+cd cachyos-repo
+sudo ./cachyos-repo.sh
+cd ..
+```
+
 Chezmoi prompts for identity, deploys dotfiles, then automatically runs Ansible.
 
 ## Machine Identity
@@ -50,7 +62,7 @@ Re-prompt: `chezmoi init --prompt`
 ```
 pre_tasks: validate OS, detect bare metal, detect Nvidia GPU
 roles:
-  1. base     <- XDG dirs, yay bootstrap, package installation
+  1. base     <- XDG dirs, CachyOS repo check, package installation
   2. zsh      <- default shell, omz, p10k
   3. battery  <- charge threshold service (laptop only)
   4. hyprland <- compositor, desktop apps (Arch + desktop only)
@@ -83,17 +95,19 @@ Packages are defined in `ansible/site.yml`:
 - `common_packages` — installed everywhere
 - `distro_packages` — platform-specific (Archlinux, Ubuntu, Darwin, etc.)
 - `hardware_packages` — bare-metal only (filesystem tools, fwupd)
-- `aur_packages` — AUR-only packages (neovim-git, nvidia drivers)
 - `macos_casks` — macOS GUI apps
 
-Nvidia packages are dynamically appended based on GPU detection.
+Nvidia packages are dynamically appended to the Arch pacman package set based on
+GPU detection. AUR packages are intentionally not automated; install them
+manually after reviewing the PKGBUILD.
 
 ## Common Tasks
 
 | Task                    | How                                                                                |
 | ----------------------- | ---------------------------------------------------------------------------------- |
 | Add CLI tool            | Add to `common_packages` or `distro_packages`                                      |
-| Add AUR package         | Add to `aur_packages`                                                              |
+| Add repo package        | Add to `common_packages`, `distro_packages`, or the relevant role package list      |
+| Add AUR package         | Install manually after reviewing the PKGBUILD                                      |
 | Add macOS cask          | Add to `macos_casks`                                                               |
 | Add XDG redirect        | Add absolute path to `environment.d/10-xdg.conf`; mirror as `${VAR:-/absolute/path}` fallback in `06-xdg-apps.zsh`; update `site.yml` only if Ansible needs it |
 | Re-run Ansible manually | `cd ~/.local/share/chezmoi/ansible && ansible-playbook site.yml --ask-become-pass` |

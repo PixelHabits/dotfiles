@@ -1,68 +1,107 @@
-# ── AUR infrastructure ──────────────────────────────────────
-# Sets up aur_builder user and yay AUR helper.
-# Must complete before Phase 3 installs AUR packages.
+# ── Arch package source infrastructure ──────────────────────
+# Verify pacman is configured with CachyOS repositories before
+# installing the Arch package set.
 
-- name: Create aur_builder user
-  become: true
-  ansible.builtin.user:
-    name: aur_builder
-    create_home: true
-    shell: /usr/sbin/nologin
-    group: wheel
-    system: true
-
-- name: Allow aur_builder passwordless sudo for pacman
-  become: true
-  ansible.builtin.copy:
-    dest: /etc/sudoers.d/10-aur-builder
-    owner: root
-    group: root
-    mode: "0440"
-    validate: /usr/bin/visudo -cf %s
-    content: |
-      aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman
-
-- name: Check if yay is installed
-  ansible.builtin.command: which yay
-  register: yay_check
+- name: Check CachyOS repositories are configured
+  ansible.builtin.command:
+    argv:
+      - grep
+      - -Eq
+      - ^\[(cachyos|cachyos-v3|cachyos-v4|cachyos-znver4)\]
+      - /etc/pacman.conf
+  register: cachyos_repo_check
   changed_when: false
   failed_when: false
 
-- name: Install yay from AUR
-  when: yay_check.rc != 0
-  block:
-    - name: Install base-devel and yay build dependencies
-      become: true
-      community.general.pacman:
-        name:
-          - base-devel
-          - go
-        state: present
+- name: Prompt before updating pacman repositories with CachyOS
+  ansible.builtin.pause:
+    prompt: |
+      CachyOS repositories are not configured.
 
-    - name: Clone and build yay
-      ansible.builtin.shell: |
-        set -euo pipefail
-        rm -rf /tmp/yay-build
-        git clone https://aur.archlinux.org/yay.git /tmp/yay-build
-        cd /tmp/yay-build
-        makepkg --noconfirm
-      args:
-        executable: /bin/bash
+      Update pacman repositories with the CachyOS repo script now?
+      This imports CachyOS keys, updates /etc/pacman.conf, installs
+      CachyOS mirrorlists/keyring, and runs pacman -Syu.
+      After this confirmation, the script runs non-interactively.
 
-    - name: Install built yay package
-      become: true
-      ansible.builtin.shell: pacman -U --noconfirm /tmp/yay-build/yay-*.pkg.tar.zst
-      args:
-        executable: /bin/bash
+      Type yes to continue
+  register: cachyos_repo_prompt
+  when: cachyos_repo_check.rc != 0
 
-  always:
-    - name: Clean up yay build directory
-      ansible.builtin.file:
-        path: /tmp/yay-build
-        state: absent
+- name: Abort when CachyOS repository update is declined
+  ansible.builtin.fail:
+    msg: |
+      CachyOS repositories are not configured.
 
-- name: Configure yay devel database
-  ansible.builtin.shell: |
-    yay -Y --gendb
-    yay -Y --devel --save
+      Update pacman repositories with the CachyOS repo script:
+        curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz
+        tar xvf cachyos-repo.tar.xz
+        cd cachyos-repo
+        sudo ./cachyos-repo.sh
+  when:
+    - cachyos_repo_check.rc != 0
+    - (cachyos_repo_prompt.user_input | default('') | lower) != 'yes'
+
+- name: Create CachyOS repo bootstrap directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: cachyos-repo
+  register: cachyos_repo_tmp
+  when:
+    - cachyos_repo_check.rc != 0
+    - (cachyos_repo_prompt.user_input | default('') | lower) == 'yes'
+
+- name: Download CachyOS repo script archive
+  ansible.builtin.get_url:
+    url: https://mirror.cachyos.org/cachyos-repo.tar.xz
+    dest: "{{ cachyos_repo_tmp.path }}/cachyos-repo.tar.xz"
+    mode: "0644"
+  when:
+    - cachyos_repo_check.rc != 0
+    - (cachyos_repo_prompt.user_input | default('') | lower) == 'yes'
+
+- name: Extract CachyOS repo script archive
+  ansible.builtin.unarchive:
+    src: "{{ cachyos_repo_tmp.path }}/cachyos-repo.tar.xz"
+    dest: "{{ cachyos_repo_tmp.path }}"
+    remote_src: true
+  when:
+    - cachyos_repo_check.rc != 0
+    - (cachyos_repo_prompt.user_input | default('') | lower) == 'yes'
+
+- name: Update pacman repositories with CachyOS repo script
+  become: true
+  ansible.builtin.shell: yes | ./cachyos-repo.sh --install
+  args:
+    chdir: "{{ cachyos_repo_tmp.path }}/cachyos-repo"
+    executable: /bin/bash
+  when:
+    - cachyos_repo_check.rc != 0
+    - (cachyos_repo_prompt.user_input | default('') | lower) == 'yes'
+
+- name: Remove CachyOS repo bootstrap directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ cachyos_repo_tmp.path }}"
+    state: absent
+  when:
+    - cachyos_repo_tmp is defined
+    - cachyos_repo_tmp.path is defined
+
+- name: Re-check CachyOS repositories are configured
+  ansible.builtin.command:
+    argv:
+      - grep
+      - -Eq
+      - ^\[(cachyos|cachyos-v3|cachyos-v4|cachyos-znver4)\]
+      - /etc/pacman.conf
+  register: cachyos_repo_recheck
   changed_when: false
+  failed_when: false
+  when: cachyos_repo_check.rc != 0
+
+- name: Require CachyOS repositories on Arch
+  ansible.builtin.fail:
+    msg: CachyOS repository update did not configure pacman.
+  when:
+    - cachyos_repo_check.rc != 0
+    - cachyos_repo_recheck.rc != 0

@@ -4,10 +4,10 @@
 # Reference: https://wiki.hyprland.org/Nvidia/
 # Last verified: 2025-03-09
 #
-# All Nvidia packages (driver, utils, settings, headers, libva)
-# are installed via yay in the base role. The nvidia_driver_map
-# in site.yml pre_tasks builds the correct list per GPU
-# generation. This role has zero Nvidia awareness.
+# Nvidia packages (driver, utils, settings, headers, libva) are
+# installed by pacman in the base role. The nvidia_driver_map in
+# site.yml pre_tasks builds the correct list per GPU generation.
+# This role has zero Nvidia awareness.
 #
 # Nvidia env vars belong in hyprland.conf, NOT zsh dotfiles.
 # ============================================================
@@ -45,6 +45,9 @@
       - hyprsunset
       - hyprlauncher
       - hyprpwcenter
+      - helium-browser-bin
+      - localsend
+      - code
       - mpv
       - waybar
       - yt-dlp
@@ -54,17 +57,6 @@
       - rustup
       - fnm
     state: present
-
-- name: Install Hyprland desktop AUR packages
-  become: true
-  become_user: aur_builder
-  ansible.builtin.command: yay -S --needed --noconfirm {{ item }}
-  loop:
-    - 1password
-    - 1password-cli
-    - helium-browser-bin
-  register: yay_desktop_install
-  changed_when: "'there is nothing to do' not in yay_desktop_install.stdout"
 
 - name: Enable Hyprland user services
   ansible.builtin.systemd:

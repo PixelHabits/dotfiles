@@ -36,7 +36,6 @@ zwarn "missing: $tool"
 ### Package Organization
 - `common_packages` — all platforms
 - `distro_packages[Archlinux|Ubuntu|Darwin]` — platform-specific
-- `aur_packages` — AUR only (dynamically extended for Nvidia)
 - `macos_casks` — macOS GUI apps
 
 ## Chezmoi
