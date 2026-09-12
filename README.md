@@ -39,3 +39,4 @@ On Arch, Ansible asks to add CachyOS repositories when those repositories are ab
 | [Agent instructions](AGENTS.md) | Coding rules and worktree boundaries |
 | [Workstation bootstrap](workstation-bootstrap.md) | Chezmoi and Ansible responsibilities |
 | [Shell architecture](zsh-dotfile-architecture.md) | Shell configuration structure |
+| [Claude Code](claude.md) | Shared instructions, local state, and local configuration |
