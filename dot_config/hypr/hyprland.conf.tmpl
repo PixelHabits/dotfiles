@@ -39,6 +39,12 @@ $terminal = ghostty
 $fileManager = nautilus
 $menu = hyprlauncher
 $browser = helium-browser --force-dark-mode
+$vimApp = $terminal -e nvim
+$musicApp = $browser --app=https://music.youtube.com
+$teamsApp = $browser --app=https://teams.microsoft.com
+$notionApp = $browser --app=https://notion.so
+$chatApp = $browser --app=https://t3.chat
+$mailApp = $browser --app=https://outlook.office.com/mail/
 
 #################
 ### AUTOSTART ###
@@ -276,10 +282,14 @@ bindd = $mainMod, RETURN, Terminal (tmux), exec, uwsm app -- $terminal -e zsh -c
 bindd = $mainMod ALT, RETURN, Terminal, exec, uwsm app -- $terminal
 bindd = $mainMod, SPACE, App launcher, exec, uwsm app -- $menu
 bindd = $mainMod SHIFT, B, Browser, exec, uwsm app -- $browser
+bindd = $mainMod SHIFT, A, T3 Chat, exec, hypr-workspace-app chat '^chrome-t3\.chat__-Default$' uwsm app -- $chatApp
+bindd = $mainMod SHIFT, E, Mail, exec, hypr-workspace-app mail '^chrome-outlook\.office\.com__mail_-Default$' uwsm app -- $mailApp
 bindd = $mainMod SHIFT, F, File manager, exec, uwsm app -- $fileManager
-bindd = $mainMod SHIFT, N, Editor, exec, uwsm app -- $terminal -e nvim
-bindd = $mainMod SHIFT, M, Music, exec, xdg-open https://music.youtube.com
+bindd = $mainMod SHIFT, M, Music, exec, hypr-workspace-app music '^chrome-music\.youtube\.com__-Default$' uwsm app -- $musicApp
+bindd = $mainMod SHIFT, N, Notion, exec, hypr-workspace-app notion '^chrome-notion\.so__-Default$' uwsm app -- $notionApp
 bindd = $mainMod SHIFT, SLASH, Passwords, exec, uwsm app -- 1password
+bindd = $mainMod SHIFT, T, Teams, exec, hypr-workspace-app teams '^chrome-teams\.microsoft\.com__-Default$' uwsm app -- $teamsApp
+bindd = $mainMod SHIFT, V, Vim, exec, uwsm app -- $vimApp
 bindd = $mainMod, L, Lock session, exec, loginctl lock-session
 
 # Notifications (mako)
@@ -418,6 +428,42 @@ bindl = , XF86AudioPrev, exec, playerctl previous
 # Example windowrules that are useful
 
 layerrule = no_anim on, match:namespace selection
+
+# Dedicated web apps live on named workspaces so the numbered set stays task-focused.
+windowrule {
+    name = move-chat-to-chat-workspace
+    match:class = ^chrome-t3\.chat__-Default$
+
+    workspace = name:chat
+}
+
+windowrule {
+    name = move-mail-to-mail-workspace
+    match:class = ^chrome-outlook\.office\.com__mail_-Default$
+
+    workspace = name:mail
+}
+
+windowrule {
+    name = move-music-to-music-workspace
+    match:class = ^chrome-music\.youtube\.com__-Default$
+
+    workspace = name:music
+}
+
+windowrule {
+    name = move-notion-to-notion-workspace
+    match:class = ^chrome-notion\.so__-Default$
+
+    workspace = name:notion
+}
+
+windowrule {
+    name = move-teams-to-teams-workspace
+    match:class = ^chrome-teams\.microsoft\.com__-Default$
+
+    workspace = name:teams
+}
 
 windowrule {
     # Ignore maximize requests from all apps. You'll probably like this.
