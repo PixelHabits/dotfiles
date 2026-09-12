@@ -1,3 +1,7 @@
+# environment.d is primary; preserve explicit process overrides.
+{{ range $name, $value := includeTemplate "codex/home-env.toml.tmpl" . | fromToml -}}
+export {{ $name }}={{ printf "${%s:-%s}" $name ($value | shellQuote) }}
+{{ end }}
 # Optional machine-local overrides. Fresh machines use the shared base config.
 # GUI and direct binary launches must select this profile explicitly.
 if [[ -r "${CODEX_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/codex}/local.config.toml" ]]; then

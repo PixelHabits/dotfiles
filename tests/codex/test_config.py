@@ -25,7 +25,7 @@ class CodexConfigTest(unittest.TestCase):
         self.target = self.home / ".config/codex/config.toml"
         self.target.parent.mkdir(parents=True)
         self.config = self.root / "chezmoi.toml"
-        self.config.write_text('[data]\ndev = true\ndesktop = "none"\nprofile = "personal"\nhostname = "fixture"\n')
+        self.config.write_text('[data]\ndev = true\ndesktop = "none"\nprofile = "personal"\nhostname = "fixture"\nemail = "fixture@example.invalid"\nform_factor = "server"\nosid = "arch"\n')
         self.env = {"HOME": str(self.home), "PATH": os.environ["PATH"],
                     "XDG_CONFIG_HOME": str(self.home / ".config"),
                     "XDG_CACHE_HOME": str(self.home / ".cache"),
@@ -77,7 +77,7 @@ EXAMPLE_SETTING = "keep"
         self.assertEqual(value["projects"]["/tmp/untrusted"]["trust_level"], "untrusted")
         self.assertFalse(value["plugins"]["example@local"]["enabled"])
         env = value["mcp_servers"]["local-tool"]["env"]
-        self.assertEqual(env["NPM_CONFIG_CACHE"], "/custom/cache")
+        self.assertEqual(env["NPM_CONFIG_CACHE"], str(self.home / ".cache/npm"))
         self.assertEqual(env["EXAMPLE_SETTING"], "keep")
         self.assertEqual(env["GOPATH"], str(self.home / ".local/share/go"))
         self.target.write_text(self.render())
@@ -98,6 +98,93 @@ EXAMPLE_SETTING = "keep"
         self.assertNotIn(".config/codex/config.toml", managed)
         self.assertNotIn("codex.md", managed)
         self.assertFalse(any(path.startswith("tests/codex") for path in managed))
+
+    def test_changed_shared_paths_replace_previously_rendered_defaults(self):
+        self.target.write_text('[mcp_servers.local-tool]\ncommand = "fixture"\n'
+                               '[mcp_servers.local-tool.env]\nFIXTURE_SECRET = "keep-local"\n')
+        self.target.write_text(self.render())
+        snapshot = self.root / "source"
+        for path in (".chezmoitemplates", ".chezmoidata", "dot_config/codex"):
+            shutil.copytree(SOURCE / path, snapshot / path)
+        shutil.copy2(SOURCE / ".chezmoiignore", snapshot / ".chezmoiignore")
+        defaults = snapshot / ".chezmoitemplates/xdg-env.toml.tmpl"
+        defaults.write_text(defaults.read_text().replace(".local/share/go", ".local/share/go-next")
+                            .replace(".cache/bun/install", ".cache/bun/install-next"))
+        self.command[self.command.index("--source") + 1] = str(snapshot)
+        updated = tomllib.loads(self.render())
+        for name in ("local-tool", "chrome-devtools"):
+            env = updated["mcp_servers"][name]["env"]
+            self.assertEqual(env["GOPATH"], str(self.home / ".local/share/go-next"))
+            self.assertEqual(env["BUN_INSTALL_CACHE_DIR"], str(self.home / ".cache/bun/install-next"))
+        self.assertEqual(updated["mcp_servers"]["local-tool"]["env"]["FIXTURE_SECRET"], "keep-local")
+
+    def test_optional_profile_can_override_shared_paths(self):
+        if not shutil.which("codex"):
+            self.skipTest("Codex is not installed")
+        self.target.write_text(self.render())
+        (self.target.parent / "local.config.toml").write_text(
+            '[mcp_servers.chrome-devtools.env]\nGOPATH = "/machine-local/go"\n')
+        result = subprocess.run([shutil.which("codex"), "--profile", "local", "mcp", "get",
+                                 "chrome-devtools", "--json"], env=self.env, cwd=self.home,
+                                capture_output=True, text=True, check=True, timeout=20)
+        self.assertEqual(json.loads(result.stdout)["transport"]["env"]["GOPATH"], "/machine-local/go")
+
+    def test_init_preserves_explicit_agent_home_ownership(self):
+        for enabled in (False, True):
+            if enabled:
+                self.config.write_text(self.config.read_text() + "agent_home_managed = true\n")
+            rendered = self.chezmoi("execute-template", "--init", "--file",
+                                    str(SOURCE / ".chezmoi.toml.tmpl")).stdout
+            self.assertEqual(tomllib.loads(rendered)["data"]["agent_home_managed"], enabled)
+
+    def test_externally_managed_agent_home_is_untouched(self):
+        self.config.write_text(self.config.read_text() + "agent_home_managed = true\n")
+        managed = self.chezmoi("managed").stdout.splitlines()
+        for path in (".config/codex/config.toml", ".config/zsh/zshenv.d/20-codex.zsh",
+                     ".config/environment.d/22-codex.conf"):
+            self.assertNotIn(path, managed)
+        self.assertIn(".config/zsh/zshenv.d/06-xdg-apps.zsh", managed)
+        redirects = self.chezmoi("execute-template", "--file",
+                                 str(SOURCE / "dot_config/environment.d/10-xdg.conf.tmpl")).stdout
+        self.assertNotIn("CODEX_HOME", redirects)
+        self.assertNotIn("CODEX_SQLITE_HOME", redirects)
+        self.assertIn("GOPATH=", redirects)
+
+    def test_services_shell_and_mcp_share_tool_redirects(self):
+        def render(path):
+            return self.chezmoi("execute-template", "--file", str(SOURCE / path)).stdout
+        defaults = tomllib.loads(render(".chezmoitemplates/xdg-env.toml.tmpl"))
+        service = dict(line.split("=", 1) for line in
+                       render("dot_config/environment.d/10-xdg.conf.tmpl").splitlines()
+                       if line and not line.startswith("#"))
+        self.assertEqual(service, defaults)
+        server = tomllib.loads(self.render())["mcp_servers"]["chrome-devtools"]["env"]
+        self.assertEqual(server, {k: v for k, v in defaults.items() if k != "ZDOTDIR"})
+        script = self.root / "redirects.zsh"
+        script.write_text(render("dot_config/zsh/zshenv.d/06-xdg-apps.zsh.tmpl") + "\nenv -0\n")
+        for overrides in ({}, {"GOPATH": "/custom go", "BUN_INSTALL": "/custom bun"}):
+            output = subprocess.check_output([shutil.which("zsh"), "-f", str(script)],
+                                             env=self.env | overrides, cwd=self.home)
+            actual = dict(item.decode().split("=", 1) for item in output.split(b"\0") if item)
+            for key, expected in defaults.items():
+                if key != "ZDOTDIR":
+                    self.assertEqual(actual[key], overrides.get(key, expected), key)
+
+    def test_installed_package_tools_resolve_shared_cache_paths(self):
+        (self.home / "package.json").write_text("{}")
+        env = tomllib.loads(self.render())["mcp_servers"]["chrome-devtools"]["env"]
+        for tool, args, expected in (
+            ("bun", ["pm", "cache"], env["BUN_INSTALL_CACHE_DIR"]),
+            ("npm", ["config", "get", "cache"], env["NPM_CONFIG_CACHE"]),
+            ("go", ["env", "GOPATH"], env["GOPATH"]),
+        ):
+            binary = shutil.which(tool)
+            if binary:
+                result = subprocess.run([binary, *args], env=self.env | env, cwd=self.home,
+                                        text=True, capture_output=True, check=True, timeout=20)
+                self.assertEqual(result.stdout.strip(), expected, tool)
+        for directory in (".bun", ".npm", ".go", "go", ".cargo", ".rustup"):
+            self.assertFalse((self.home / directory).exists(), directory)
 
     def test_shared_server_identity_changes_drop_old_connections(self):
         for existing in [
@@ -124,7 +211,9 @@ EXAMPLE_SETTING = "keep"
                                    text=True, check=True, timeout=20)
 
     def test_optional_local_profile_alias(self):
-        script = SOURCE / "dot_config/zsh/zshenv.d/20-codex.zsh"
+        script = self.root / "20-codex.zsh"
+        script.write_text(self.chezmoi("execute-template", "--file",
+                          str(SOURCE / "dot_config/zsh/zshenv.d/20-codex.zsh.tmpl")).stdout)
         command = [shutil.which("zsh"), "-f", "-c",
                    'require_cmd() { command -v "$1" >/dev/null 2>&1; }; '
                    'source "$1"; alias codex', "fixture", str(script)]
