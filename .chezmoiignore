@@ -10,6 +10,7 @@ xdg.md
 tests/
 codex.md
 tests/codex/
+claude.md
 zsh-dotfile-architecture.md
 workstation-bootstrap.md
 .config/nvim/nvim-pack-lock.json
@@ -72,6 +73,10 @@ workstation-bootstrap.md
 .config/codex/
 .config/zsh/zshenv.d/20-codex.zsh
 .config/zsh/zshrc.d/22-fnm.zsh
+.config/claude/
+.config/environment.d/20-claude.conf
+.config/zsh/zshenv.d/21-claude.zsh
+.local/state/claude/
 {{- end }}
 
 # ════════════════════════════════════════════════════════════
