@@ -69,6 +69,9 @@ workstation-bootstrap.md
 
 {{- if not .dev }}
 .config/zsh/zshrc.d/22-fnm.zsh
+{{- end }}
+
+{{- if or (not .dev) (get . "agent_home_managed" | default false) }}
 .config/claude/
 .config/environment.d/20-claude.conf
 .config/zsh/zshenv.d/21-claude.zsh
