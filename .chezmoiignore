@@ -13,6 +13,7 @@ tests/codex/
 claude.md
 nvim.md
 tmux.md
+suspend-recovery.md
 zsh-dotfile-architecture.md
 workstation-bootstrap.md
 .config/nvim/nvim-pack-lock.json
@@ -49,6 +50,7 @@ workstation-bootstrap.md
 .config/uwsm/
 .config/waybar/
 .local/bin/omarchy-*
+.local/bin/hypr-rescue
 {{- end }}
 
 # ── Any desktop (exclude from CLI/server) ───────────────────
