@@ -41,8 +41,8 @@ Set during `chezmoi init`, stored in `~/.config/chezmoi/chezmoi.toml`:
 | `form_factor` | laptop, desktop, server      | Hardware-specific tasks       |
 | `profile`     | work, personal               | Corporate vs personal configs |
 
-To change machine choices, run `chezmoi init --prompt` from a source with the current template.
-Do not reinitialize the preserved `dev` snapshot. See [source selection](worktrees.md#select-the-live-source).
+To change machine choices, run `chezmoi init --prompt` with the selected source.
+See [source selection](worktrees.md#select-the-live-source).
 
 ## Gating Matrix
 

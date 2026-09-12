@@ -16,12 +16,13 @@ A bare repository stores the shared Git history without checked-out files.
 | Directory | Purpose |
 | --- | --- |
 | `.bare` | Shared Git history and branch records |
-| `main` | Remote main branch and reviewed changes |
-| `dev` | Original files with all uncommitted work |
+| `main` | Stable branch |
+| `dev` | Development branch |
 | Feature directories | Changes for individual pull requests |
 
-Keep `dev` unchanged while you compare its files with a feature branch.
-Copy only the relevant changes into that branch.
+Use `dev` for ongoing development and feature branches for focused changes.
+Commit work on either branch as needed.
+Keep unrelated changes separate when you prepare a pull request.
 
 ## Set up a new machine
 
@@ -66,11 +67,10 @@ Use an absolute path for your machine:
 sourceDir = "/home/devinalsup/.local/share/chezmoi/main"
 ```
 
-To use your original work, change the final directory to `dev`.
+To use the development branch, change the final directory to `dev`.
 Changing this value does not deploy files.
 Changing the shell directory does not change this value.
 The current template preserves the selected worktree when you run `chezmoi init`.
-The original `dev` snapshot contains the older template, so do not reinitialize from that snapshot.
 
 Display the selected source:
 
@@ -114,5 +114,6 @@ chezmoi --source ~/.local/share/chezmoi/main diff
 ```
 
 Review the changes before you deploy them.
-Keep your local `sourceDir` on `dev` until you choose to switch.
-Updating `main` does not change the selected source or discard your WIP.
+Choose `main` or `dev` as your live source to match your workflow.
+Updating a branch does not change the selected source.
+Make sure that a worktree is ready before you update its branch.
