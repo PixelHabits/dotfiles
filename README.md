@@ -7,7 +7,7 @@ Ansible installs packages and configures system services.
 
 Follow [Git worktrees and chezmoi](worktrees.md) to create a new machine setup.
 The repository uses `.bare` for Git history and separate directories for each branch.
-Use `main` for reviewed changes and `dev` for uncommitted work.
+Use `main` for stable changes and `dev` for ongoing development.
 
 Chezmoi asks for these machine choices:
 
