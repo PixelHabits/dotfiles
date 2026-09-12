@@ -5,7 +5,7 @@
   "modules-left": [
     "hyprland/workspaces",
     "hyprland/submap",
-    "custom/media"
+    "mpris"
   ],
   "modules-center": [
     "hyprland/window"
@@ -155,16 +155,13 @@
     },
     "on-click": "uwsm-app hyprpwcenter"
   },
-  "custom/media": {
-    "format": "{icon} {text}",
-    "return-type": "json",
-    "max-length": 40,
-    "format-icons": {
-      "spotify": "",
-      "default": ""
-    },
-    "escape": true,
-    "exec": "$HOME/.config/waybar/mediaplayer.py 2> /dev/null"
+  "mpris": {
+    "format": "{player_icon} {dynamic}",
+    "dynamic-len": 40,
+    "player-icons": {
+      "default": "",
+      "spotify": ""
+    }
   },
   "custom/power": {
     "format": "⏻ ",
