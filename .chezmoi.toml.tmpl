@@ -22,3 +22,9 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
   form_factor = {{ $formFactor | quote }}
   profile = {{ $profile | quote }}
   dev = {{ $dev }}
+
+{{- if and (hasKey . "hyprland") (hasKey .hyprland "monitors") }}
+
+[data.hyprland]
+  monitors = {{ .hyprland.monitors | toJson }}
+{{- end }}
