@@ -12,4 +12,15 @@ result=$(fgl)
 [[ "$(fgl --all HEAD~2)" == *'--all HEAD~2'* ]]
 [[ "$(fgl -a HEAD~2)" == *'--all HEAD~2'* ]]
 [[ "$(fgl -- src)" == *'-- src'* ]]
-print 'PASS: current/all refs, argument forwarding, and explicit commit ID preview field'
+for option in --format=%s --pretty=raw --oneline --graph --stat --definitely-invalid; do
+  if fgl "$option" >/dev/null 2>&1; then
+    print -u2 "accepted unsafe output option: $option"
+    exit 1
+  fi
+done
+git() { return 17; }
+if fgl >/dev/null; then exit 1; else [[ $? == 17 ]]; fi
+git() { return 141; }
+fzf() { return 130; }
+fgl
+print 'PASS: current/all refs, argument forwarding, stable ID field, rejected presentation flags, errors and cancellation'

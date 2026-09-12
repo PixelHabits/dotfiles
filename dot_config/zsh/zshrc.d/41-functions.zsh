@@ -41,12 +41,31 @@ if require_cmd git && require_cmd fzf; then
         ;;
     esac
 
-    git log "${log_args[@]}" "$@" |
+    local arg paths_only=0
+    for arg in "$@"; do
+      (( paths_only )) && continue
+      case "$arg" in
+        --) paths_only=1 ;;
+        -<->|--all|--first-parent|--no-merges|--merges|--reverse) ;;
+        -*) print -u2 -- "fgl: unsupported option: $arg (use revisions, -N, --all, or -- paths)"; return 2 ;;
+      esac
+    done
+
+    setopt localoptions pipefail
+    if git log "${log_args[@]}" "$@" |
       fzf --height=100% --ansi --no-sort --delimiter=$'\t' --with-nth=2.. \
         --prompt='commit > ' \
         --header 'enter: view diff in popup, esc: quit, --all: include all refs' \
         --preview 'git show --color=always --stat {1} --' \
-        --bind 'enter:execute(git show --color=always {1} -- | less -R)'
+        --bind 'enter:execute(git show --color=always {1} -- | less -R)'; then
+      return 0
+    else
+      local -a results=("${pipestatus[@]}")
+      # Cancellation can interrupt Git or close its pipe. Other failures remain errors.
+      (( results[1] != 0 && results[1] != 141 && results[1] != 130 )) && return "$results[1]"
+      (( results[2] == 1 || results[2] == 130 )) && return 0
+      return "$results[2]"
+    fi
   }
 fi
 
