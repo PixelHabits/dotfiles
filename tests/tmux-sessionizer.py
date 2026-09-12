@@ -37,4 +37,20 @@ state.write_text(json.dumps(sessions))
     assert calls.read_text()==before
     data=json.loads(state.read_text()); name=next(k for k,v in data.items() if v==str(projects[0])); data[name]='other'
     state.write_text(json.dumps(data)); result=run(projects[0]); assert result.returncode!=0 and 'collision' in result.stderr
-print('PASS: same-name worktrees, spaces/quotes, repeat selection, invalid paths, and session collision rejection')
+    # Exercise actual fd discovery of an ignored nested Git worktree.
+    import shutil
+    finder=shutil.which('fd') or shutil.which('fdfind')
+    assert finder, 'fd or fdfind required for discovery test'
+    repo=home/'Developer/team/repo';repo.mkdir(parents=True)
+    subprocess.run(['git','init','-q',str(repo)],check=True)
+    (repo/'.gitignore').write_text('.worktrees/\n')
+    nested=repo/'.worktrees/feature';nested.mkdir(parents=True);(nested/'.git').write_text('gitdir: test\n')
+    picker=tools/'fzf';picker.write_text('#!/bin/sh\ncat > "$PICKS"\nexit "${PICK_EXIT:-130}"\n');picker.chmod(0o755)
+    (tools/'fd').symlink_to(finder)
+    env['PICKS']=str(home/'picks')
+    assert run().returncode==0
+    assert str(nested)+'/' in (home/'picks').read_text()
+    assert run(extra={'PICK_EXIT':'2'}).returncode==2
+    (tools/'fd').unlink();(tools/'fd').write_text('#!/bin/sh\nexit 42\n');(tools/'fd').chmod(0o755)
+    assert run().returncode==42
+print('PASS: session routing, path collisions, ignored worktree discovery, finder errors and picker cancellation/errors')
