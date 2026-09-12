@@ -27,21 +27,26 @@ if [[ $# == 0 ]]; then
             roots+=("$root")
         done < "$roots_file"
     fi
-    selected=$(
-        {
-            for root in "${roots[@]}"; do
-                [[ -d $root ]] || continue
-                [[ -e $root/.git ]] && printf '%s\n' "$root"
-                "$finder" --hidden --type d --max-depth 4 --exclude .git --exclude .bare \
-                    --exclude node_modules --exclude vendor . "$root" |
-                    while IFS= read -r directory; do
-                        [[ -e $directory/.git ]] || continue
-                        printf '%s\n' "$directory"
-                    done
-            done
-            :
-        } | sort -u | fzf --prompt='project> ' --reverse --border
-    ) || exit 0
+    candidates=$(
+        for root in "${roots[@]}"; do
+            [[ $root == /* ]] || { printf 'Project root must be absolute: %s\n' "$root" >&2; exit 2; }
+            [[ -d $root ]] || continue
+            [[ -e $root/.git ]] && printf '%s\n' "$root"
+            directories=$("$finder" --hidden --no-ignore --type d --max-depth 4 \
+                --exclude .git --exclude .bare --exclude node_modules --exclude vendor . "$root") || exit $?
+            while IFS= read -r directory; do
+                [[ -e $directory/.git ]] || continue
+                printf '%s\n' "$directory"
+            done <<< "$directories"
+        done
+    ) || exit $?
+    if selected=$(printf '%s\n' "$candidates" | sort -u | fzf --prompt='project> ' --reverse --border); then
+        :
+    else
+        picker_result=$?
+        case $picker_result in 1|130|141) exit 0 ;; esac
+        exit "$picker_result"
+    fi
 fi
 [[ -n $selected ]] || exit 0
 [[ -d $selected ]] || { printf 'Not a directory: %s\n' "$selected" >&2; exit 1; }
