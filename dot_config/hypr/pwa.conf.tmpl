@@ -1,0 +1,12 @@
+{{- $apps := includeTemplate "pwa-apps.json" . | fromJson -}}
+# Generated from .chezmoidata/pwa.toml and this machine's chezmoi data.
+# The browser must support Chromium's --app mode.
+{{ range $apps }}
+bindd = $mainMod SHIFT, {{ .key }}, {{ .label }}, exec, hypr-workspace-app {{ .workspace | shellQuote }} {{ .class | shellQuote }} uwsm app -- $browser {{ printf "--app=%s" .url | shellQuote }}
+
+windowrule {
+    name = move-{{ .workspace }}-to-{{ .workspace }}-workspace
+    match:class = {{ .class }}
+    workspace = name:{{ .workspace }}
+}
+{{ end -}}

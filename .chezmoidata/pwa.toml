@@ -1,0 +1,51 @@
+# App identity stays the same when a machine chooses a different provider.
+[pwa]
+order = ["chat", "mail", "music", "linear", "teams"]
+
+[pwa.mailDefaults]
+work = "outlook"
+personal = "gmail"
+
+[pwa.linearDefaults]
+work = "https://linear.app/greenway-automotive"
+personal = "https://linear.app"
+
+[pwa.mailProviders.outlook]
+url = "https://outlook.office.com/mail/"
+class = '^chrome-outlook[.]office[.]com__.*$'
+
+[pwa.mailProviders.gmail]
+url = "https://mail.google.com/mail/u/0/"
+class = '^chrome-mail[.]google[.]com__.*$'
+
+[pwa.apps.chat]
+label = "T3 Chat"
+key = "A"
+icon = ""
+url = "https://t3.chat"
+class = '^chrome-t3[.]chat__.*$'
+
+[pwa.apps.mail]
+label = "Mail"
+key = "E"
+icon = ""
+
+[pwa.apps.music]
+label = "Music"
+key = "M"
+icon = ""
+url = "https://music.youtube.com"
+class = '^chrome-music[.]youtube[.]com__.*$'
+
+[pwa.apps.linear]
+label = "Linear"
+key = "L"
+icon = "◩"
+class = '^chrome-linear[.]app__.*$'
+
+[pwa.apps.teams]
+label = "Teams"
+key = "T"
+icon = ""
+url = "https://teams.microsoft.com"
+class = '^chrome-teams[.]microsoft[.]com__.*$'
