@@ -77,7 +77,7 @@ EXAMPLE_SETTING = "keep"
         self.assertEqual(value["projects"]["/tmp/untrusted"]["trust_level"], "untrusted")
         self.assertFalse(value["plugins"]["example@local"]["enabled"])
         env = value["mcp_servers"]["local-tool"]["env"]
-        self.assertEqual(env["NPM_CONFIG_CACHE"], "/custom/cache")
+        self.assertEqual(env["NPM_CONFIG_CACHE"], str(self.home / ".cache/npm"))
         self.assertEqual(env["EXAMPLE_SETTING"], "keep")
         self.assertEqual(env["GOPATH"], str(self.home / ".local/share/go"))
         self.target.write_text(self.render())
@@ -98,6 +98,36 @@ EXAMPLE_SETTING = "keep"
         self.assertNotIn(".config/codex/config.toml", managed)
         self.assertNotIn("codex.md", managed)
         self.assertFalse(any(path.startswith("tests/codex") for path in managed))
+
+    def test_changed_shared_paths_replace_previously_rendered_defaults(self):
+        self.target.write_text('[mcp_servers.local-tool]\ncommand = "fixture"\n'
+                               '[mcp_servers.local-tool.env]\nFIXTURE_SECRET = "keep-local"\n')
+        self.target.write_text(self.render())
+        snapshot = self.root / "source"
+        for path in (".chezmoitemplates", ".chezmoidata", "dot_config/codex"):
+            shutil.copytree(SOURCE / path, snapshot / path)
+        shutil.copy2(SOURCE / ".chezmoiignore", snapshot / ".chezmoiignore")
+        defaults = snapshot / ".chezmoitemplates/xdg-env.toml.tmpl"
+        defaults.write_text(defaults.read_text().replace(".local/share/go", ".local/share/go-next")
+                            .replace(".cache/bun/install", ".cache/bun/install-next"))
+        self.command[self.command.index("--source") + 1] = str(snapshot)
+        updated = tomllib.loads(self.render())
+        for name in ("local-tool", "chrome-devtools"):
+            env = updated["mcp_servers"][name]["env"]
+            self.assertEqual(env["GOPATH"], str(self.home / ".local/share/go-next"))
+            self.assertEqual(env["BUN_INSTALL_CACHE_DIR"], str(self.home / ".cache/bun/install-next"))
+        self.assertEqual(updated["mcp_servers"]["local-tool"]["env"]["FIXTURE_SECRET"], "keep-local")
+
+    def test_optional_profile_can_override_shared_paths(self):
+        if not shutil.which("codex"):
+            self.skipTest("Codex is not installed")
+        self.target.write_text(self.render())
+        (self.target.parent / "local.config.toml").write_text(
+            '[mcp_servers.chrome-devtools.env]\nGOPATH = "/machine-local/go"\n')
+        result = subprocess.run([shutil.which("codex"), "--profile", "local", "mcp", "get",
+                                 "chrome-devtools", "--json"], env=self.env, cwd=self.home,
+                                capture_output=True, text=True, check=True, timeout=20)
+        self.assertEqual(json.loads(result.stdout)["transport"]["env"]["GOPATH"], "/machine-local/go")
 
     def test_init_preserves_explicit_agent_home_ownership(self):
         for enabled in (False, True):

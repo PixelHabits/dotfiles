@@ -132,7 +132,8 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 - No trusted parent roots. No credentials, sessions, databases, or local profile files in Git.
 - No `chezmoi add/re-add` generated Codex config. Edit source templates.
 - MCP drops most inherited env. Test actual child env; shell exports alone insufficient.
-- Per-server env overrides stay local. Profile/project/plugin MCP layers need own redirects.
+- Shared XDG keys overwrite old generated values. Unknown env keys stay local. Explicit path overrides belong in local profile.
+- Profile/project/plugin MCP layers need own redirects. Durable task scratch: `.local/state/codex/tmp/<task>`; `/tmp` stays ephemeral.
 - Optional `local.config.toml` alias only when file exists. Direct binary/GUI bypass alias.
 - Codex home env: sibling `home-env.toml.tmpl`; environment.d22 + zshenv20. Exclude all Codex files when `agent_home_managed`.
 - Ignore is not removal. Set ownership before first apply; existing redirects need explicit removal before ownership changes.

@@ -50,7 +50,9 @@ Codex filters environment variables before it starts a local MCP process.
 User services, Zsh, and command-based MCP servers render their defaults from that same table.
 The table covers Go, Bun, npm, Rust, and the other tools already redirected by this repository.
 Bun packages and its transpiler cache use separate directories under `~/.cache/bun`.
-Explicit environment values already set on a server take precedence over these defaults.
+The shared table owns its named environment keys, so later path changes also update existing installations.
+Other server environment keys, including credentials, remain local.
+For a machine-specific tool path, set that server's environment value in `local.config.toml` and select the local profile.
 Shell exports alone do not cross that process boundary.
 Codex directory values have their own small table and gated environment files.
 This keeps external agent-home ownership separate from general tool paths.
@@ -61,6 +63,15 @@ Servers from profiles, project configuration, or plugins can define separate env
 Set the same redirects in those server definitions if they launch package tools.
 The setup does not rewrite third-party plugin files or delete existing home directories.
 Chrome DevTools requires a browser when you use its tools.
+
+## Scratch work and reboots
+
+Codex session storage does not preserve arbitrary files that tools create under `/tmp`.
+The Claude scratch redirect does not cover Codex tasks.
+Use `~/.local/state/codex/tmp/<task>` for task scratch that must survive a reboot.
+Tell the agent that task path and use normal sandbox permissions when it needs access.
+This repository does not change global `TMPDIR` or promise to redirect every tool's temporary files.
+Existing sessions can reference absolute scratch paths, so preserve those files before rebooting and restore their original paths before resuming.
 
 ## Review and tests
 
@@ -74,7 +85,7 @@ python3 ~/.local/share/chezmoi/codex-config/tests/codex/test_config.py
 The tests require Python 3.11+, chezmoi, Zsh, and Codex.
 They use temporary home directories and no credentials.
 They test repeated updates, local trust, invalid TOML, profile selection, and development-machine gating.
-They also test external ownership, redirect parity, shell overrides, and installed package-tool cache paths.
+They also test external ownership, changed shared paths, local profile overrides, redirect parity, and installed package-tool cache paths.
 A local MCP fixture also tests the environment received from the installed Codex process.
 The fixture replaces real servers and points the model provider at an unused localhost port.
 It does not test account access, real tools, or a desktop browser.
