@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import tomllib
 import unittest
 
 SOURCE = Path(__file__).resolve().parents[1]
@@ -31,11 +32,12 @@ class ClaudeConfigTest(unittest.TestCase):
             'XDG_STATE_HOME': str(self.home / '.local/state'),
         }
 
-    def configure(self, dev=True, profile='work'):
+    def configure(self, dev=True, profile='work', agent_home_managed=False):
         self.config.write_text(
             '[data]\n' + f'dev = {str(dev).lower()}\nprofile = "{profile}"\n'
             'desktop = "none"\nform_factor = "server"\nhostname = "test"\n'
             'osid = "ubuntu"\nemail = "test@example.invalid"\n'
+            f'agent_home_managed = {str(agent_home_managed).lower()}\n'
         )
 
     def chezmoi(self, *args, stdin=None, check=True):
@@ -90,7 +92,7 @@ class ClaudeConfigTest(unittest.TestCase):
         script.write_text(shell + '\nprint -r -- "$CLAUDE_CONFIG_DIR|$CLAUDE_CODE_TMPDIR|$TMPDIR|$DO_NOT_TRACK"\n')
         env = self.env | {'TMPDIR': '/unchanged', 'DO_NOT_TRACK': '1'}
         result = subprocess.check_output(['zsh', '-f', str(script)], env=env, text=True)
-        self.assertEqual(result.strip(), f'{self.home}/.local/state/claude|{self.home}/.cache/claude/tmp|/unchanged|1')
+        self.assertEqual(result.strip(), f'{self.home}/.local/state/claude|{self.home}/.local/state/claude/tmp|/unchanged|1')
         env |= {'CLAUDE_CONFIG_DIR': '/custom/runtime', 'CLAUDE_CODE_TMPDIR': '/custom/scratch'}
         result = subprocess.check_output(['zsh', '-f', str(script)], env=env, text=True)
         self.assertEqual(result.strip(), '/custom/runtime|/custom/scratch|/unchanged|1')
@@ -106,6 +108,42 @@ class ClaudeConfigTest(unittest.TestCase):
                         self.assertEqual(path in paths, dev, path)
                     self.assertNotIn('claude.md', paths)
                     self.assertFalse(any(path.startswith('tests/') for path in paths))
+
+    def test_managed_agent_home_gating_and_init_persistence(self):
+        self.configure(agent_home_managed=True)
+        paths = self.chezmoi('managed').stdout.splitlines()
+        for prefix in ['.config/claude', '.local/state/claude',
+                       '.config/environment.d/20-claude.conf', '.config/zsh/zshenv.d/21-claude.zsh']:
+            self.assertFalse(any(path.startswith(prefix) for path in paths), prefix)
+        self.assertIn('.config/zsh/zshenv.d/06-xdg-apps.zsh', paths)
+        init = self.chezmoi('execute-template', '--init', (SOURCE / '.chezmoi.toml.tmpl').read_text()).stdout
+        self.assertTrue(tomllib.loads(init)['data']['agent_home_managed'])
+        self.assertEqual(tomllib.loads(init)['sourceDir'], str(SOURCE))
+        self.config.write_text(self.config.read_text().replace('agent_home_managed = true\n', ''))
+        init = self.chezmoi('execute-template', '--init', (SOURCE / '.chezmoi.toml.tmpl').read_text()).stdout
+        self.assertFalse(tomllib.loads(init)['data']['agent_home_managed'])
+
+    def test_bash_inherits_xdg_and_scratch_survives_reapply(self):
+        self.chezmoi('apply', '--exclude', 'scripts',
+                     str(self.home / '.config/claude'), str(self.home / '.local/state/claude'),
+                     str(self.home / '.config/zsh/zshenv.d/21-claude.zsh'))
+        scratch = self.home / '.local/state/claude/tmp/session/work.txt'
+        scratch.parent.mkdir(parents=True)
+        scratch.write_text('unfinished work')
+        self.chezmoi('apply', '--exclude', 'scripts', str(self.home / '.local/state/claude'))
+        self.assertEqual(scratch.read_text(), 'unfinished work')
+        script = self.home / '.config/zsh/zshenv.d/21-claude.zsh'
+        env = self.env | {'GOPATH': '/inherited/go', 'NPM_CONFIG_CACHE': '/inherited/npm'}
+        command = ['zsh', '-f', '-c', 'source "$1"; exec "$CLAUDE_CODE_SHELL" -c '\
+                   + "'printf \"%s|%s|%s|%s\" \"$BASH_VERSION\" \"$XDG_STATE_HOME\" \"$GOPATH\" \"$NPM_CONFIG_CACHE\"'", 'test', str(script)]
+        result = subprocess.check_output(command, env=env, text=True).split('|')
+        self.assertTrue(result[0])
+        self.assertEqual(result[1:], [str(self.home / '.local/state'), '/inherited/go', '/inherited/npm'])
+        env['CLAUDE_CODE_SHELL'] = '/custom/bash'
+        result = subprocess.check_output(['zsh', '-f', '-c',
+                                         'source "$1"; print -r -- "$CLAUDE_CODE_SHELL"',
+                                         'test', str(script)], env=env, text=True)
+        self.assertEqual(result.strip(), '/custom/bash')
 
     def test_native_plugin_writes_preserve_settings_symlink(self):
         claude = shutil.which('claude')
@@ -124,7 +162,7 @@ class ClaudeConfigTest(unittest.TestCase):
         (plugin / 'plugin.json').write_text(json.dumps({'name': 'fixture', 'version': '1.0.0'}))
         env = self.env | {
             'CLAUDE_CONFIG_DIR': str(self.home / '.local/state/claude'),
-            'CLAUDE_CODE_TMPDIR': str(self.home / '.cache/claude/tmp'),
+            'CLAUDE_CODE_TMPDIR': str(self.home / '.local/state/claude/tmp'),
             'DO_NOT_TRACK': '1', 'DISABLE_AUTOUPDATER': '1',
             'ANTHROPIC_BASE_URL': 'http://127.0.0.1:9',
         }
