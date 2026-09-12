@@ -11,6 +11,9 @@
 {{- $profile := promptStringOnce . "profile" "Machine profile (work/personal)" -}}
 {{- $dev := promptBoolOnce . "dev" "Development machine" -}}
 
+# Keep the worktree selected by --source when this file is regenerated.
+sourceDir = {{ .chezmoi.sourceDir | quote }}
+
 [data]
   osid = {{ $osid | quote }}
   hostname = {{ .chezmoi.hostname | quote }}

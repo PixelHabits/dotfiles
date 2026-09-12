@@ -5,6 +5,7 @@ ansible/
 post-install/
 AGENTS.md
 README.md
+worktrees.md
 zsh-dotfile-architecture.md
 workstation-bootstrap.md
 .config/nvim/nvim-pack-lock.json
