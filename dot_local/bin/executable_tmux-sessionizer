@@ -56,15 +56,17 @@ label=$(printf '%s' "${selected##*/}" | tr -c '[:alnum:]_-' '-')
 session_name="${label:-project}-${checksum%% *}"
 
 if tmux has-session -t "=$session_name" 2>/dev/null; then
-    existing=$(tmux show-options -v -t "=$session_name" @project_path 2>/dev/null || true)
+    session_id=$(tmux display-message -p -t "=$session_name:" '#{session_id}')
+    [[ $session_id == \$* ]] || { printf 'Cannot resolve session: %s\n' "$session_name" >&2; exit 1; }
+    existing=$(tmux show-options -v -t "$session_id" @project_path 2>/dev/null || true)
     [[ $existing == "$selected" ]] || { printf 'Session name collision: %s\n' "$session_name" >&2; exit 1; }
 else
-    tmux new-session -ds "$session_name" -c "$selected"
-    tmux set-option -t "=$session_name" @project_path "$selected"
+    session_id=$(tmux new-session -P -F '#{session_id}' -ds "$session_name" -c "$selected")
+    tmux set-option -t "$session_id" @project_path "$selected"
 fi
 
 if [[ -n ${TMUX:-} ]]; then
-    tmux switch-client -t "=$session_name"
+    tmux switch-client -t "$session_id"
 else
-    tmux attach-session -t "=$session_name"
+    tmux attach-session -t "$session_id"
 fi
