@@ -1,0 +1,4 @@
+{{- $home := .chezmoi.homeDir -}}
+# environment.d is primary; fill unset values for other sessions.
+export CLAUDE_CONFIG_DIR="${CLAUDE_CONFIG_DIR:-{{ $home }}/.local/state/claude}"
+export CLAUDE_CODE_TMPDIR="${CLAUDE_CODE_TMPDIR:-{{ $home }}/.cache/claude/tmp}"
