@@ -87,13 +87,12 @@ button:hover {
 #network,
 #pulseaudio,
 #wireplumber,
-#custom-media,
+#mpris,
 #tray,
 #mode,
 #idle_inhibitor,
 #scratchpad,
-#power-profiles-daemon,
-#mpd {
+#power-profiles-daemon {
     padding: 0 10px;
     color: #ffffff;
 }
@@ -212,17 +211,17 @@ label:focus {
     background-color: #f53c3c;
 }
 
-#custom-media {
+#mpris {
     background-color: #66cc99;
     color: #2a5c45;
     min-width: 100px;
 }
 
-#custom-media.custom-spotify {
+#mpris.spotify {
     background-color: #66cc99;
 }
 
-#custom-media.custom-vlc {
+#mpris.vlc {
     background-color: #ffa000;
 }
 
@@ -254,23 +253,6 @@ label:focus {
 #idle_inhibitor.activated {
     background-color: #ecf0f1;
     color: #2d3436;
-}
-
-#mpd {
-    background-color: #66cc99;
-    color: #2a5c45;
-}
-
-#mpd.disconnected {
-    background-color: #f53c3c;
-}
-
-#mpd.stopped {
-    background-color: #90b1b1;
-}
-
-#mpd.paused {
-    background-color: #51a37a;
 }
 
 #language {
