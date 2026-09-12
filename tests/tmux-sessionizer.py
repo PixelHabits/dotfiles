@@ -13,9 +13,11 @@ state=Path(os.environ['STATE']); sessions=json.loads(state.read_text()) if state
 a=sys.argv[1:]
 with open(os.environ['CALLS'],'a') as log: log.write(json.dumps(a)+'\n')
 if a[0]=='has-session': sys.exit(0 if a[-1].lstrip('=') in sessions else 1)
-if a[0]=='new-session': sessions[a[2]]=None
-if a[0]=='set-option': sessions[a[2].lstrip('=')]=a[-1]
-if a[0]=='show-options': print(sessions.get(a[3].lstrip('='),''))
+if a[0]=='new-session':
+    name=a[a.index('-ds')+1]; sessions[name]=None; print('$'+name)
+if a[0]=='display-message': print('$'+a[a.index('-t')+1].strip('=:'))
+if a[0]=='set-option': sessions[a[2].lstrip('$')]=a[-1]
+if a[0]=='show-options': print(sessions.get(a[3].lstrip('$'),''))
 state.write_text(json.dumps(sessions))
 """)
     stub.chmod(0o755)
@@ -54,3 +56,21 @@ state.write_text(json.dumps(sessions))
     (tools/'fd').unlink();(tools/'fd').write_text('#!/bin/sh\nexit 42\n');(tools/'fd').chmod(0o755)
     assert run().returncode==42
 print('PASS: session routing, path collisions, ignored worktree discovery, finder errors and picker cancellation/errors')
+
+# Use a native private server for command target semantics; intercept only client focus.
+import shutil
+real_tmux=shutil.which('tmux')
+with tempfile.TemporaryDirectory(prefix='tmux-native-') as directory:
+    home=Path(directory); tools=home/'bin'; tools.mkdir(); socket=home/'socket'
+    stub=tools/'tmux'
+    stub.write_text('#!/bin/sh\ncase "$1" in attach-session|switch-client) exit 0;; esac\nexec "$REAL_TMUX" -S "$TEST_SOCKET" "$@"\n')
+    stub.chmod(0o755)
+    env=dict(os.environ,HOME=str(home),ZDOTDIR=str(home),PATH=str(tools)+os.pathsep+os.environ['PATH'],REAL_TMUX=real_tmux,TEST_SOCKET=str(socket),TMUX='')
+    project=home/'main';project.mkdir()
+    try:
+        for _ in range(2):
+            subprocess.run(['bash',str(ROOT/'dot_local/bin/executable_tmux-sessionizer'),str(project)],env=env,check=True)
+        output=subprocess.check_output([real_tmux,'-S',str(socket),'list-sessions','-F','#{@project_path}'],env=env,text=True)
+        assert output.splitlines()==[str(project)],output
+    finally: subprocess.run([real_tmux,'-S',str(socket),'kill-server'],env=env,capture_output=True)
+print('PASS: native tmux creates and reuses metadata through session IDs')
