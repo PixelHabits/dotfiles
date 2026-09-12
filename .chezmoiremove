@@ -1,0 +1,6 @@
+{{- if eq .desktop "hyprland" }}
+.config/hypr/hyprland.conf
+.local/bin/omarchy-hyprland-window-pop
+.local/bin/omarchy-hyprland-window-close-all
+.local/bin/omarchy-hyprland-workspace-layout-toggle
+{{- end }}
