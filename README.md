@@ -1,62 +1,41 @@
-# dotfiles
+# Dotfiles
 
-Cross-platform dotfiles and machine provisioning via Chezmoi + Ansible.
+Chezmoi manages user configuration across machines.
+Ansible installs packages and configures system services.
 
-## Quick Start
+## Start here
 
-```bash
-# Arch
-sudo pacman -S --needed git chezmoi
-chezmoi init --apply PixelHabits
+Follow [Git worktrees and chezmoi](worktrees.md) to create a new machine setup.
+The repository uses `.bare` for Git history and separate directories for each branch.
+Use `main` for reviewed changes and `dev` for uncommitted work.
 
-# macOS (requires Homebrew)
-brew install chezmoi
-chezmoi init --apply PixelHabits
+Chezmoi asks for these machine choices:
 
-# Ubuntu
-sudo apt update
-sudo apt install -y git chezmoi
-chezmoi init --apply PixelHabits
+- Email address for Git
+- Desktop environment
+- Laptop, desktop, or server
+- Work or personal profile
+- Development tools
 
-# Fedora
-sudo dnf install -y git chezmoi
-chezmoi init --apply PixelHabits
-```
+Chezmoi can run Ansible after it deploys files.
+On Arch, Ansible asks to add CachyOS repositories when those repositories are absent.
 
-On Arch, Ansible prompts to update pacman repositories with the CachyOS repo
-script when CachyOS repositories are missing.
+## Common tasks
 
-You'll be prompted for:
-- **Email** — for git config
-- **Desktop** — `hyprland` or `none`
-- **Profile** — `work` or `personal`
-
-Ansible runs automatically after dotfiles deploy.
-
-## Common Operations
-
-```bash
-# Edit and apply a config
-chezmoi edit ~/.config/zsh/zshrc.d/40-aliases.zsh
-chezmoi apply
-
-# Add a package (edit ansible/site.yml, then apply)
-chezmoi cd
-nvim ansible/site.yml
-chezmoi apply
-
-# Change machine identity
-chezmoi init --prompt
-chezmoi apply
-
-# Debug zsh startup
-ZSH_BOOT_DEBUG=1 zsh
-```
+| Task | Command |
+| --- | --- |
+| Show the selected source | `chezmoi execute-template '{{ .chezmoi.sourceDir }}'` |
+| Review the selected source | `chezmoi diff` |
+| Edit the selected source | `chezmoi edit ~/.config/zsh/zshrc.d/40-aliases.zsh` |
+| Deploy the selected source | `chezmoi apply` |
+| Review a feature | `chezmoi --source ~/.local/share/chezmoi/pwa-web-apps diff` |
+| Debug shell startup | `ZSH_BOOT_DEBUG=1 zsh` |
 
 ## Documentation
 
-| Doc | Purpose |
-|-----|---------|
-| [AGENTS.md](AGENTS.md) | Coding standards and conventions |
-| [workstation-bootstrap.md](workstation-bootstrap.md) | Chezmoi/Ansible architecture |
-| [zsh-dotfile-architecture.md](zsh-dotfile-architecture.md) | Shell configuration structure |
+| Document | Purpose |
+| --- | --- |
+| [Worktrees](worktrees.md) | Setup, source selection, and pull requests |
+| [Agent instructions](AGENTS.md) | Coding rules and worktree boundaries |
+| [Workstation bootstrap](workstation-bootstrap.md) | Chezmoi and Ansible responsibilities |
+| [Shell architecture](zsh-dotfile-architecture.md) | Shell configuration structure |

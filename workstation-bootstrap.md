@@ -13,11 +13,8 @@ They do not overlap. Chezmoi never installs packages. Ansible never touches dotf
 
 ## Bootstrap Commands
 
-| Platform | Command                                                                   |
-| -------- | ------------------------------------------------------------------------- |
-| Arch     | `sudo pacman -S --needed git chezmoi && chezmoi init --apply PixelHabits` |
-| macOS    | `brew install chezmoi && chezmoi init --apply PixelHabits`                |
-| Ubuntu   | `sudo apt install git chezmoi && chezmoi init --apply PixelHabits`        |
+Follow [Git worktrees and chezmoi](worktrees.md) for installation and initial setup.
+Select a worktree as the chezmoi source before you deploy files.
 
 On Arch, Ansible prompts to update pacman repositories with the CachyOS repo
 script when CachyOS repositories are missing. The interactive task runs the same
@@ -44,7 +41,8 @@ Set during `chezmoi init`, stored in `~/.config/chezmoi/chezmoi.toml`:
 | `form_factor` | laptop, desktop, server      | Hardware-specific tasks       |
 | `profile`     | work, personal               | Corporate vs personal configs |
 
-Re-prompt: `chezmoi init --prompt`
+To change machine choices, run `chezmoi init --prompt` from a source with the current template.
+Do not reinitialize the preserved `dev` snapshot. See [source selection](worktrees.md#select-the-live-source).
 
 ## Gating Matrix
 
@@ -110,7 +108,7 @@ manually after reviewing the PKGBUILD.
 | Add AUR package         | Install manually after reviewing the PKGBUILD                                      |
 | Add macOS cask          | Add to `macos_casks`                                                               |
 | Add XDG redirect        | Add absolute path to `environment.d/10-xdg.conf`; mirror as `${VAR:-/absolute/path}` fallback in `06-xdg-apps.zsh`; update `site.yml` only if Ansible needs it |
-| Re-run Ansible manually | `cd ~/.local/share/chezmoi/ansible && ansible-playbook site.yml --ask-become-pass` |
+| Re-run Ansible manually | `cd "$(chezmoi execute-template '{{ .chezmoi.sourceDir }}')/ansible" && ansible-playbook site.yml --ask-become-pass` |
 | Add host-specific file  | Create file, add gating in `.chezmoiignore`                                        |
 
 ## Chezmoi Gating
@@ -145,7 +143,8 @@ manually after reviewing the PKGBUILD.
 # site.yml hash: {{ include "ansible/site.yml" | sha256sum }}
 ```
 
-When any included file changes, the rendered script changes, triggering chezmoi to re-run Ansible. Dotfile-only edits do not trigger Ansible.
+When any included file changes, the rendered script changes, triggering chezmoi to re-run Ansible. Dotfile-only edits do not trigger Ansible when the source path stays the same.
+Changing the source worktree also changes the script and can trigger Ansible.
 
 ## Constraints
 
@@ -153,4 +152,4 @@ When any included file changes, the rendered script changes, triggering chezmoi 
 2. No inventory file — `connection: local` on the play
 3. Homebrew is a user prerequisite on macOS, not managed by Ansible
 4. `environment.d/10-xdg.conf` is primary; `06-xdg-apps.zsh` only fills unset values; `xdg_environment` is an Ansible-only subset
-5. The `run_onchange_` script re-runs Ansible only when Ansible files change
+5. The `run_onchange_` script runs again when its rendered contents change, including its source path

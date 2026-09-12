@@ -1,5 +1,20 @@
 # Coding Standards & Conventions
 
+## Git Worktrees
+
+- Layout: repo container `.bare/`, `main/`, `dev/`, feature dirs. Container not chezmoi source.
+- `main`: remote baseline plus reviewed commits. `dev`: preserved uncommitted WIP. Feature branches: scoped changes + PRs.
+- Preserve `dev` files/index. No stash, reset, clean, commit, or bulk copy into feature branch without user request.
+- Run Git from chosen worktree: `git -C <worktree> ...`. Repo admin: `git --git-dir=<container>/.bare ...`.
+- Chezmoi source = local config `sourceDir`. `cd` does not switch source. Always pass `chezmoi --source <worktree>` for feature commands.
+- Default stable source: `main`. This machine can select `dev` explicitly. Never assume active source.
+- Inspect source: `chezmoi execute-template '{{ .chezmoi.sourceDir }}'`.
+- `.chezmoi.toml.tmpl` preserves selected source on init. Old `dev` snapshot predates fix: avoid re-init there.
+- Worktrees share destination HOME and chezmoi state. Feature `apply` changes live files; review scoped diff first.
+- Ansible run-onchange includes source path. Worktree switch can trigger provisioning. For dotfile-only apply, pass exact targets + `--exclude scripts`.
+- New machine: follow `worktrees.md`. No `chezmoi init <repo>` into container.
+- Human docs: plain English. Agent instructions: terse, exact. Keep commands literal.
+
 ## Shell Scripts (zsh)
 ### Patterns
 ```zsh
