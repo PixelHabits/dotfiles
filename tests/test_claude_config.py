@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -105,6 +106,39 @@ class ClaudeConfigTest(unittest.TestCase):
                         self.assertEqual(path in paths, dev, path)
                     self.assertNotIn('claude.md', paths)
                     self.assertFalse(any(path.startswith('tests/') for path in paths))
+
+    def test_native_plugin_writes_preserve_settings_symlink(self):
+        claude = shutil.which('claude')
+        if not claude:
+            self.skipTest('Claude Code is not installed')
+        self.chezmoi('apply', '--exclude', 'scripts',
+                     str(self.home / '.config/claude'), str(self.home / '.local/state/claude'))
+        marketplace = self.root / 'marketplace'
+        (marketplace / '.claude-plugin').mkdir(parents=True)
+        plugin = marketplace / 'plugins/fixture/.claude-plugin'
+        plugin.mkdir(parents=True)
+        (marketplace / '.claude-plugin/marketplace.json').write_text(json.dumps({
+            'name': 'fixture', 'owner': {'name': 'Fixture'},
+            'plugins': [{'name': 'fixture', 'source': './plugins/fixture'}],
+        }))
+        (plugin / 'plugin.json').write_text(json.dumps({'name': 'fixture', 'version': '1.0.0'}))
+        env = self.env | {
+            'CLAUDE_CONFIG_DIR': str(self.home / '.local/state/claude'),
+            'CLAUDE_CODE_TMPDIR': str(self.home / '.cache/claude/tmp'),
+            'DO_NOT_TRACK': '1', 'DISABLE_AUTOUPDATER': '1',
+            'ANTHROPIC_BASE_URL': 'http://127.0.0.1:9',
+        }
+        for args in [['plugin', 'marketplace', 'add', str(marketplace)],
+                     ['plugin', 'install', 'fixture@fixture']]:
+            subprocess.run([claude, *args], cwd=self.root, env=env, check=True,
+                           text=True, capture_output=True, timeout=30)
+        runtime = self.home / '.local/state/claude/settings.json'
+        self.assertTrue(runtime.is_symlink())
+        settings = json.loads((self.home / '.config/claude/settings.json').read_text())
+        self.assertTrue(settings['enabledPlugins']['fixture@fixture'])
+        self.assertEqual(settings['attribution']['commit'], '')
+        self.chezmoi('apply', '--exclude', 'scripts', str(self.home / '.config/claude/settings.json'))
+        self.assertEqual(json.loads(runtime.read_text()), settings)
 
 
 if __name__ == '__main__':

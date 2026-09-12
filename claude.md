@@ -57,3 +57,5 @@ Explicit environment overrides remain supported, but this repository deploys its
 Run `python3 tests/test_claude_config.py` from the worktree.
 The tests use temporary homes and never apply files to the real home directory.
 They cover local setting preservation, invalid input, repeat applies, redirects, and development-machine gating.
+If Claude is installed, a local test plugin makes sure that native configuration writes preserve the symbolic link.
+The test uses no account and downloads no plugins.
