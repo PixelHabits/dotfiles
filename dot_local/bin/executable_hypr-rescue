@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Rescue a Hyprland session frozen after suspend/resume.
+# Root cause: a DRM pageflip submitted at suspend never completes (i915 s2idle),
+# aquamarine waits on it forever and rejects all further commits
+# ("Cannot commit when a page-flip is awaiting" in hyprland.log).
+# The fix is a full modeset: disable the wedged output, then reload the config.
+#
+# Symptom: lock screen frozen at lid-close time, nothing interactable.
+# Run from a spare TTY. The modeset kills hyprlock's lock surface; with
+# misc:allow_session_lock_restore the session stays locked with no client, so a
+# fresh hyprlock is started to take the lock over and accept the password.
+set -euo pipefail
+
+uid=$(id -u)
+
+# find the live Hyprland instance (stale signature dirs can linger)
+found=""
+for sig in $(ls -t "/run/user/$uid/hypr"); do
+    if HYPRLAND_INSTANCE_SIGNATURE=$sig hyprctl monitors >/dev/null 2>&1; then
+        found=$sig
+        break
+    fi
+done
+[ -n "$found" ] || { echo "no responsive Hyprland instance found" >&2; exit 1; }
+export HYPRLAND_INSTANCE_SIGNATURE=$found
+
+# make the wayland session active so Hyprland holds DRM master
+for s in $(loginctl list-sessions --no-legend | awk '{print $1}'); do
+    if [ "$(loginctl show-session "$s" -p Type --value)" = "wayland" ]; then
+        loginctl activate "$s"
+        break
+    fi
+done
+sleep 1
+
+# break the stuck pageflip: disable every output, then reload config to re-enable
+hyprctl monitors | awk '/^Monitor/ {print $2}' | while read -r mon; do
+    hyprctl keyword monitor "$mon, disable"
+done
+sleep 2
+hyprctl reload
+
+# the before_sleep dpms-off persists through the modeset on the internal panel
+# (externals wake via hotplug), so force every output back on
+sleep 1
+hyprctl dispatch dpms on
+
+# hyprlock loses its lock surface in the modeset but can keep spinning its
+# render loop at full CPU; its pid also makes hypridle's lock_cmd a no-op.
+# Replace it with a fresh instance that reclaims the orphaned session lock.
+pkill -9 -x hyprlock || true
+sleep 1
+WAYLAND_DISPLAY=$(ls "/run/user/$uid" | grep -m1 '^wayland-[0-9]*$') setsid -f hyprlock >/dev/null 2>&1
+
+echo "done - switch to the Hyprland TTY (Ctrl+Alt+F1) and enter your password"
