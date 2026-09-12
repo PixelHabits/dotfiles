@@ -19,6 +19,16 @@ class_regex="$2"
 shift 2
 launch_cmd=("$@")
 
+# JSON quotes are also Lua quotes for text without control characters.
+lua_string() {
+    jq -rn --arg value "$1" '
+        if ($value | explode | any(. < 32 or . == 127)) then
+            error("control characters are not allowed in workspace or monitor names")
+        else $value | @json end
+    '
+}
+workspace_literal=$(lua_string "name:$workspace")
+
 # Named app workspaces are soft-gated: the workspace is the source of truth.
 visible_monitor=$(
     hyprctl monitors -j | jq -r --arg workspace "$workspace" '
@@ -27,16 +37,15 @@ visible_monitor=$(
 )
 
 if [[ -n "$visible_monitor" ]]; then
-    response=$(hyprctl dispatch focusmonitor "$visible_monitor")
+    monitor_literal=$(lua_string "$visible_monitor")
+    response=$(hyprctl dispatch "hl.dsp.focus({ monitor = $monitor_literal })")
 else
-    response=$(hyprctl dispatch focusworkspaceoncurrentmonitor "name:$workspace")
+    response=$(hyprctl dispatch "hl.dsp.focus({ workspace = $workspace_literal, on_current_monitor = true })")
 fi
 [[ $response == ok ]] || { printf 'Hyprland rejected focus: %s\n' "$response" >&2; exit 1; }
 
-clients=$(hyprctl clients -j)
-matched=$(jq -r --arg workspace "$workspace" --arg class_regex "$class_regex" '
+if ! hyprctl clients -j | jq -e --arg workspace "$workspace" --arg class_regex "$class_regex" '
     any(.[]; .workspace.name == $workspace and (.class | test($class_regex)))
-' <<<"$clients")
-if [[ $matched != true ]]; then
+' >/dev/null; then
     "${launch_cmd[@]}"
 fi

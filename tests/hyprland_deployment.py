@@ -18,7 +18,7 @@ with tempfile.TemporaryDirectory(prefix='hypr-deploy-') as directory:
         base = ['chezmoi', '--config', str(config), '--source', str(ROOT), '--destination', str(destination),
                 '--persistent-state', str(temp / 'state.db'), '--cache', str(temp / 'cache')]
         if desktop == 'hyprland':
-            result = subprocess.run(base + ['apply', '--exclude', 'scripts'] + [str(folder / name) for name in ['hyprland.lua', 'pwa.lua', 'hyprland.conf', 'pwa.conf']], text=True, capture_output=True)
+            result = subprocess.run(base + ['apply', '--exclude', 'scripts'] + [str(folder / name) for name in ['hyprland.lua', 'pwa.lua', 'hypridle.conf', 'hyprland.conf', 'pwa.conf']], text=True, capture_output=True)
             assert result.returncode == 0, result.stderr
             assert not (folder / 'hyprland.conf').exists() and not (folder / 'pwa.conf').exists()
             assert (folder / 'hyprland.lua').exists() and (folder / 'pwa.lua').exists()

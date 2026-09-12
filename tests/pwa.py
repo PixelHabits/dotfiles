@@ -131,6 +131,8 @@ with open(os.environ['CALLS'], 'a') as log:
     log.write(json.dumps(sys.argv[1:]) + '\\n')
 if sys.argv[1] in ('monitors', 'clients'):
     print(os.environ[sys.argv[1].upper()])
+else:
+    print('ok')
 ''')
     stub.chmod(0o755)
     launch = bin_dir / 'launch'
@@ -148,10 +150,16 @@ if sys.argv[1] in ('monitors', 'clients'):
         run(['bash', str(ROOT / 'dot_local/bin/executable_hypr-workspace-app'),
              'mail', '^chrome-mail[.]google[.]com__.*$', str(launch)], env=env)
         operations = [json.loads(line) for line in calls.read_text().splitlines()]
-        expected_focus = ['dispatch', 'focusmonitor', 'DP-1'] if visible else [
-            'dispatch', 'focusworkspaceoncurrentmonitor', 'name:mail']
+        expected_focus = ['dispatch', 'hl.dsp.focus({ monitor = "DP-1" })'] if visible else [
+            'dispatch', 'hl.dsp.focus({ workspace = "name:mail", on_current_monitor = true })']
         assert expected_focus in operations
         assert launched.exists() == expected_launch
+    rejected_calls = temp / 'rejected-calls'
+    rejected = subprocess.run(['bash', str(ROOT / 'dot_local/bin/executable_hypr-workspace-app'),
+                               'mail\x01', '.*', str(launch)],
+                              env=dict(env, CALLS=str(rejected_calls)), capture_output=True, text=True)
+    assert rejected.returncode != 0 and 'control characters' in rejected.stderr
+    assert not rejected_calls.exists(), 'Rejected input must not contact Hyprland'
     print('PASS: launcher focuses visible/hidden workspaces and opens only when the matching app is absent')
 
 
