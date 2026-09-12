@@ -32,10 +32,19 @@ fi
 # Git log browser — browse commits with diff preview
 if require_cmd git && require_cmd fzf; then
   fgl() {
-    git log --oneline --graph --color=always --all |
+    local -a log_args=(--oneline --graph --color=always)
+
+    case "${1:-}" in
+      -a|--all)
+        log_args+=(--all)
+        shift
+        ;;
+    esac
+
+    git log "${log_args[@]}" "$@" |
       fzf --height=100% --ansi --no-sort \
         --prompt='commit > ' \
-        --header 'enter: view diff in popup, esc: quit' \
+        --header 'enter: view diff in popup, esc: quit, --all: include all refs' \
         --preview 'git show --color=always --stat $(echo {} | grep -oE "[a-f0-9]{7,}" | head -1)' \
         --bind 'enter:execute(git show --color=always $(echo {} | grep -oE "[a-f0-9]{7,}" | head -1) | less -R)'
   }
