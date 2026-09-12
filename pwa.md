@@ -1,54 +1,111 @@
 # Web app workspaces
 
-A web app opens a website without browser tabs, on a dedicated Hyprland workspace.
-Helium or another Chromium browser supplies the `--app` window.
+A web app opens a website in a browser window without tabs.
+These apps use Helium through the Hyprland `browser` setting.
+Another Chromium browser must support `--app` and compatible window classes.
+This setup does not install browser extensions or synchronize accounts.
 
 ## Shortcuts
 
-Hold Super and Shift, then press the category key.
+Hold Super and Shift, then press the app key:
 
-| Key | Category | Workspace |
+| Key | App | Workspace |
 | --- | --- | --- |
-| A | AI Chat | `chat` |
+| A | T3 Chat | `chat` |
 | E | Mail | `mail` |
 | M | Music | `music` |
-| L | Projects | `linear` |
-| T | Messages | `teams` |
-| G | GitHub | `github` |
-| N | Editor | Current workspace |
+| L | Linear | `linear` |
+| T | Teams | `teams` |
 
-Super + L locks the session.
-Workspace names stay stable when the provider changes.
+The shortcut selects the named workspace.
+If that workspace is visible on another monitor, the shortcut focuses that monitor.
+If the workspace contains the matching app, the launcher does not open another window.
+Otherwise, it opens the app.
+If you move the app to another workspace, the shortcut can open another window in its assigned workspace.
+Super + L still locks the session.
 
-## Machine choices
+## Choose services for a machine
 
-`chezmoi init` asks Hyprland machines to choose providers for AI Chat, Mail, Music, Projects, and Messages.
-It also asks for the Projects and GitHub landing URLs.
-Use a public home page, organization page, or repository page without query parameters.
-These answers stay in the local chezmoi configuration.
-Shared definitions contain no email address, account ID, or organization name.
+The profile supplies defaults when the machine does not contain an explicit choice:
 
-To change a choice, edit the existing `[data]` table in `~/.config/chezmoi/chezmoi.toml`:
+| Profile | Mail | Linear |
+| --- | --- | --- |
+| `work` | Outlook | Greenway Automotive |
+| `personal` | Gmail | Linear home |
+
+On Hyprland, initialization asks for the mail provider and Linear landing URL.
+Your answers stay in the local chezmoi configuration.
+A work machine can choose Gmail, and a personal machine can choose Outlook.
+Existing machines use the profile defaults until you select explicit values.
+Once saved, explicit values stay the same if you later change the profile.
+
+In `~/.config/chezmoi/chezmoi.toml`, add or change these keys inside the existing `[data]` section:
 
 ```toml
-ai_provider = "claude"
-mail_provider = "outlook"
-music_provider = "youtube"
-project_provider = "linear"
-chat_provider = "slack"
-project_url = "https://linear.app"
-github_url = "https://github.com"
+mail_provider = "gmail"
+linear_url = "https://linear.app/another-workspace"
 ```
 
-When changing the Projects provider, set its landing URL to a page on that provider's domain.
-Initialization preserves saved choices.
-The browser handles authentication after launch.
+Do not add a second `[data]` section.
+The Linear URL must use `https://linear.app` with an optional workspace path.
+Query parameters and fragments are not accepted.
+The browser uses its current profile and signed-in accounts.
+A different mail provider does not create a separate browser profile.
 
-## Add a provider
+## Review and deploy
 
-Add its public `host` and `url` under `pwa.providers.<workspace>` in `.chezmoidata/pwa.toml`.
-The resolver generates the matching window class from the same host.
-The provider then appears in the initialization choices.
-Chezmoi include files use `.tmpl` because their contents are templates.
+Before you start, read [source selection](worktrees.md#select-the-live-source).
+For the first switch from `.conf` to Lua, follow [Hyprland deployment](hyprland.md#first-deployment) before this routine update.
+Select the worktree that contains the changes you want to test.
 
-Run `uv run tests/pwa.py` to render the machine variants without opening an app.
+Review all four deployment targets:
+
+```sh
+chezmoi --source ~/.local/share/chezmoi/hyprland-lua-config diff \
+  ~/.config/hypr/hyprland.lua \
+  ~/.config/hypr/pwa.lua \
+  ~/.config/waybar/config.jsonc \
+  ~/.local/bin/hypr-workspace-app
+```
+
+The diff compares the selected worktree with your live files.
+Review all differences before you apply the Hyprland or Waybar configuration.
+For a trial with no Ansible run, use the same targets:
+
+```sh
+chezmoi --source ~/.local/share/chezmoi/hyprland-lua-config --exclude scripts apply \
+  ~/.config/hypr/hyprland.lua \
+  ~/.config/hypr/pwa.lua \
+  ~/.config/waybar/config.jsonc \
+  ~/.local/bin/hypr-workspace-app
+hyprctl reload
+pkill -USR2 -x waybar
+```
+
+These commands change your live desktop files.
+They do not change the default `sourceDir`.
+
+## Maintain the definitions
+
+| File | Responsibility |
+| --- | --- |
+| `.chezmoidata/pwa.toml` | App definitions, provider URL and class pairs, and profile defaults |
+| `.chezmoi.toml.tmpl` | Prompts and saved machine choices |
+| `.chezmoitemplates/pwa-apps.json` | Select the provider and resolve the app list |
+| `dot_config/hypr/pwa.lua.tmpl` | Generate shortcuts and window rules |
+| `dot_config/waybar/config.jsonc.tmpl` | Generate workspace icons |
+| `dot_local/bin/executable_hypr-workspace-app` | Focus or open the app |
+
+To add a mail provider, add its URL and window class pattern under `pwa.mailProviders`.
+The initialization prompt uses the provider names from that table.
+Use `hyprctl clients -j` to inspect the class of its app window.
+Make sure that the pattern matches the app, then run the tests.
+
+## Tests
+
+Run `python3 tests/pwa.py` from this worktree.
+The tests need Python 3.11 or later, chezmoi, Bash, and jq.
+If Hyprland is installed, the tests also parse the generated app configuration with Hyprland.
+The tests use temporary files and fake desktop commands.
+They do not open websites or apply files to your home directory.
+Browser sign-in and actual window creation still need a desktop trial.

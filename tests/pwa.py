@@ -1,11 +1,8 @@
-#!/usr/bin/env -S uv run --script
-# /// script
-# requires-python = ">=3.14"
-# dependencies = []
-# ///
-"""Render the PWA templates and check the generated hyprland/waybar/pwa output."""
+#!/usr/bin/env python3
+"""Render PWA variants and exercise the launcher without touching the desktop."""
 
 import json
+import os
 from pathlib import Path
 import re
 import shlex
@@ -13,11 +10,11 @@ import shutil
 import subprocess
 import tempfile
 import tomllib
+from hyprland_tools import capture, native_verify
 
 
 ROOT = Path(__file__).resolve().parents[1]
 HOME = Path.home()
-EXPECTED_APPS = {'chat', 'mail', 'music', 'linear', 'teams', 'github'}
 
 
 def run(args, **kwargs):
@@ -35,89 +32,136 @@ def jsonc(text):
     return json.loads(text)
 
 
-def render(temp, data):
+def render_tests(temp):
     config = temp / 'chezmoi.toml'
     config.write_text('''[data]
 email = "test@example.invalid"
 hostname = "test-host"
 osid = "arch"
 desktop = "hyprland"
-form_factor = "laptop"
+form_factor = "desktop"
 profile = "work"
 dev = true
 ''')
-    return ['chezmoi', '--config', str(config), '--source', str(ROOT),
-            '--persistent-state', str(temp / 'state.db'), '--cache', str(temp / 'cache'),
-            '--override-data', json.dumps(data)]
+    base = ['chezmoi', '--config', str(config), '--source', str(ROOT),
+            '--persistent-state', str(temp / 'state.db'), '--cache', str(temp / 'cache')]
 
+    def cm(data, *args):
+        return run(base + ['--override-data', json.dumps(data), *args])
 
-def test_hyprland_machine(temp):
-    base = render(temp, {})
-    pwa = run(base + ['cat', str(HOME / '.config/hypr/pwa.conf')])
-    hypr = run(base + ['cat', str(HOME / '.config/hypr/hyprland.conf')])
-    bar = jsonc(run(base + ['cat', str(HOME / '.config/waybar/config.jsonc')]))
+    cases = [
+        ({'profile': 'work'}, 'outlook.office.com', 'greenway-automotive'),
+        ({'profile': 'personal'}, 'mail.google.com', ''),
+        ({'profile': 'work', 'mail_provider': 'gmail',
+          'linear_url': 'https://linear.app/another-workspace'}, 'mail.google.com', 'another-workspace'),
+        ({'profile': 'personal', 'mail_provider': 'outlook'}, 'outlook.office.com', ''),
+    ]
+    for data, mail_host, workspace in cases:
+        pwa = cm(data, 'cat', str(HOME / '.config/hypr/pwa.lua'))
+        hypr = cm(data, 'cat', str(HOME / '.config/hypr/hyprland.lua'))
+        bar = jsonc(cm(data, 'cat', str(HOME / '.config/waybar/config.jsonc')))
+        captured = capture(temp, hypr, pwa)
+        bindings = [binding for binding in captured['binds']
+                    if binding['action']['name'] == 'hl.dsp.exec_cmd'
+                    and binding['action']['args'][0].startswith('hypr-workspace-app ')]
+        rules = {rule.get('workspace', ''): rule for rule in captured['rules'] if 'workspace' in rule}
+        icons = bar['hyprland/workspaces']['format-icons']
+        assert len(bindings) == 5
+        assert set(rules) == {'name:' + app for app in ['chat', 'mail', 'music', 'linear', 'teams']}
+        assert icons['linear'] == '◩' and 'notion' not in icons
+        for binding in bindings:
+            argv = shlex.split(binding['action']['args'][0])
+            app, pattern = argv[1:3]
+            assert app in icons
+            assert rules['name:' + app]['match']['class'] == pattern
+            host = mail_host if app == 'mail' else {
+                'chat': 't3.chat', 'music': 'music.youtube.com',
+                'linear': 'linear.app', 'teams': 'teams.microsoft.com',
+            }[app]
+            for profile in ['Default', 'Profile 2']:
+                assert re.fullmatch(pattern, f'chrome-{host}__some_path-{profile}'), (pattern, host)
+            assert not re.fullmatch(pattern, f'chrome-{host}.evil__-Default')
+            assert not re.fullmatch(pattern, 'helium-browser')
+            if app == 'mail':
+                assert mail_host in argv[-1]
+            if app == 'linear':
+                assert argv[-1] == '--app=https://linear.app' + (f'/{workspace}' if workspace else '')
+        all_keys = [binding['keys'] for binding in captured['binds']]
+        assert len(set(all_keys)) == len(all_keys), 'Duplicate shortcut'
+        lock = next(binding for binding in captured['binds'] if binding['keys'] == 'SUPER + L')
+        assert lock['action']['args'] == ['loginctl lock-session']
+        assert 'require("pwa")(mainMod, browser)' in hypr
+        if data['profile'] == 'personal':
+            assert 'greenway' not in pwa
+        native_verify(temp)
 
-    bindings = [line for line in pwa.splitlines() if line.startswith('bindd =')]
-    assert len(bindings) == len(EXPECTED_APPS)
-    assert set(re.findall(r'workspace = name:(\w+)', pwa)) == EXPECTED_APPS
-    assert EXPECTED_APPS <= bar['hyprland/workspaces']['format-icons'].keys()
-    assert 'bindd = $mainMod, L, Lock session' in hypr
-    assert 'SHIFT, N, Vim' in hypr and 'SHIFT, V, Vim' not in hypr
-    assert f'source = {HOME}/.config/hypr/pwa.conf' in hypr
+    for os_name in ['linux', 'darwin']:
+        paths = cm({'desktop': 'none', 'chezmoi': {'os': os_name}}, 'managed').splitlines()
+        assert not any(path.startswith(('.config/hypr/', '.config/waybar/')) or
+                       path == '.local/bin/hypr-workspace-app' for path in paths)
 
-    if shutil.which('Hyprland'):
-        rendered = temp / 'pwa.conf'
-        rendered.write_text('$mainMod = SUPER\n$browser = helium-browser\n' + pwa)
-        output = run(['Hyprland', '--verify-config', '--config', str(rendered)], cwd=temp)
-        assert 'config ok' in output, output
-    print('PASS: laptop/hyprland machine renders pwa.conf, hyprland.conf, and waybar with all apps')
-
-
-def test_non_hyprland_machine(temp):
-    base = render(temp, {'desktop': 'none'})
-    paths = run(base + ['managed']).splitlines()
-    assert not any(path.startswith(('.config/hypr/', '.config/waybar/')) or
-                   path == '.local/bin/hypr-workspace-app' for path in paths)
-    print('PASS: non-hyprland machine manages no hyprland or waybar files')
-
-
-def test_provider_choices(temp):
-    data = {'ai_provider': 'claude', 'mail_provider': 'proton', 'music_provider': 'apple',
-            'chat_provider': 'slack', 'project_provider': 'notion', 'project_url': 'https://www.notion.so',
-            'github_url': 'https://github.com/example-org'}
-    base = render(temp, data)
-    apps = json.loads(run(base + ['execute-template', '{{ includeTemplate "pwa-apps.json.tmpl" . }}']))
-    by_id = {app['workspace']: app for app in apps}
-    assert by_id['chat']['url'] == 'https://claude.ai'
-    assert by_id['mail']['host'] == 'mail.proton.me'
-    assert by_id['music']['host'] == 'music.apple.com'
-    assert by_id['teams']['host'] == 'app.slack.com'
-    assert by_id['github']['url'] == data['github_url']
-    for app in apps:
-        assert re.fullmatch(app['class'], f"chrome-{app['host']}__some_path-Profile 2")
-        assert not re.fullmatch(app['class'], f"chrome-{app['host']}.evil__-Default")
-    config = run(base + ['execute-template', '--init', '--file', str(ROOT / '.chezmoi.toml.tmpl')])
-    saved = tomllib.loads(config)['data']
-    assert all(saved[key] == value for key, value in data.items())
-    for bad in [{'ai_provider': 'unknown'}, {'github_url': 'https://evil.example'},
-                {'project_url': 'https://linear.app/work\nbind = bad'}]:
-        result = subprocess.run(render(temp, bad) + ['cat', str(HOME / '.config/hypr/pwa.conf')], capture_output=True)
+    for data in [{'mail_provider': 'unknown'}, {'linear_url': 'https://evil.example'},
+                 {'linear_url': 'https://linear.app/ok\nbind = bad'}]:
+        result = subprocess.run(base + ['--override-data', json.dumps(data), 'cat',
+                                       str(HOME / '.config/hypr/pwa.lua')], capture_output=True, text=True)
         assert result.returncode != 0
-    fresh = run(render(temp, {}) + ['execute-template', '--init', '--file', str(ROOT / '.chezmoi.toml.tmpl'),
-        '--promptChoice', 'AI Chat provider=chatgpt,Music provider=apple,Messages provider=discord,Projects provider=notion',
-        '--promptString', 'Projects landing URL=https://www.notion.so,GitHub landing URL=https://github.com/example-org'])
-    answers = tomllib.loads(fresh)['data']
-    assert answers['ai_provider'] == 'chatgpt' and answers['project_provider'] == 'notion'
-    assert answers['github_url'] == 'https://github.com/example-org'
-    assert 'greenway'  not in (ROOT / '.chezmoidata/pwa.toml').read_text().lower()
-    print('PASS: provider choices, host matching, saved initialization answers, and invalid URLs')
+        assert 'mail_provider' in result.stderr or 'linear_url' in result.stderr
+
+    # Simulate fresh initialization prompts, then preserve explicit choices on re-init.
+    template = (ROOT / '.chezmoi.toml.tmpl').read_text()
+    result = run(base + ['execute-template', '--init', '--promptChoice', 'Mail provider=gmail',
+                        '--promptString', 'Linear landing URL=https://linear.app/custom'], input=template)
+    parsed = tomllib.loads(result)
+    assert parsed['sourceDir'] == str(ROOT)
+    assert parsed['data']['mail_provider'] == 'gmail'
+    assert parsed['data']['linear_url'] == 'https://linear.app/custom'
+    config.write_text(result)
+    run(base + ['init'])
+    assert tomllib.loads(config.read_text()) == parsed
+    print('PASS: provider/profile rendering, matching, shortcuts, icons, gating, invalid input, and init persistence')
+
+
+def launcher_tests(temp):
+    bin_dir = temp / 'bin'
+    bin_dir.mkdir()
+    stub = bin_dir / 'hyprctl'
+    stub.write_text('''#!/usr/bin/env python3
+import json, os, sys
+with open(os.environ['CALLS'], 'a') as log:
+    log.write(json.dumps(sys.argv[1:]) + '\\n')
+if sys.argv[1] in ('monitors', 'clients'):
+    print(os.environ[sys.argv[1].upper()])
+''')
+    stub.chmod(0o755)
+    launch = bin_dir / 'launch'
+    launch.write_text('#!/usr/bin/env python3\nimport os\nopen(os.environ["LAUNCHED"], "w").write("yes")\n')
+    launch.chmod(0o755)
+    client = {'workspace': {'name': 'mail'}, 'class': 'chrome-mail.google.com__mail_u_0_-Profile 2'}
+    for i, (visible, clients, expected_launch) in enumerate([
+        (True, [client], False), (False, [client], False), (False, [], True),
+        (True, [{'workspace': {'name': 'mail'}, 'class': 'other-app'}], True),
+    ]):
+        calls, launched = temp / f'calls-{i}', temp / f'launch-{i}'
+        env = dict(os.environ, PATH=str(bin_dir) + os.pathsep + os.environ['PATH'],
+                   CALLS=str(calls), LAUNCHED=str(launched), CLIENTS=json.dumps(clients),
+                   MONITORS=json.dumps([{'name': 'DP-1', 'activeWorkspace': {'name': 'mail' if visible else '1'}}]))
+        run(['bash', str(ROOT / 'dot_local/bin/executable_hypr-workspace-app'),
+             'mail', '^chrome-mail[.]google[.]com__.*$', str(launch)], env=env)
+        operations = [json.loads(line) for line in calls.read_text().splitlines()]
+        expected_focus = ['dispatch', 'focusmonitor', 'DP-1'] if visible else [
+            'dispatch', 'focusworkspaceoncurrentmonitor', 'name:mail']
+        assert expected_focus in operations
+        assert launched.exists() == expected_launch
+    print('PASS: launcher focuses visible/hidden workspaces and opens only when the matching app is absent')
 
 
 if __name__ == '__main__':
-    if not shutil.which('chezmoi'):
-        raise SystemExit('Missing required command: chezmoi')
-    for test in [test_hyprland_machine, test_non_hyprland_machine, test_provider_choices]:
-        with tempfile.TemporaryDirectory(prefix='pwa-tests-') as directory:
-            test(Path(directory))
+    for command in ['chezmoi', 'bash', 'jq']:
+        if not shutil.which(command):
+            raise SystemExit(f'Missing required command: {command}')
+    with tempfile.TemporaryDirectory(prefix='pwa-tests-') as directory:
+        temp = Path(directory)
+        render_tests(temp)
+        launcher_tests(temp)
     if not shutil.which('Hyprland'):
         print('SKIP: native Hyprland parsing (Hyprland is not installed)')

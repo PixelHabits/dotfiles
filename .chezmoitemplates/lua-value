@@ -1,0 +1,12 @@
+{{- if kindIs "map" . -}}
+{ {{ range $key, $value := . }}[{{ includeTemplate "lua-value" $key }}] = {{ includeTemplate "lua-value" $value }}, {{ end }} }
+{{- else if kindIs "slice" . -}}
+{ {{ range . }}{{ includeTemplate "lua-value" . }}, {{ end }} }
+{{- else if kindIs "string" . -}}
+{{- /* Go quotes strings safely; Lua requires braces around Unicode escapes. Keep escaped backslashes intact. */ -}}
+{{- range regexFindAll `\\\\|\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8}|(?s:.)` (quote .) -1 -}}
+{{- if regexMatch `^\\[uU]` . -}}{{ printf "\\u{%s}" (substr 2 (len .) .) }}{{- else -}}{{ . }}{{- end -}}
+{{- end -}}
+{{- else -}}
+{{ . }}
+{{- end -}}
