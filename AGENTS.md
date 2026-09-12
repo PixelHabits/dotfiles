@@ -135,3 +135,12 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 - Codex home env: `.chezmoitemplates/codex/home-env.toml.tmpl` renders `environment.d/22-codex.conf` and `zshenv.d/20-codex.zsh`. Dev-gate config and redirects together.
 - Tests: `uv run tests/codex/test_config.py`. Python >=3.14 via PEP 723; temporary HOME only; no credentials or external MCP servers.
 - Human guide: `codex.md`.
+
+## Hyprland Recovery
+
+- Evidence + hardware test limits: `suspend-recovery.md`.
+- Monitor values: `.chezmoidata/hyprland.toml`; local override: `data.hyprland.monitors`.
+- No live suspend, lock, session activation, GPU changes, or helper execution during tests.
+- Mock tests: `python3 tests/test_hypr_rescue.py`.
+- Render tests: `python3 tests/test_suspend_templates.py`. Uses temporary config; Hyprland parse-only when available.
+- Driver workaround != verified fix. Preserve lock process; never select another user's session.
