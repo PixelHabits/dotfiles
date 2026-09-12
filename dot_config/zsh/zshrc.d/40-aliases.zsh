@@ -11,3 +11,5 @@ fi
 if require_cmd tmux; then
   alias t='tmux attach || tmux new -s main'
 fi
+
+alias claude='env -u DO_NOT_TRACK claude'
