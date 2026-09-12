@@ -1,51 +1,35 @@
-#!/bin/bash
-# Source: https://github.com/basecamp/omarchy
-# File:   bin/omarchy-hyprland-window-pop
-# Commit: 77fd86ae93648a16f40e1afcd3644ade4d67a725 (2025-11-25)
-#
-# Local changes: none
-
-# Toggle to pop-out a tile to stay fixed on a display basis.
-
-# Usage:
-# omarchy-hyprland-window-pop [width height [x y]]
-#
-# Arguments:
-#   width   Optional. Width of the floating window. Default: 1300
-#   height  Optional. Height of the floating window. Default: 900
-#   x       Optional. X position of the window. Must provide both X and Y to take effect.
-#   y       Optional. Y position of the window. Must provide both X and Y to take effect.
-#
-# Behavior:
-#   - If the window is already pinned, it will be unpinned and removed from the pop layer.
-#   - If the window is not pinned, it will be floated, resized, moved/centered, pinned, brought to top, and popped.
-
+#!/usr/bin/env bash
+# Float, size, position, and pin the current window; repeat to return it to tiling.
+# Usage: omarchy-hyprland-window-pop [width height [x y]]
+set -euo pipefail
+[[ $# -le 4 ]] || { printf 'Expected at most four numeric arguments\n' >&2; exit 2; }
 width=${1:-1300}
 height=${2:-900}
-x=${3:-}
-y=${4:-}
-
+x=${3:-0}
+y=${4:-0}
+[[ $width =~ ^[1-9][0-9]*$ && $height =~ ^[1-9][0-9]*$ && $x =~ ^-?[0-9]+$ && $y =~ ^-?[0-9]+$ ]] || exit 2
 active=$(hyprctl activewindow -j)
-pinned=$(echo "$active" | jq ".pinned")
-addr=$(echo "$active" | jq -r ".address")
-
-if [[ $pinned == "true" ]]; then
-  hyprctl -q --batch \
-    "dispatch pin address:$addr;" \
-    "dispatch togglefloating address:$addr;" \
-    "dispatch tagwindow -pop address:$addr;"
-elif [[ -n $addr ]]; then
-  hyprctl dispatch togglefloating address:$addr
-  hyprctl dispatch resizeactive exact $width $height address:$addr
-
-  if [[ -n $x && -n $y ]]; then
-    hyprctl dispatch moveactive $x $y address:$addr
-  else
-    hyprctl dispatch centerwindow address:$addr
-  fi
-
-  hyprctl -q --batch \
-    "dispatch pin address:$addr;" \
-    "dispatch alterzorder top address:$addr;" \
-    "dispatch tagwindow +pop address:$addr;"
+address=$(jq -er '.address // empty' <<<"$active") || exit 0
+[[ $address =~ ^0x[0-9a-fA-F]+$ ]] || exit 1
+pinned=$(jq -r '.pinned' <<<"$active")
+request() {
+    local response
+    response=$(hyprctl dispatch "$1")
+    [[ $response == ok ]] || { printf '%s\n' "$response" >&2; exit 1; }
+}
+if [[ $pinned == true ]]; then
+    request "hl.dsp.window.pin({ window = \"address:$address\" })"
+    request "hl.dsp.window.float({ window = \"address:$address\", action = \"toggle\" })"
+    request "hl.dsp.window.tag({ window = \"address:$address\", tag = \"-pop\" })"
+else
+    request "hl.dsp.window.float({ window = \"address:$address\", action = \"toggle\" })"
+    request "hl.dsp.window.resize({ window = \"address:$address\", x = $width, y = $height, relative = false })"
+    if [[ $# == 4 ]]; then
+        request "hl.dsp.window.move({ window = \"address:$address\", x = $x, y = $y, relative = true })"
+    else
+        request "hl.dsp.window.center({ window = \"address:$address\" })"
+    fi
+    request "hl.dsp.window.pin({ window = \"address:$address\" })"
+    request "hl.dsp.window.alter_zorder({ window = \"address:$address\", mode = \"top\" })"
+    request "hl.dsp.window.tag({ window = \"address:$address\", tag = \"+pop\" })"
 fi

@@ -41,7 +41,7 @@ print('error: rejected' if command == os.environ['FAILURE'] else 'ok')
     def test_single_instance_restores_without_session_or_process_mutation(self):
         result, calls = self.run_rescue()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(calls, [["-j", "instances"], ["-i", "mine", "reload"], ["-i", "mine", "dispatch", "dpms", "on"]])
+        self.assertEqual(calls, [["-j", "instances"], ["-i", "mine", "reload"], ['-i', 'mine', 'dispatch', 'hl.dsp.dpms({ action = "on" })']])
 
     def test_multiple_instances_require_selection(self):
         result, calls = self.run_rescue(instances=[{"instance": "a"}, {"instance": "b"}])
@@ -72,7 +72,7 @@ print('error: rejected' if command == os.environ['FAILURE'] else 'ok')
         self.assertNotIn("restore requested", result.stdout)
 
     def test_dpms_error_is_not_reported_as_success(self):
-        result, calls = self.run_rescue(failure="dispatch dpms on")
+        result, calls = self.run_rescue(failure='dispatch hl.dsp.dpms({ action = "on" })')
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(len(calls), 3)
 

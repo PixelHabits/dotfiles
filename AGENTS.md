@@ -148,4 +148,7 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 - Preserve binding flags, direction, follow behavior, descriptions, and lock commands.
 - Tests: `python3 tests/hyprland.py`, `python3 tests/pwa.py`, `python3 tests/test_suspend_templates.py`.
 - Initial format switch: follow `hyprland.md`; no live apply/reload during agent validation.
+- Lua IPC includes helpers, hypridle DPMS, and Waybar scroll. No legacy dispatch/keyword calls.
+- IPC tests: `python3 tests/hyprland_ipc.py`.
+- Waybar 0.15.0-3.1 native clicks lack Lua support. Keep migration draft until compatible build tested.
 - `.chezmoiremove`: exact old Hyprland/PWA files only; gate by desktop. Keep hypridle/hyprlock formats.
