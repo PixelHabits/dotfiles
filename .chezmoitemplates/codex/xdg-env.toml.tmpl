@@ -1,0 +1,13 @@
+{{- $home := .chezmoi.homeDir -}}
+XDG_CONFIG_HOME = {{ printf "%s/.config" $home | quote }}
+XDG_CACHE_HOME = {{ printf "%s/.cache" $home | quote }}
+XDG_DATA_HOME = {{ printf "%s/.local/share" $home | quote }}
+XDG_STATE_HOME = {{ printf "%s/.local/state" $home | quote }}
+GOPATH = {{ printf "%s/.local/share/go" $home | quote }}
+GOMODCACHE = {{ printf "%s/.cache/go/mod" $home | quote }}
+GOCACHE = {{ printf "%s/.cache/go/build" $home | quote }}
+BUN_INSTALL = {{ printf "%s/.local/share/bun" $home | quote }}
+BUN_INSTALL_CACHE_DIR = {{ printf "%s/.cache/bun/install" $home | quote }}
+NPM_CONFIG_USERCONFIG = {{ printf "%s/.config/npm/npmrc" $home | quote }}
+NPM_CONFIG_CACHE = {{ printf "%s/.cache/npm" $home | quote }}
+NODE_REPL_HISTORY = {{ printf "%s/.local/state/node/node_repl_history" $home | quote }}

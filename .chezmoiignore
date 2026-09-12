@@ -6,6 +6,8 @@ post-install/
 AGENTS.md
 README.md
 worktrees.md
+codex.md
+tests/codex/
 zsh-dotfile-architecture.md
 workstation-bootstrap.md
 .config/nvim/nvim-pack-lock.json
@@ -65,6 +67,8 @@ workstation-bootstrap.md
 # ════════════════════════════════════════════════════════════
 
 {{- if not .dev }}
+.config/codex/
+.config/zsh/zshenv.d/20-codex.zsh
 .config/zsh/zshrc.d/22-fnm.zsh
 {{- end }}
 
