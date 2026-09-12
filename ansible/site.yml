@@ -73,6 +73,8 @@
 
     distro_packages:
       Archlinux:
+        - bubblewrap
+        - socat
         - bun
         - fd
         - github-cli
@@ -85,12 +87,16 @@
         - ufw
         - uv
       Ubuntu:
+        - bubblewrap
+        - socat
         - neovim
         - fd-find
         - gh
         - man-db
         - ufw
       Fedora:
+        - bubblewrap
+        - socat
         - neovim
         - fd-find
         - gh
