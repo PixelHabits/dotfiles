@@ -4,6 +4,14 @@ Development machines share Codex preferences on both work and personal profiles.
 The configuration also works without a desktop.
 Chezmoi does not install Codex or sign in to an account.
 
+If another system owns your agent directories, set `agent_home_managed = true` under `[data]` in your local chezmoi configuration.
+For example, a preconfigured development host can maintain its own agent instructions and authentication paths.
+This option excludes the Codex configuration, directory redirects, and local-profile alias.
+General tool redirects remain enabled.
+Choose this option before the first apply.
+When changing ownership later, remove the old Codex redirects and restart the affected processes before using the externally managed installation.
+Ignoring a deployed file does not delete it or change an existing process environment.
+
 ## Shared and local values
 
 Edit shared preferences in `.chezmoitemplates/codex/shared.toml.tmpl`.
@@ -38,9 +46,14 @@ Codex does not provide separate XDG paths for every artifact.
 
 MCP connects Codex to external tools.
 Codex filters environment variables before it starts a local MCP process.
-The template supplies XDG, Go, Bun, and npm paths to every command-based server in the base configuration.
+`.chezmoitemplates/xdg-env.toml.tmpl` defines the shared tool paths.
+User services, Zsh, and command-based MCP servers render their defaults from that same table.
+The table covers Go, Bun, npm, Rust, and the other tools already redirected by this repository.
+Bun packages and its transpiler cache use separate directories under `~/.cache/bun`.
 Explicit environment values already set on a server take precedence over these defaults.
 Shell exports alone do not cross that process boundary.
+Codex directory values have their own small table and gated environment files.
+This keeps external agent-home ownership separate from general tool paths.
 
 The defaults keep Go downloads, Bun packages, and npm caches out of the home directory root.
 They apply when the server starts, including when Codex starts it before a shell runs.
@@ -61,6 +74,7 @@ python3 ~/.local/share/chezmoi/codex-config/tests/codex/test_config.py
 The tests require Python 3.11+, chezmoi, Zsh, and Codex.
 They use temporary home directories and no credentials.
 They test repeated updates, local trust, invalid TOML, profile selection, and development-machine gating.
+They also test external ownership, redirect parity, shell overrides, and installed package-tool cache paths.
 A local MCP fixture also tests the environment received from the installed Codex process.
 The fixture replaces real servers and points the model provider at an unused localhost port.
 It does not test account access, real tools, or a desktop browser.
@@ -71,3 +85,4 @@ It does not test account access, real tools, or a desktop browser.
 - [OpenAI profile files and state locations](https://learn.chatgpt.com/docs/config-file/config-advanced)
 - [OpenAI MCP configuration](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)
 - [Bun package cache](https://bun.com/docs/pm/global-cache)
+- [Bun transpiler cache](https://bun.com/docs/runtime/environment-variables)

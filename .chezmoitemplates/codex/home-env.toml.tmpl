@@ -1,0 +1,3 @@
+{{- $home := .chezmoi.homeDir -}}
+CODEX_HOME = {{ printf "%s/.config/codex" $home | quote }}
+CODEX_SQLITE_HOME = {{ printf "%s/.local/state/codex" $home | quote }}

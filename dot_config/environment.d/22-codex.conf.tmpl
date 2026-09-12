@@ -1,0 +1,4 @@
+# Codex directories. Excluded when another system manages the agent home.
+{{ range $name, $value := includeTemplate "codex/home-env.toml.tmpl" . | fromToml -}}
+{{ $name }}={{ $value }}
+{{ end -}}

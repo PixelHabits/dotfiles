@@ -81,10 +81,11 @@ Prefer: `profile` > `dev` > `desktop` > `os` > `hostname`
 | `XDG_STATE_HOME`  | Persistent non-config      | Config, data, cache    |
 
 ### Adding a New XDG Redirect
-1. Add absolute path to `environment.d/10-xdg.conf` as the primary runtime value
-2. Add matching fallback to `zshenv.d/06-xdg-apps.zsh` using `${VAR:-/absolute/path}`
-3. Add to `xdg_environment` in `ansible/site.yml` only when Ansible invokes that tool
-4. If tool has `bin/`, add PATH entry in `zshenv.d/10-path.zsh`
+1. Add absolute tool path to `.chezmoitemplates/xdg-env.toml.tmpl`.
+2. `environment.d/10-xdg.conf`, `zshenv.d/06-xdg-apps.zsh`, and Codex MCP share that map. Shell keeps existing values.
+3. Agent-home redirects use separate gated files. `agent_home_managed = true` leaves those homes externally owned.
+4. Add to `xdg_environment` in `ansible/site.yml` only when Ansible invokes that tool.
+5. If tool has `bin/`, add PATH entry in `zshenv.d/10-path.zsh`.
 
 ## Documentation
 
@@ -126,12 +127,14 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 
 ## Codex
 
-- Shared keys: `.chezmoitemplates/codex/shared.toml.tmpl`. XDG MCP defaults: sibling `xdg-env.toml.tmpl`.
+- Shared keys: `.chezmoitemplates/codex/shared.toml.tmpl`. Tool redirects: `.chezmoitemplates/xdg-env.toml.tmpl`.
 - Destination TOML = local keys + shared overrides. Preserve project trust, local MCPs, plugin metadata.
 - No trusted parent roots. No credentials, sessions, databases, or local profile files in Git.
 - No `chezmoi add/re-add` generated Codex config. Edit source templates.
 - MCP drops most inherited env. Test actual child env; shell exports alone insufficient.
 - Per-server env overrides stay local. Profile/project/plugin MCP layers need own redirects.
 - Optional `local.config.toml` alias only when file exists. Direct binary/GUI bypass alias.
+- Codex home env: sibling `home-env.toml.tmpl`; environment.d22 + zshenv20. Exclude all Codex files when `agent_home_managed`.
+- Ignore is not removal. Set ownership before first apply; existing redirects need explicit removal before ownership changes.
 - Tests: `python3 tests/codex/test_config.py`. Temporary HOME only; no live apply or real MCP startup.
 - Human guide: `codex.md`.

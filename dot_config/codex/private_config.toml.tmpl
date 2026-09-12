@@ -15,7 +15,7 @@
 {{-   end -}}
 {{- end -}}
 {{- $config := mergeOverwrite $local $shared -}}
-{{- $env := includeTemplate "codex/xdg-env.toml.tmpl" . | fromToml -}}
+{{- $env := omit (includeTemplate "xdg-env.toml.tmpl" . | fromToml) "ZDOTDIR" -}}
 {{- range $name, $server := $config.mcp_servers -}}
 {{-   if hasKey $server "command" -}}
 {{-     $serverEnv := mergeOverwrite (deepCopy $env) (get $server "env" | default dict) -}}
