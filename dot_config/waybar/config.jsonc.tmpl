@@ -1,3 +1,4 @@
+{{- $apps := includeTemplate "pwa-apps.json" . | fromJson -}}
 // -*- mode: jsonc -*-
 {
     // "layer": "top", // Waybar at top layer
@@ -61,11 +62,9 @@
 			"8": "8",
 			"9": "9",
 			"10": "10",
-			"chat": "",
-			"mail": "",
-			"music": "",
-			"notion": "",
-			"teams": "",
+{{- range $apps }}
+            {{ .workspace | toJson }}: {{ .icon | toJson }},
+{{- end }}
 			"default": ""
 		},
 	    "on-scroll-up": "hyprctl dispatch workspace e+1",

@@ -1,0 +1,20 @@
+{{- $provider := get . "mail_provider" | default (get .pwa.mailDefaults .profile) -}}
+{{- if not (hasKey .pwa.mailProviders $provider) -}}
+{{- fail (printf "Unknown mail_provider %q; choose a provider from .chezmoidata/pwa.toml" $provider) -}}
+{{- end -}}
+{{- $linearURL := get . "linear_url" | default (get .pwa.linearDefaults .profile) -}}
+{{- if not (regexMatch `^https://linear[.]app(/[-a-zA-Z0-9_/]*)?$` $linearURL) -}}
+{{- fail "linear_url must be https://linear.app or a Linear workspace URL without query parameters" -}}
+{{- end -}}
+{{- $apps := list -}}
+{{- range $id := .pwa.order -}}
+{{- $app := deepCopy (index $.pwa.apps $id) -}}
+{{- $_ := set $app "workspace" $id -}}
+{{- if eq $id "mail" -}}
+{{- $app = mergeOverwrite $app (index $.pwa.mailProviders $provider) -}}
+{{- else if eq $id "linear" -}}
+{{- $_ := set $app "url" $linearURL -}}
+{{- end -}}
+{{- $apps = append $apps $app -}}
+{{- end -}}
+{{- $apps | toJson -}}

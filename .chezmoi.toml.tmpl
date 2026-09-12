@@ -11,6 +11,18 @@
 {{- $profile := promptStringOnce . "profile" "Machine profile (work/personal)" -}}
 {{- $dev := promptBoolOnce . "dev" "Development machine" -}}
 
+{{- $pwa := (include ".chezmoidata/pwa.toml" | fromToml).pwa -}}
+{{- $mailChoices := list -}}
+{{- range $name, $_ := $pwa.mailProviders -}}
+{{- $mailChoices = append $mailChoices $name -}}
+{{- end -}}
+{{- $mailProvider := get . "mail_provider" | default (get $pwa.mailDefaults $profile) -}}
+{{- $linearURL := get . "linear_url" | default (get $pwa.linearDefaults $profile) -}}
+{{- if eq $desktop "hyprland" -}}
+{{- $mailProvider = promptChoiceOnce . "mail_provider" "Mail provider" $mailChoices $mailProvider -}}
+{{- $linearURL = promptStringOnce . "linear_url" "Linear landing URL" $linearURL -}}
+{{- end -}}
+
 # Keep the worktree selected by --source when this file is regenerated.
 sourceDir = {{ .chezmoi.sourceDir | quote }}
 
@@ -22,6 +34,8 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
   form_factor = {{ $formFactor | quote }}
   profile = {{ $profile | quote }}
   dev = {{ $dev }}
+  mail_provider = {{ $mailProvider | quote }}
+  linear_url = {{ $linearURL | quote }}
 
 {{- if and (hasKey . "hyprland") (or (hasKey .hyprland "monitors") (hasKey .hyprland "laptop_output")) }}
 
