@@ -1,0 +1,32 @@
+{{- $home := .chezmoi.homeDir -}}
+# Shared preferences. Machine-specific keys stay in the destination file.
+service_tier = "fast"
+model = "gpt-5.5"
+model_reasoning_effort = "xhigh"
+log_dir = {{ printf "%s/.local/state/codex/log" $home | quote }}
+sqlite_home = {{ printf "%s/.local/state/codex" $home | quote }}
+
+[marketplaces.caveman-repo]
+source_type = "git"
+source = "https://github.com/JuliusBrussee/caveman.git"
+
+[plugins."caveman@caveman-repo"]
+enabled = true
+
+[features]
+goals = true
+terminal_resize_reflow = true
+memories = true
+
+[notice]
+fast_default_opt_out = true
+
+[mcp_servers.Bun]
+url = "https://bun.com/docs/mcp"
+
+[mcp_servers.Bun.tools.search_bun]
+approval_mode = "approve"
+
+[mcp_servers.chrome-devtools]
+command = "bunx"
+args = ["chrome-devtools-mcp@latest"]

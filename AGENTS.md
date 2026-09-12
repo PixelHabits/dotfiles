@@ -123,3 +123,15 @@ ansible-playbook site.yml --syntax-check
 # Run specific Ansible tags
 ansible-playbook site.yml --tags cli --ask-become-pass
 ```
+
+## Codex
+
+- Shared keys: `.chezmoitemplates/codex/shared.toml.tmpl`. XDG MCP defaults: sibling `xdg-env.toml.tmpl`.
+- Destination TOML = local keys + shared overrides. Preserve project trust, local MCPs, plugin metadata.
+- No trusted parent roots. No credentials, sessions, databases, or local profile files in Git.
+- No `chezmoi add/re-add` generated Codex config. Edit source templates.
+- MCP drops most inherited env. Test actual child env; shell exports alone insufficient.
+- Per-server env overrides stay local. Profile/project/plugin MCP layers need own redirects.
+- Optional `local.config.toml` alias only when file exists. Direct binary/GUI bypass alias.
+- Tests: `python3 tests/codex/test_config.py`. Temporary HOME only; no live apply or real MCP startup.
+- Human guide: `codex.md`.

@@ -1,0 +1,27 @@
+{{- $path := joinPath .chezmoi.homeDir ".config/codex/config.toml" -}}
+{{- $local := dict -}}
+{{- if stat $path -}}
+{{-   $local = include $path | fromToml -}}
+{{- end -}}
+{{- $shared := includeTemplate "codex/shared.toml.tmpl" . | fromToml -}}
+{{- /* A different connection must not inherit credentials or transport keys. */ -}}
+{{- range $name, $server := $shared.mcp_servers -}}
+{{-   $old := get (get $local "mcp_servers" | default dict) $name | default dict -}}
+{{-   $oldIdentity := pick $old "command" "args" "url" -}}
+{{-   $newIdentity := pick $server "command" "args" "url" -}}
+{{-   if and $oldIdentity (not (deepEqual $oldIdentity $newIdentity)) -}}
+{{-     $replacement := mergeOverwrite (deepCopy $server) (pick $old "enabled") -}}
+{{-     $_ := set $local.mcp_servers $name $replacement -}}
+{{-   end -}}
+{{- end -}}
+{{- $config := mergeOverwrite $local $shared -}}
+{{- $env := includeTemplate "codex/xdg-env.toml.tmpl" . | fromToml -}}
+{{- range $name, $server := $config.mcp_servers -}}
+{{-   if hasKey $server "command" -}}
+{{-     $serverEnv := mergeOverwrite (deepCopy $env) (get $server "env" | default dict) -}}
+{{-     $_ := set $server "env" $serverEnv -}}
+{{-   end -}}
+{{- end -}}
+# Shared keys are managed by chezmoi. Other keys remain local.
+# Edit shared preferences in .chezmoitemplates/codex/shared.toml.tmpl.
+{{ $config | toToml }}

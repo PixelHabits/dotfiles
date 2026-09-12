@@ -8,6 +8,8 @@ README.md
 worktrees.md
 xdg.md
 tests/
+codex.md
+tests/codex/
 zsh-dotfile-architecture.md
 workstation-bootstrap.md
 .config/nvim/nvim-pack-lock.json
@@ -67,6 +69,8 @@ workstation-bootstrap.md
 # ════════════════════════════════════════════════════════════
 
 {{- if not .dev }}
+.config/codex/
+.config/zsh/zshenv.d/20-codex.zsh
 .config/zsh/zshrc.d/22-fnm.zsh
 {{- end }}
 
