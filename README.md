@@ -35,6 +35,7 @@ On Arch, Ansible asks to add CachyOS repositories when those repositories are ab
 
 | Document | Purpose |
 | --- | --- |
+| [Web app workspaces](pwa.md) | App shortcuts and per-machine providers |
 | [Worktrees](worktrees.md) | Setup, source selection, and pull requests |
 | [Agent instructions](AGENTS.md) | Coding rules and worktree boundaries |
 | [Workstation bootstrap](workstation-bootstrap.md) | Chezmoi and Ansible responsibilities |
