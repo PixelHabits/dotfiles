@@ -11,6 +11,9 @@ Chezmoi combines them with the existing `~/.config/codex/config.toml`.
 Shared keys take precedence. Other keys remain local.
 This preserves trusted projects, untrusted projects, local tools, and plugin metadata.
 A new machine starts without trusted projects.
+If a shared server changes its command, arguments, or URL, chezmoi replaces that server definition.
+This removes old credentials and incompatible connection keys before the new server starts.
+An explicit `enabled = false` stays in place.
 
 The template parses TOML, the configuration file format.
 It rewrites formatting and removes comments from the destination file.

@@ -99,6 +99,30 @@ EXAMPLE_SETTING = "keep"
         self.assertNotIn("codex.md", managed)
         self.assertFalse(any(path.startswith("tests/codex") for path in managed))
 
+    def test_shared_server_identity_changes_drop_old_connections(self):
+        for existing in [
+            '[mcp_servers.Bun]\ncommand = "example"\nargs = ["x"]\nenabled = false\n'
+            '[mcp_servers.Bun.env]\nPRIVATE_SETTING = "fixture"\n',
+            '[mcp_servers.chrome-devtools]\nurl = "https://example.invalid"\nenabled = false\n'
+            '[mcp_servers.chrome-devtools.http_headers]\nAuthorization = "fixture"\n',
+            '[mcp_servers.Bun]\nurl = "https://example.invalid"\nenabled = false\n'
+            '[mcp_servers.Bun.http_headers]\nAuthorization = "fixture"\n',
+        ]:
+            with self.subTest(existing=existing):
+                self.target.write_text(existing)
+                rendered = self.render()
+                self.assertNotIn("PRIVATE_SETTING", rendered)
+                self.assertNotIn("Authorization", rendered)
+                self.assertNotIn("https://example.invalid", rendered)
+                self.target.write_text(rendered)
+                value = tomllib.loads(rendered)
+                name = "chrome-devtools" if "chrome-devtools" in existing else "Bun"
+                self.assertFalse(value["mcp_servers"][name]["enabled"])
+                if shutil.which("codex"):
+                    subprocess.run([shutil.which("codex"), "mcp", "list", "--json"],
+                                   env=self.env, cwd=self.home, capture_output=True,
+                                   text=True, check=True, timeout=20)
+
     def test_optional_local_profile_alias(self):
         script = SOURCE / "dot_config/zsh/zshenv.d/20-codex.zsh"
         command = [shutil.which("zsh"), "-f", "-c",
