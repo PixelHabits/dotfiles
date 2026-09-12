@@ -10,6 +10,8 @@ with tempfile.TemporaryDirectory(prefix="waybar-tests-") as temp:
         data=json.loads(text)
         assert ('battery' in data['modules-right']) == (form=='laptop')
         assert ('backlight' in data['modules-right']) == (form=='laptop')
+        assert 'custom/media' not in data and 'exec' not in data['mpris']
+        assert data['mpris']['format'] == '{player_icon} {dynamic}'
         assert 'mpd' not in data and 'sway/language' not in data['modules-right']
         assert 'timezone' not in data['clock']
         assert data['hyprland/submap']['format']=='<span style="italic">{}</span>'
