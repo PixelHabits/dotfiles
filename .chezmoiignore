@@ -7,6 +7,8 @@ AGENTS.md
 README.md
 worktrees.md
 xdg.md
+suspend-recovery.md
+pwa.md
 tests/
 codex.md
 tests/codex/
@@ -51,6 +53,7 @@ workstation-bootstrap.md
 .config/waybar/
 .local/bin/omarchy-*
 .local/bin/hypr-rescue
+.local/bin/hypr-workspace-app
 {{- end }}
 
 # ── Any desktop (exclude from CLI/server) ───────────────────
