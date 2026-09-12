@@ -39,6 +39,12 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 
 {{- if and (hasKey . "hyprland") (hasKey .hyprland "monitors") }}
 
+{{ if eq (len .hyprland.monitors) 0 }}
 [data.hyprland]
-  monitors = {{ .hyprland.monitors | toJson }}
+monitors = []
+{{ end }}
+{{ range .hyprland.monitors }}
+{{ if not (kindIs "map" .) }}{{ fail "hyprland.monitors must contain tables; see hyprland.md" }}{{ end -}}
+[[data.hyprland.monitors]]
+{{ . | toToml }}{{ end }}
 {{- end }}

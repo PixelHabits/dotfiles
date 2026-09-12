@@ -1,0 +1,4 @@
+{{- if eq .desktop "hyprland" }}
+.config/hypr/hyprland.conf
+.config/hypr/pwa.conf
+{{- end }}

@@ -9,7 +9,7 @@
 # site.yml pre_tasks builds the correct list per GPU generation.
 # This role has zero Nvidia awareness.
 #
-# Nvidia env vars belong in hyprland.conf, NOT zsh dotfiles.
+# Nvidia env vars belong in hyprland.lua, NOT zsh dotfiles.
 # ============================================================
 
 - name: Skip Hyprland role on non-Arch systems

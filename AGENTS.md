@@ -59,7 +59,7 @@ zwarn "missing: $tool"
 - Catalog: `.chezmoidata/pwa.toml`. Machine choices: `mail_provider`, `linear_url` in local chezmoi `[data]`.
 - Resolver: `.chezmoitemplates/pwa-apps.json`. Hyprland bindings/rules + Waybar icons consume same result.
 - Provider URL + class travel together. Match domain + any app path/profile. Do not embed account slugs in rules.
-- Keep named workspace IDs stable. App launch uses Chromium `--app`, current `$browser` profile.
+- Keep named workspace IDs stable. App launch uses Chromium `--app`, current `browser` profile.
 - Gate helper + desktop files in `.chezmoiignore`. No desktop checks inside helper.
 - Run `python3 tests/pwa.py`. Tests use temp files + fake desktop commands; no live apply.
 
@@ -140,3 +140,12 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 - Mock tests: `python3 tests/test_hypr_rescue.py`.
 - Render tests: `python3 tests/test_suspend_templates.py`. Uses temporary config; Hyprland parse-only when available.
 - Driver workaround != verified fix. Preserve lock process; never select another user's session.
+
+## Native Hyprland Lua
+
+- Entrypoint: `dot_config/hypr/hyprland.lua.tmpl`. PWA module: `pwa.lua.tmpl`. Native `hl.*` calls only.
+- Match installed Hyprland API. Reference version: 0.56.2. No legacy parser at runtime.
+- Preserve binding flags, direction, follow behavior, descriptions, and lock commands.
+- Tests: `python3 tests/hyprland.py`, `python3 tests/pwa.py`, `python3 tests/test_suspend_templates.py`.
+- Initial format switch: follow `hyprland.md`; no live apply/reload during agent validation.
+- `.chezmoiremove`: exact old Hyprland/PWA files only; gate by desktop. Keep hypridle/hyprlock formats.

@@ -1,7 +1,7 @@
 # Web app workspaces
 
 A web app opens a website in a browser window without tabs.
-These apps use Helium through the Hyprland `$browser` setting.
+These apps use Helium through the Hyprland `browser` setting.
 Another Chromium browser must support `--app` and compatible window classes.
 This setup does not install browser extensions or synchronize accounts.
 
@@ -55,14 +55,15 @@ A different mail provider does not create a separate browser profile.
 ## Review and deploy
 
 Before you start, read [source selection](worktrees.md#select-the-live-source).
+For the first switch from `.conf` to Lua, follow [Hyprland deployment](hyprland.md#first-deployment) before this routine update.
 Select the worktree that contains the changes you want to test.
 
 Review all four deployment targets:
 
 ```sh
-chezmoi --source ~/.local/share/chezmoi/pwa-web-apps diff \
-  ~/.config/hypr/hyprland.conf \
-  ~/.config/hypr/pwa.conf \
+chezmoi --source ~/.local/share/chezmoi/hyprland-lua-config diff \
+  ~/.config/hypr/hyprland.lua \
+  ~/.config/hypr/pwa.lua \
   ~/.config/waybar/config.jsonc \
   ~/.local/bin/hypr-workspace-app
 ```
@@ -72,9 +73,9 @@ Review all differences before you apply the Hyprland or Waybar configuration.
 For a trial with no Ansible run, use the same targets:
 
 ```sh
-chezmoi --source ~/.local/share/chezmoi/pwa-web-apps --exclude scripts apply \
-  ~/.config/hypr/hyprland.conf \
-  ~/.config/hypr/pwa.conf \
+chezmoi --source ~/.local/share/chezmoi/hyprland-lua-config --exclude scripts apply \
+  ~/.config/hypr/hyprland.lua \
+  ~/.config/hypr/pwa.lua \
   ~/.config/waybar/config.jsonc \
   ~/.local/bin/hypr-workspace-app
 hyprctl reload
@@ -91,7 +92,7 @@ They do not change the default `sourceDir`.
 | `.chezmoidata/pwa.toml` | App definitions, provider URL and class pairs, and profile defaults |
 | `.chezmoi.toml.tmpl` | Prompts and saved machine choices |
 | `.chezmoitemplates/pwa-apps.json` | Select the provider and resolve the app list |
-| `dot_config/hypr/pwa.conf.tmpl` | Generate shortcuts and window rules |
+| `dot_config/hypr/pwa.lua.tmpl` | Generate shortcuts and window rules |
 | `dot_config/waybar/config.jsonc.tmpl` | Generate workspace icons |
 | `dot_local/bin/executable_hypr-workspace-app` | Focus or open the app |
 

@@ -1,13 +1,13 @@
 [hyprland]
-default_monitors = [", preferred, auto, auto"]
+default_monitors = [{ output = "", mode = "preferred", position = "auto", scale = "auto" }]
 
-# Physical monitor layouts are hardware-specific. Local data can override monitors.
+# Hardware-specific layouts. Local data.hyprland.monitors overrides the selected profile.
 [hyprland.monitor_profiles]
 GAM-DEV001 = [
-  "desc:Dell Inc. Dell AW3821DW, 3840x1600@120.00, auto-center-up, auto, vrr, 1, bitdepth, 10",
-  "desc:Samsung Display Corp. ATNA60KA02, 3200x2000@120.00, auto-center-down, 1.25, vrr, 1, bitdepth, 10, cm, dcip3",
-  "desc:Dell Inc. DELL P2422H 1YT5CV3, preferred, 0x0, 1",
-  "desc:Dell Inc. DELL P2422H 10W9CV3, preferred, 1920x0, 1",
-  "desc:LG Electronics LG TV SSCR2 0x01010101, 1920x1080@60.00, auto-center-up, auto",
-  ", preferred, auto, auto",
+  { output = "desc:Dell Inc. Dell AW3821DW", mode = "3840x1600@120.00", position = "auto-center-up", scale = "auto", vrr = 1, bitdepth = 10 },
+  { output = "desc:Samsung Display Corp. ATNA60KA02", mode = "3200x2000@120.00", position = "auto-center-down", scale = 1.25, vrr = 1, bitdepth = 10, cm = "dcip3" },
+  { output = "desc:Dell Inc. DELL P2422H 1YT5CV3", mode = "preferred", position = "0x0", scale = 1.0 },
+  { output = "desc:Dell Inc. DELL P2422H 10W9CV3", mode = "preferred", position = "1920x0", scale = 1.0 },
+  { output = "desc:LG Electronics LG TV SSCR2 0x01010101", mode = "1920x1080@60.00", position = "auto-center-up", scale = "auto" },
+  { output = "", mode = "preferred", position = "auto", scale = "auto" },
 ]

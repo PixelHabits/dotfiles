@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import tempfile
 import tomllib
+from hyprland_tools import capture, native_verify
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,21 +57,23 @@ dev = true
         ({'profile': 'personal', 'mail_provider': 'outlook'}, 'outlook.office.com', ''),
     ]
     for data, mail_host, workspace in cases:
-        pwa = cm(data, 'cat', str(HOME / '.config/hypr/pwa.conf'))
-        hypr = cm(data, 'cat', str(HOME / '.config/hypr/hyprland.conf'))
+        pwa = cm(data, 'cat', str(HOME / '.config/hypr/pwa.lua'))
+        hypr = cm(data, 'cat', str(HOME / '.config/hypr/hyprland.lua'))
         bar = jsonc(cm(data, 'cat', str(HOME / '.config/waybar/config.jsonc')))
-        bindings = [line for line in pwa.splitlines() if line.startswith('bindd =')]
+        captured = capture(temp, hypr, pwa)
+        bindings = [binding for binding in captured['binds']
+                    if binding['action']['name'] == 'hl.dsp.exec_cmd'
+                    and binding['action']['args'][0].startswith('hypr-workspace-app ')]
+        rules = {rule.get('workspace', ''): rule for rule in captured['rules'] if 'workspace' in rule}
         icons = bar['hyprland/workspaces']['format-icons']
         assert len(bindings) == 5
-        assert set(re.findall(r'workspace = name:(\w+)', pwa)) == {'chat', 'mail', 'music', 'linear', 'teams'}
+        assert set(rules) == {'name:' + app for app in ['chat', 'mail', 'music', 'linear', 'teams']}
         assert icons['linear'] == '◩' and 'notion' not in icons
-        keys = []
-        for line in bindings:
-            keys.append(line.split(',')[1].strip())
-            argv = shlex.split(line.split('exec, ', 1)[1])
+        for binding in bindings:
+            argv = shlex.split(binding['action']['args'][0])
             app, pattern = argv[1:3]
             assert app in icons
-            assert f'match:class = {pattern}' in pwa
+            assert rules['name:' + app]['match']['class'] == pattern
             host = mail_host if app == 'mail' else {
                 'chat': 't3.chat', 'music': 'music.youtube.com',
                 'linear': 'linear.app', 'teams': 'teams.microsoft.com',
@@ -83,18 +86,14 @@ dev = true
                 assert mail_host in argv[-1]
             if app == 'linear':
                 assert argv[-1] == '--app=https://linear.app' + (f'/{workspace}' if workspace else '')
-        assert len(set(keys)) == len(keys)
-        all_keys = re.findall(r'^bind\w* = (\$mainMod SHIFT), ([^,]+),', hypr + pwa, re.M)
-        assert len(set(all_keys)) == len(all_keys), 'Duplicate Shift shortcut'
-        assert 'bindd = $mainMod, L, Lock session' in hypr
-        assert f'source = {HOME}/.config/hypr/pwa.conf' in hypr
+        all_keys = [binding['keys'] for binding in captured['binds']]
+        assert len(set(all_keys)) == len(all_keys), 'Duplicate shortcut'
+        lock = next(binding for binding in captured['binds'] if binding['keys'] == 'SUPER + L')
+        assert lock['action']['args'] == ['loginctl lock-session']
+        assert 'require("pwa")(mainMod, browser)' in hypr
         if data['profile'] == 'personal':
             assert 'greenway' not in pwa
-        if shutil.which('Hyprland'):
-            rendered = temp / 'pwa.conf'
-            rendered.write_text('$mainMod = SUPER\n$browser = helium-browser\n' + pwa)
-            output = run(['Hyprland', '--verify-config', '--config', str(rendered)], cwd=temp)
-            assert 'config ok' in output, output
+        native_verify(temp)
 
     for os_name in ['linux', 'darwin']:
         paths = cm({'desktop': 'none', 'chezmoi': {'os': os_name}}, 'managed').splitlines()
@@ -104,7 +103,7 @@ dev = true
     for data in [{'mail_provider': 'unknown'}, {'linear_url': 'https://evil.example'},
                  {'linear_url': 'https://linear.app/ok\nbind = bad'}]:
         result = subprocess.run(base + ['--override-data', json.dumps(data), 'cat',
-                                       str(HOME / '.config/hypr/pwa.conf')], capture_output=True, text=True)
+                                       str(HOME / '.config/hypr/pwa.lua')], capture_output=True, text=True)
         assert result.returncode != 0
         assert 'mail_provider' in result.stderr or 'linear_url' in result.stderr
 
