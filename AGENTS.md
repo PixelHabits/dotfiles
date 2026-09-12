@@ -15,7 +15,19 @@
 - New machine: follow `worktrees.md`. No `chezmoi init <repo>` into container.
 - Human docs: plain English. Agent instructions: terse, exact. Keep commands literal.
 
+## Claude Code
+
+- Human guide: `claude.md`. Dev machines only; gate paths in `.chezmoiignore`.
+- Shared config: `.config/claude`. Runtime: `.local/state/claude`; config symlinks only.
+- Runtime auth/history/plugins stay local. Never import runtime directory into source.
+- `modify_private_settings.json`: preserve local keys; manage attribution only.
+- Claude redirects: dedicated `environment.d/20-claude.conf` + `zshenv.d/21-claude.zsh` for dev gating.
+- Claude scratch: `.cache/claude/tmp`; disposable. Do not set global `TMPDIR`.
+- Preserve privacy opt-outs. No bypass alias. No guessed settings keys.
+- Validate: `python3 tests/test_claude_config.py`.
+
 ## Shell Scripts (zsh)
+
 ### Patterns
 ```zsh
 # Guard with require_cmd — fail open, never crash
