@@ -11,6 +11,7 @@ tests/
 codex.md
 tests/codex/
 claude.md
+nvim.md
 zsh-dotfile-architecture.md
 workstation-bootstrap.md
 .config/nvim/nvim-pack-lock.json
