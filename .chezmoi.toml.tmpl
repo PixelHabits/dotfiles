@@ -34,6 +34,7 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
   form_factor = {{ $formFactor | quote }}
   profile = {{ $profile | quote }}
   dev = {{ $dev }}
+  agent_home_managed = {{ get . "agent_home_managed" | default false }}
   mail_provider = {{ $mailProvider | quote }}
   linear_url = {{ $linearURL | quote }}
 
