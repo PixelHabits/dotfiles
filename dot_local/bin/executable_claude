@@ -1,0 +1,29 @@
+#!/bin/sh
+# Start Claude Code with one project store per repository.
+# The store is named after the repository container, so every worktree of a
+# repository shares transcripts and auto memory. Then run the real binary.
+
+self=$(realpath "$0")
+name=
+
+if common=$(git rev-parse --git-common-dir 2>/dev/null); then
+  name=$(basename "$(dirname "$(realpath "$common")")")
+elif [ -d "$PWD/.bare" ]; then
+  name=$(basename "$PWD")
+fi
+
+if [ -n "$name" ] && [ -n "$CLAUDE_CONFIG_DIR" ] && [ -z "$CLAUDE_CODE_PROJECT_DIR_NAME" ]; then
+  export CLAUDE_CODE_PROJECT_DIR_NAME="$name"
+fi
+
+set -f
+IFS=:
+for dir in $PATH; do
+  candidate="${dir:-.}/claude"
+  [ -f "$candidate" ] && [ -x "$candidate" ] || continue
+  [ "$(realpath "$candidate")" = "$self" ] && continue
+  exec "$candidate" "$@"
+done
+
+echo "claude: no other claude binary on PATH" >&2
+exit 127

@@ -43,7 +43,7 @@ Read this first. Domain detail lives in skills under `~/.agents/skills`: `repo-c
 - Turborepo monorepos with Ultracite on Biome, sherif, lefthook. Script names in `repo-conventions`.
 - Default stack when unstated: Bun, TypeScript, Effect, TanStack Start plus Router, Vite, React, Tailwind v4, shadcn on Base UI, Neon Postgres with drizzle, Vercel.
 - Assume the dev server already runs. Do not start another.
-- The shell keeps its working directory between calls. Use absolute paths, `git -C <dir>`, and `bun --cwd <dir>`. Never a bare relative `cd`.
+- Every shell call starts at the session root. Relative paths resolve from there. Use `git -C <dir>` and `bun --cwd <dir>` for another tree; never a bare relative `cd`.
 - Read each file with its own Read call. Never join files with `cat` or a loop. When Read reports a token limit, retry the same offset with a smaller limit.
 - Run a gate (typecheck, test, check) once and read its output. Never pipe a gate through `tail` or `grep -c` and then run it again.
 - Never sleep or loop on an external job in a shell call. Use the background task or monitor tools.
