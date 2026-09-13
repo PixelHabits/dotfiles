@@ -129,6 +129,6 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 - Evidence + hardware test limits: `suspend-recovery.md`.
 - Monitor values: `.chezmoidata/hyprland.toml`; local override: `data.hyprland.monitors`.
 - No live suspend, lock, session activation, GPU changes, or helper execution during tests.
-- Mock tests: `python3 tests/test_hypr_rescue.py`.
-- Render tests: `python3 tests/test_suspend_templates.py`. Uses temporary config; Hyprland parse-only when available.
+- Mock tests: `uv run tests/test_hypr_rescue.py`.
+- Render tests: `uv run tests/test_suspend_templates.py`. Uses temporary config; Hyprland parse-only when available.
 - Driver workaround != verified fix. Preserve lock process; never select another user's session.
