@@ -1,35 +1,54 @@
 # Web app workspaces
 
-A web app opens a website in a browser window without tabs, on a dedicated Hyprland workspace.
-It runs through Helium or another Chromium browser that supports `--app`.
+A web app opens a website without browser tabs, on a dedicated Hyprland workspace.
+Helium or another Chromium browser supplies the `--app` window.
 
 ## Shortcuts
 
-Hold Super and Shift, then press the app key.
+Hold Super and Shift, then press the category key.
 
-| Key | App | Workspace |
+| Key | Category | Workspace |
 | --- | --- | --- |
-| A | T3 Chat | `chat` |
+| A | AI Chat | `chat` |
 | E | Mail | `mail` |
 | M | Music | `music` |
-| L | Linear | `linear` |
-| T | Teams | `teams` |
+| L | Projects | `linear` |
+| T | Messages | `teams` |
+| G | GitHub | `github` |
+| N | Editor | Current workspace |
 
-Super + L still locks the session.
-Shift+L is the Linear bind.
+Super + L locks the session.
+Workspace names stay stable when the provider changes.
 
-## Mail provider and Linear URL
+## Machine choices
 
-`chezmoi init` prompts Hyprland machines for a mail provider and a Linear landing URL.
-Other machines use the `work`/`personal` profile default in `.chezmoidata/pwa.toml`.
-Override either on one machine in the existing `[data]` table of `~/.config/chezmoi/chezmoi.toml`:
+`chezmoi init` asks Hyprland machines to choose providers for AI Chat, Mail, Music, Projects, and Messages.
+It also asks for the Projects and GitHub landing URLs.
+Use a public home page, organization page, or repository page without query parameters.
+These answers stay in the local chezmoi configuration.
+Shared definitions contain no email address, account ID, or organization name.
+
+To change a choice, edit the existing `[data]` table in `~/.config/chezmoi/chezmoi.toml`:
 
 ```toml
-mail_provider = "gmail"
-linear_url = "https://linear.app/another-workspace"
+ai_provider = "claude"
+mail_provider = "outlook"
+music_provider = "youtube"
+project_provider = "linear"
+chat_provider = "slack"
+project_url = "https://linear.app"
+github_url = "https://github.com"
 ```
 
-## Add an app
+When changing the Projects provider, set its landing URL to a page on that provider's domain.
+Initialization preserves saved choices.
+The browser handles authentication after launch.
 
-Add an entry under `pwa.apps` in `.chezmoidata/pwa.toml`, and its workspace name to `pwa.order`.
-Fields: `label` (display name), `key` (shortcut key), `icon` (Waybar icon), `url` (site to open), `class` (regex matched against the browser window class).
+## Add a provider
+
+Add its public `host` and `url` under `pwa.providers.<workspace>` in `.chezmoidata/pwa.toml`.
+The resolver generates the matching window class from the same host.
+The provider then appears in the initialization choices.
+Chezmoi include files use `.tmpl` because their contents are templates.
+
+Run `uv run tests/pwa.py` to render the machine variants without opening an app.

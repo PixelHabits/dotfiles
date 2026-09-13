@@ -1,4 +1,4 @@
-{{- $apps := includeTemplate "pwa-apps.json" . | fromJson -}}
+{{- $apps := includeTemplate "pwa-apps.json.tmpl" . | fromJson -}}
 # Generated from .chezmoidata/pwa.toml and this machine's chezmoi data.
 # The browser must support Chromium's --app mode.
 {{ range $apps }}
