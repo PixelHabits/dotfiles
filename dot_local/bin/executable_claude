@@ -24,7 +24,9 @@ fi
 
 set -f
 IFS=:
-for dir in $PATH; do
+# POSIX splitting drops the last empty field; keep an original trailing colon.
+search_path=$PATH:
+for dir in $search_path; do
   candidate="${dir:-.}/claude"
   [ -f "$candidate" ] && [ -x "$candidate" ] || continue
   [ "$(realpath "$candidate")" = "$self" ] && continue
