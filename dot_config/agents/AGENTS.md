@@ -36,6 +36,7 @@ Read this first. Domain detail lives in skills under `~/.agents/skills`: `repo-c
 
 - Bun for runtime, package manager, test runner, and scripts. `bun run <script>`, never the bare `bun <script>` shortcut. No npm, no Yarn.
 - Prefer a Bun built-in over a dependency. Check current Bun docs before choosing. Training data lags. Details in `bun-first`.
+- Fast-moving libraries are read from source, not from memory. The reference clone under `~/Projects/<name>` is the source of truth for the current API: `git fetch` it before reading. `node_modules` shows only the pinned version the repository runs, which can lag behind because of `minimumReleaseAge` or an old bump. If the clone is missing, `git clone` it there and keep it. Cite the file and line you read.
 - TypeScript on the native compiler with strict presets. Effect on the server, Effect Schema at every edge. Details in `effect-way`.
 - Turborepo monorepos with Ultracite on Biome, sherif, lefthook. Script names in `repo-conventions`.
 - Default stack when unstated: Bun, TypeScript, Effect, TanStack Start plus Router, Vite, React, Tailwind v4, shadcn on Base UI, Neon Postgres with drizzle, Vercel.
