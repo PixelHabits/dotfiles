@@ -5,6 +5,7 @@ export interface Paths {
 	home: string;
 	lock: string;
 	manifest: string;
+	markerLock: string;
 	repos: string;
 	sessions: string;
 	stateFile: string;
@@ -24,6 +25,7 @@ export function resolvePaths(
 		home,
 		lock: join(stateDir, "sync.lock"),
 		manifest: join(home, ".agents/references.json"),
+		markerLock: join(stateDir, "markers.lock"),
 		repos: join(store, "repos"),
 		sessions: join(stateDir, "sessions"),
 		stateFile: join(store, "state.json"),

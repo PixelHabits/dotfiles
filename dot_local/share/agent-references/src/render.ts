@@ -7,6 +7,7 @@ import {
 	writeJsonAtomic,
 } from "./fs.ts";
 import { shortSha } from "./git.ts";
+import { acquireLockWithRetry } from "./lock.ts";
 import { type Entry, manifestEntries, readManifest } from "./manifest.ts";
 import { aliasPath, type Paths, treePath } from "./paths.ts";
 import { type AliasState, emptyAliasState, readState } from "./state.ts";
@@ -167,26 +168,37 @@ async function writeMarker(
 	return writeJsonAtomic(markerPath(paths, session), marker);
 }
 
-export async function renderFull(
+async function render(
+	paths: Paths,
+	session: string | undefined,
+	delta: boolean
+): Promise<string | null> {
+	const lock = session ? await acquireLockWithRetry(paths.markerLock) : null;
+	try {
+		const lines = await buildLines(paths);
+		const previous = session ? await readMarker(paths, session) : null;
+		const visible = delta
+			? lines.filter((line) => previous?.lines[line.alias] !== line.key)
+			: lines;
+		if (session && lock) {
+			await writeMarker(paths, session, lines);
+		}
+		return visible.length === 0 ? null : block(visible);
+	} finally {
+		await lock?.release();
+	}
+}
+
+export function renderFull(
 	paths: Paths,
 	session?: string
 ): Promise<string | null> {
-	const lines = await buildLines(paths);
-	if (session) {
-		await writeMarker(paths, session, lines);
-	}
-	return lines.length === 0 ? null : block(lines);
+	return render(paths, session, false);
 }
 
-export async function renderDelta(
+export function renderDelta(
 	paths: Paths,
 	session: string
 ): Promise<string | null> {
-	const lines = await buildLines(paths);
-	const previous = await readMarker(paths, session);
-	const changed = lines.filter(
-		(line) => previous?.lines[line.alias] !== line.key
-	);
-	await writeMarker(paths, session, lines);
-	return changed.length === 0 ? null : block(changed);
+	return render(paths, session, true);
 }

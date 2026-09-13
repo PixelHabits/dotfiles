@@ -378,6 +378,22 @@ describe("hooks", () => {
 		}
 	);
 
+	test("SessionStart during a running sync still emits the full block", async () => {
+		const remote = await makeRemote(sandbox, "lib");
+		await refs(sandbox, ["add", remote.bare, "--alias", "lib"]);
+		await mkdir(sandbox.paths.lock, { recursive: true });
+		await Bun.write(join(sandbox.paths.lock, "pid"), `${process.pid}\n`);
+		const result = await refs(sandbox, ["hook", "claude", "SessionStart"], {
+			stdin: hookInput("SessionStart", "busy", { source: "startup" }),
+		});
+		await rm(sandbox.paths.lock, { force: true, recursive: true });
+		expect(result.code).toBe(0);
+		const context = parseHook(result.stdout).additionalContext;
+		expect(context).toStartWith(HEADER);
+		expect(context).toContain("- lib ");
+		expect(await exists(join(sandbox.paths.sessions, "busy.json"))).toBe(true);
+	});
+
 	test("SessionStart on compact renders but does not move the checkout", async () => {
 		const remote = await makeRemote(sandbox, "lib");
 		await refs(sandbox, ["add", remote.bare, "--alias", "lib"]);
@@ -396,10 +412,21 @@ describe("hooks", () => {
 	test("UserPromptSubmit returns the delta once and refreshes a stale sync", async () => {
 		const remote = await makeRemote(sandbox, "lib");
 		await refs(sandbox, ["add", remote.bare, "--alias", "lib"]);
+		const initial = await readState(sandbox.paths.stateFile);
+		const oldSync = Temporal.Now.instant().subtract({ hours: 2 }).toString();
+		initial.syncedAt = oldSync;
+		await Bun.write(sandbox.paths.stateFile, JSON.stringify(initial));
 		await refs(sandbox, ["hook", "claude", "SessionStart"], {
 			stdin: hookInput("SessionStart", "s1", { source: "startup" }),
 		});
-		await waitForSync();
+		expect(
+			await waitUntil(async () => {
+				const state = await readState(sandbox.paths.stateFile);
+				return (
+					state.syncedAt !== oldSync && !(await exists(sandbox.paths.lock))
+				);
+			})
+		).toBe(true);
 		const quiet = await refs(sandbox, ["hook", "claude", "UserPromptSubmit"], {
 			stdin: hookInput("UserPromptSubmit", "s1", { prompt: "hi" }),
 		});
@@ -414,7 +441,12 @@ describe("hooks", () => {
 			stdin: hookInput("UserPromptSubmit", "s1", { prompt: "hi" }),
 		});
 		expect(stale.stdout).toBe("");
-		expect(await waitUntil(async () => (await lib()).behind === 1)).toBe(true);
+		expect(
+			await waitUntil(
+				async () =>
+					(await lib()).behind === 1 && !(await exists(sandbox.paths.lock))
+			)
+		).toBe(true);
 		const moved = await refs(sandbox, ["hook", "claude", "UserPromptSubmit"], {
 			stdin: hookInput("UserPromptSubmit", "s1", { prompt: "hi" }),
 		});
