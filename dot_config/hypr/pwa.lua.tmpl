@@ -1,0 +1,14 @@
+{{- $apps := includeTemplate "pwa-apps.json.tmpl" . | fromJson -}}
+-- Provider URLs, matching rules, shortcuts, and Waybar icons share one catalog.
+return function(mainMod, browser)
+{{ range $apps }}
+    hl.bind(mainMod .. {{ printf " + SHIFT + %s" .key | includeTemplate "lua-value" }}, hl.dsp.exec_cmd(
+        {{ printf "hypr-workspace-app %s %s uwsm app -- " (.workspace | shellQuote) (.class | shellQuote) | includeTemplate "lua-value" }} .. browser .. {{ printf " %s" (printf "--app=%s" .url | shellQuote) | includeTemplate "lua-value" }}
+    ), { description = {{ .label | includeTemplate "lua-value" }} })
+    hl.window_rule({
+        name = {{ printf "move-%s-to-%s-workspace" .workspace .workspace | includeTemplate "lua-value" }},
+        match = { class = {{ .class | includeTemplate "lua-value" }} },
+        workspace = {{ printf "name:%s" .workspace | includeTemplate "lua-value" }},
+    })
+{{ end -}}
+end

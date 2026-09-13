@@ -1,0 +1,183 @@
+-- Native Hyprland Lua configuration. Machine values come from chezmoi data.
+{{- $monitors := get .hyprland.monitor_profiles .hostname | default .hyprland.default_monitors -}}
+{{- $monitors = get .hyprland "monitors" | default $monitors }}
+{{ range $monitors -}}
+{{ if not (kindIs "map" .) }}{{ fail "hyprland.monitors must contain tables; see hyprland.md" }}{{ end -}}
+hl.monitor({{ includeTemplate "lua-value" . }})
+{{ end }}
+{{- $internal := get .hyprland "laptop_output" | default (get .hyprland.internal_outputs .hostname) }}
+{{ if and (eq .form_factor "laptop") $internal }}
+-- Keep external displays active with the lid closed. Resume also checks ACPI state.
+hl.bind("switch:on:Lid Switch", function()
+    hl.monitor({ output = {{ includeTemplate "lua-value" $internal }}, disabled = true })
+end, { locked = true })
+hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("hyprctl reload"), { locked = true })
+{{ end }}
+local terminal = "ghostty"
+local fileManager = "nautilus"
+local menu = "hyprlauncher"
+local browser = "helium-browser --force-dark-mode"
+local vimApp = terminal .. " -e nvim"
+local mainMod = "SUPER"
+
+-- Startup callbacks run once, not on configuration reload.
+hl.on("hyprland.start", function()
+    hl.exec_cmd("uwsm app -- " .. terminal .. " -e zsh -c 'tmux attach || tmux new -s main'")
+    hl.exec_cmd("uwsm app -- hyprlauncher -d")
+end)
+
+hl.env("XCURSOR_SIZE", "24")
+hl.env("HYPRCURSOR_SIZE", "24")
+
+hl.config({
+    general = {
+        gaps_in = 0, gaps_out = 0, border_size = 1,
+        col = {
+            active_border = { colors = { "rgba(33ccffee)", "rgba(00ff99ee)" }, angle = 45 },
+            inactive_border = "rgba(595959aa)",
+        },
+        resize_on_border = false, allow_tearing = false, layout = "dwindle",
+    },
+    decoration = {
+        rounding = 0, rounding_power = 2,
+        active_opacity = 1.0, inactive_opacity = 1.0,
+        shadow = { enabled = true, range = 4, render_power = 3, color = "rgba(1a1a1aee)" },
+        blur = { enabled = true, size = 3, passes = 1, vibrancy = 0.1696 },
+    },
+    animations = { enabled = false },
+    dwindle = { preserve_split = true },
+    master = { new_status = "master" },
+    misc = { force_default_wallpaper = 0, disable_hyprland_logo = false, allow_session_lock_restore = true },
+    input = {
+        kb_layout = "us", kb_variant = "", kb_model = "", kb_options = "", kb_rules = "",
+        follow_mouse = 1, sensitivity = 0, numlock_by_default = true,
+        touchpad = { clickfinger_behavior = true, natural_scroll = false },
+    },
+})
+
+-- Keep the curves ready if animations are enabled interactively.
+hl.curve("easeOutQuint", { type = "bezier", points = { { 0.23, 1 }, { 0.32, 1 } } })
+hl.curve("easeInOutCubic", { type = "bezier", points = { { 0.65, 0.05 }, { 0.36, 1 } } })
+hl.curve("linear", { type = "bezier", points = { { 0, 0 }, { 1, 1 } } })
+hl.curve("almostLinear", { type = "bezier", points = { { 0.5, 0.5 }, { 0.75, 1 } } })
+hl.curve("quick", { type = "bezier", points = { { 0.15, 0 }, { 0.1, 1 } } })
+hl.animation({ leaf = "global", enabled = true, speed = 10, bezier = "default" })
+hl.animation({ leaf = "border", enabled = true, speed = 5.39, bezier = "easeOutQuint" })
+hl.animation({ leaf = "windows", enabled = true, speed = 4.79, bezier = "easeOutQuint" })
+hl.animation({ leaf = "windowsIn", enabled = true, speed = 4.1, bezier = "easeOutQuint", style = "popin 87%" })
+hl.animation({ leaf = "windowsOut", enabled = true, speed = 1.49, bezier = "linear", style = "popin 87%" })
+hl.animation({ leaf = "fadeIn", enabled = true, speed = 1.73, bezier = "almostLinear" })
+hl.animation({ leaf = "fadeOut", enabled = true, speed = 1.46, bezier = "almostLinear" })
+hl.animation({ leaf = "fade", enabled = true, speed = 3.03, bezier = "quick" })
+hl.animation({ leaf = "layers", enabled = true, speed = 3.81, bezier = "easeOutQuint" })
+hl.animation({ leaf = "layersIn", enabled = true, speed = 4, bezier = "easeOutQuint", style = "fade" })
+hl.animation({ leaf = "layersOut", enabled = true, speed = 1.5, bezier = "linear", style = "fade" })
+hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 1.79, bezier = "almostLinear" })
+hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 1.39, bezier = "almostLinear" })
+hl.animation({ leaf = "workspaces", enabled = true, speed = 1.94, bezier = "almostLinear", style = "fade" })
+hl.animation({ leaf = "workspacesIn", enabled = true, speed = 1.21, bezier = "almostLinear", style = "fade" })
+hl.animation({ leaf = "workspacesOut", enabled = true, speed = 1.94, bezier = "almostLinear", style = "fade" })
+hl.animation({ leaf = "zoomFactor", enabled = true, speed = 7, bezier = "quick" })
+
+hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
+hl.device({ name = "epic-mouse-v1", sensitivity = -0.5 })
+
+-- SUPER: core actions. SHIFT: movement/apps. CTRL: system. ALT: secondary actions.
+local function bind(keys, action, description, flags)
+    flags = flags or {}
+    flags.description = description
+    hl.bind(keys, action, flags)
+end
+
+bind(mainMod .. " + C", hl.dsp.send_shortcut({ mods = "CTRL", key = "Insert", window = "active" }), "Universal copy")
+bind(mainMod .. " + V", hl.dsp.send_shortcut({ mods = "SHIFT", key = "Insert", window = "active" }), "Universal paste")
+bind(mainMod .. " + X", hl.dsp.send_shortcut({ mods = "CTRL", key = "X", window = "active" }), "Universal cut")
+bind(mainMod .. " + W", hl.dsp.window.close(), "Close window")
+bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = "fullscreen" }), "Fullscreen toggle")
+bind(mainMod .. " + ALT + F", hl.dsp.window.fullscreen({ mode = "maximized" }), "Full width")
+bind(mainMod .. " + T", hl.dsp.window.float({ action = "toggle" }), "Toggle floating/tiling")
+bind(mainMod .. " + P", hl.dsp.window.pseudo(), "Pseudo (dwindle)")
+bind(mainMod .. " + J", hl.dsp.layout("togglesplit"), "Toggle split (dwindle)")
+bind(mainMod .. " + A", hl.dsp.window.pin(), "Pin window")
+bind(mainMod .. " + O", hl.dsp.exec_cmd("omarchy-hyprland-window-pop"), "Pop window out (float & pin)")
+bind(mainMod .. " + S", hl.dsp.exec_cmd("omarchy-hyprland-workspace-layout-toggle"), "Toggle workspace layout")
+bind(mainMod .. " + RETURN", hl.dsp.exec_cmd("uwsm app -- " .. terminal .. " -e zsh -c 'tmux attach || tmux new -s main'"), "Terminal (tmux)")
+bind(mainMod .. " + ALT + RETURN", hl.dsp.exec_cmd("uwsm app -- " .. terminal), "Terminal")
+bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("uwsm app -- " .. menu), "App launcher")
+bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("uwsm app -- " .. browser), "Browser")
+bind(mainMod .. " + SHIFT + F", hl.dsp.exec_cmd("uwsm app -- " .. fileManager), "File manager")
+bind(mainMod .. " + SHIFT + SLASH", hl.dsp.exec_cmd("uwsm app -- 1password"), "Passwords")
+bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("uwsm app -- " .. vimApp), "Vim")
+bind(mainMod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"), "Lock session")
+bind(mainMod .. " + COMMA", hl.dsp.exec_cmd("makoctl dismiss"), "Dismiss last notification")
+bind(mainMod .. " + SHIFT + COMMA", hl.dsp.exec_cmd("makoctl dismiss --all"), "Dismiss all notifications")
+bind(mainMod .. " + ALT + COMMA", hl.dsp.exec_cmd("makoctl restore"), "Restore last notification")
+bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }), "Focus left")
+bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }), "Focus right")
+bind(mainMod .. " + up", hl.dsp.focus({ direction = "up" }), "Focus up")
+bind(mainMod .. " + down", hl.dsp.focus({ direction = "down" }), "Focus down")
+bind(mainMod .. " + TAB", hl.dsp.focus({ workspace = "e+1" }), "Next workspace")
+bind(mainMod .. " + grave", hl.dsp.workspace.toggle_special("scratchpad"), nil)
+bind(mainMod .. " + minus", hl.dsp.window.resize({ x = -100, y = 0, relative = true }), "Shrink window width")
+bind(mainMod .. " + equal", hl.dsp.window.resize({ x = 100, y = 0, relative = true }), "Grow window width")
+bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }), nil)
+bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }), nil)
+bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), nil, { mouse = true })
+bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), nil, { mouse = true })
+bind(mainMod .. " + SHIFT + left", hl.dsp.window.swap({ direction = "left" }), "Swap window left")
+bind(mainMod .. " + SHIFT + right", hl.dsp.window.swap({ direction = "right" }), "Swap window right")
+bind(mainMod .. " + SHIFT + up", hl.dsp.window.swap({ direction = "up" }), "Swap window up")
+bind(mainMod .. " + SHIFT + down", hl.dsp.window.swap({ direction = "down" }), "Swap window down")
+bind(mainMod .. " + SHIFT + TAB", hl.dsp.focus({ workspace = "e-1" }), "Previous workspace")
+bind(mainMod .. " + SHIFT + grave", hl.dsp.window.move({ workspace = "special:scratchpad", follow = false }), nil)
+bind(mainMod .. " + SHIFT + minus", hl.dsp.window.resize({ x = 0, y = -100, relative = true }), "Shrink window height")
+bind(mainMod .. " + SHIFT + equal", hl.dsp.window.resize({ x = 0, y = 100, relative = true }), "Grow window height")
+bind(mainMod .. " + PRINT", hl.dsp.exec_cmd("hyprshot -m window -z"), "Screenshot window")
+bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot -m region -z"), "Screenshot region")
+bind("PRINT", hl.dsp.exec_cmd("hyprshot -m output -m active"), "Screenshot monitor")
+bind(mainMod .. " + ALT + PRINT", hl.dsp.exec_cmd("pkill hyprpicker || hyprpicker -a"), "Color picker")
+bind(mainMod .. " + SHIFT + SPACE", hl.dsp.exec_cmd("omarchy-toggle-waybar"), "Toggle top bar")
+bind(mainMod .. " + CTRL + N", hl.dsp.exec_cmd("omarchy-toggle-nightlight"), "Toggle night light")
+bind(mainMod .. " + CTRL + T", hl.dsp.exec_cmd("uwsm app -- " .. terminal .. " -e btop"), "Activity")
+bind(mainMod .. " + SHIFT + ALT + left", hl.dsp.workspace.move({ monitor = "l" }), "Move workspace to left monitor")
+bind(mainMod .. " + SHIFT + ALT + right", hl.dsp.workspace.move({ monitor = "r" }), "Move workspace to right monitor")
+bind(mainMod .. " + SHIFT + ALT + up", hl.dsp.workspace.move({ monitor = "u" }), "Move workspace to upper monitor")
+bind(mainMod .. " + SHIFT + ALT + down", hl.dsp.workspace.move({ monitor = "d" }), "Move workspace to lower monitor")
+bind("CTRL + ALT + DELETE", hl.dsp.exec_cmd("omarchy-hyprland-window-close-all"), "Close all windows")
+bind("XF86PowerOff", hl.dsp.exec_cmd("loginctl lock-session"), "Lock session", { locked = true })
+bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), nil, { locked = true, repeating = true })
+bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), nil, { locked = true, repeating = true })
+bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), nil, { locked = true, repeating = true })
+bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), nil, { locked = true, repeating = true })
+bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), nil, { locked = true, repeating = true })
+bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), nil, { locked = true, repeating = true })
+bind("ALT + XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 1%+"), nil, { locked = true, repeating = true })
+bind("ALT + XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-"), nil, { locked = true, repeating = true })
+bind("ALT + XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 1%+"), nil, { locked = true, repeating = true })
+bind("ALT + XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 1%-"), nil, { locked = true, repeating = true })
+bind("XF86KbdBrightnessUp", hl.dsp.exec_cmd("brightnessctl -d '*::kbd_backlight' set 1+"), nil, { locked = true, repeating = true })
+bind("XF86KbdBrightnessDown", hl.dsp.exec_cmd("brightnessctl -d '*::kbd_backlight' set 1-"), nil, { locked = true, repeating = true })
+bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), nil, { locked = true })
+bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), nil, { locked = true })
+bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), nil, { locked = true })
+bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), nil, { locked = true })
+
+for workspace = 1, 10 do
+    local key = workspace % 10
+    hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ workspace = workspace }))
+    hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = workspace, follow = true }))
+    hl.bind(mainMod .. " + SHIFT + ALT + " .. key, hl.dsp.window.move({ workspace = workspace, follow = false }))
+end
+
+require("pwa")(mainMod, browser)
+
+hl.layer_rule({ name = "selection-no-animation", match = { namespace = "selection" }, no_anim = true })
+hl.window_rule({ name = "suppress-maximize-events", match = { class = ".*" }, suppress_event = "maximize" })
+hl.window_rule({
+    name = "fix-xwayland-drags",
+    match = { class = "^$", title = "^$", xwayland = true, float = true, fullscreen = false, pin = false },
+    no_focus = true,
+})
+hl.window_rule({ name = "move-hyprland-run", match = { class = "hyprland-run" }, move = "20 monitor_h-120", float = true })
+hl.window_rule({ name = "float-localsend", match = { class = "^localsend$" }, float = true, center = true })
+hl.window_rule({ name = "float-1password", match = { class = "^1password$" }, float = true, center = true })

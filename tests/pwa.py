@@ -7,6 +7,7 @@
 
 import json
 from pathlib import Path
+from hyprland_tools import capture, native_verify
 import re
 import shlex
 import shutil
@@ -53,24 +54,22 @@ dev = true
 
 def test_hyprland_machine(temp):
     base = render(temp, {})
-    pwa = run(base + ['cat', str(HOME / '.config/hypr/pwa.conf')])
-    hypr = run(base + ['cat', str(HOME / '.config/hypr/hyprland.conf')])
+    pwa = run(base + ['cat', str(HOME / '.config/hypr/pwa.lua')])
+    hypr = run(base + ['cat', str(HOME / '.config/hypr/hyprland.lua')])
     bar = jsonc(run(base + ['cat', str(HOME / '.config/waybar/config.jsonc')]))
 
-    bindings = [line for line in pwa.splitlines() if line.startswith('bindd =')]
+    calls = capture(temp, hypr, pwa)
+    bindings = [binding for binding in calls['binds'] if binding['action'].get('name') == 'hl.dsp.exec_cmd'
+                and binding['action']['args'][0].startswith('hypr-workspace-app ')]
     assert len(bindings) == len(EXPECTED_APPS)
-    assert set(re.findall(r'workspace = name:(\w+)', pwa)) == EXPECTED_APPS
+    assert {rule['workspace'].removeprefix('name:') for rule in calls['rules'] if 'workspace' in rule} == EXPECTED_APPS
     assert EXPECTED_APPS <= bar['hyprland/workspaces']['format-icons'].keys()
-    assert 'bindd = $mainMod, L, Lock session' in hypr
-    assert 'SHIFT, N, Vim' in hypr and 'SHIFT, V, Vim' not in hypr
-    assert f'source = {HOME}/.config/hypr/pwa.conf' in hypr
-
-    if shutil.which('Hyprland'):
-        rendered = temp / 'pwa.conf'
-        rendered.write_text('$mainMod = SUPER\n$browser = helium-browser\n' + pwa)
-        output = run(['Hyprland', '--verify-config', '--config', str(rendered)], cwd=temp)
-        assert 'config ok' in output, output
-    print('PASS: laptop/hyprland machine renders pwa.conf, hyprland.conf, and waybar with all apps')
+    by_key = {binding['keys']: binding for binding in calls['binds']}
+    assert by_key['SUPER + L']['action']['args'] == ['loginctl lock-session']
+    assert by_key['SUPER + SHIFT + N']['flags']['description'] == 'Vim'
+    assert 'SUPER + SHIFT + V' not in by_key
+    native_verify(temp)
+    print('PASS: laptop/hyprland machine renders native Lua and Waybar with all apps')
 
 
 def test_non_hyprland_machine(temp):
@@ -101,7 +100,7 @@ def test_provider_choices(temp):
     assert all(saved[key] == value for key, value in data.items())
     for bad in [{'ai_provider': 'unknown'}, {'github_url': 'https://evil.example'},
                 {'project_url': 'https://linear.app/work\nbind = bad'}]:
-        result = subprocess.run(render(temp, bad) + ['cat', str(HOME / '.config/hypr/pwa.conf')], capture_output=True)
+        result = subprocess.run(render(temp, bad) + ['cat', str(HOME / '.config/hypr/pwa.lua')], capture_output=True)
         assert result.returncode != 0
     fresh = run(render(temp, {}) + ['execute-template', '--init', '--file', str(ROOT / '.chezmoi.toml.tmpl'),
         '--promptChoice', 'AI Chat provider=chatgpt,Music provider=apple,Messages provider=discord,Projects provider=notion',

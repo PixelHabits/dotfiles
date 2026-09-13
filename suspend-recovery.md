@@ -28,8 +28,11 @@ Hardware names do not appear in recovery commands.
 To override the layout on one machine, add this table to the local chezmoi configuration:
 
 ```toml
-[data.hyprland]
-monitors = [", preferred, auto, 1"]
+[[data.hyprland.monitors]]
+output = ""
+mode = "preferred"
+position = "auto"
+scale = 1
 ```
 
 The initialization template preserves this override.

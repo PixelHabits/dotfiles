@@ -3,9 +3,9 @@ general {
     lock_cmd = pidof hyprlock || hyprlock       # avoid starting multiple hyprlock instances.
     before_sleep_cmd = loginctl lock-session
 {{- if eq .form_factor "laptop" }}
-    after_sleep_cmd = grep -q open /proc/acpi/button/lid/*/state && hyprctl reload; hyprctl dispatch dpms on
+    after_sleep_cmd = grep -q open /proc/acpi/button/lid/*/state && hyprctl reload; hyprctl dispatch 'hl.dsp.dpms({ action = "on" })'
 {{- else }}
-    after_sleep_cmd = hyprctl dispatch dpms on
+    after_sleep_cmd = hyprctl dispatch 'hl.dsp.dpms({ action = "on" })'
 {{- end }}
     inhibit_sleep = 3 # Wait for the session lock before sleep.
 }
@@ -18,7 +18,7 @@ listener {
 }
 
 # turn off keyboard backlight, comment out this section if you dont have a keyboard backlight.
-listener { 
+listener {
     timeout = 180                                          # 3min.
     on-timeout = brightnessctl -sd '*::kbd_backlight' set 0 # turn off keyboard backlight.
     on-resume = brightnessctl -rd '*::kbd_backlight'        # turn on keyboard backlight.
@@ -33,8 +33,8 @@ listener {
 # Turn off the display entirely after 5.5 minutes
 listener {
     timeout = 330                                                     # 5.5min
-    on-timeout = hyprctl dispatch dpms off                            # screen off when timeout has passed
-    on-resume = hyprctl dispatch dpms on && brightnessctl -r          # screen on when activity is detected after timeout has fired.
+    on-timeout = hyprctl dispatch 'hl.dsp.dpms({ action = "off" })'                             # screen off when timeout has passed
+    on-resume = hyprctl dispatch 'hl.dsp.dpms({ action = "on" })'  && brightnessctl -r          # screen on when activity is detected after timeout has fired.
 }
 
 # Suspend after one hour of inactivity

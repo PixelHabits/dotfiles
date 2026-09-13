@@ -52,3 +52,5 @@ The provider then appears in the initialization choices.
 Chezmoi include files use `.tmpl` because their contents are templates.
 
 Run `uv run tests/pwa.py` to render the machine variants without opening an app.
+
+For the first switch to Lua, follow [Hyprland deployment](hyprland.md#first-deployment).
