@@ -21,7 +21,7 @@ Personal cost scores below describe user preference, not public pricing. Higher 
 
 ## Codex integration, when installed
 
-- Preferred handoff: `codex:codex-rescue` Agent subagent. `--write` for implementation; read-only for diagnosis. `--background` for long tasks. See `codex-notes` for sandbox limits and job tracking.
+- Preferred handoff: `codex:codex-rescue` Agent subagent. `--write` for implementation; read-only for diagnosis. `--background` for long tasks. See `codex-notes` for Codex sandbox limits and job tracking.
 - Workflow: `agent(prompt, {agentType: 'codex:codex-rescue', label: 'gpt-5.6:...'})`; `schema` for structured results. Label actual Codex model because wrapper UI shows Claude model.
 - Plugin slash commands are user-only. Do not invoke them through Skill. Discover the installed companion script and read its command instructions before using its runtime.
 - Rescue forwards tasks only. Background launch means started, not finished. Parent checks `status <job-id> --json`, then `result <job-id> --json` in the same repo/session. Wait for terminal status; inspect result and errors before claiming success. Empty output, launch exit zero, or wrapper completion proves no task outcome.
