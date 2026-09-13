@@ -104,10 +104,11 @@ Record the kernel, Hyprland, Aquamarine, and NVIDIA versions with each result.
 
 | Case | Expected result |
 | --- | --- |
+| Laptop only, lid open, timer suspend | Internal panel returns and unlock works |
 | Laptop only, close then open lid | Internal panel returns and unlock works |
-| Open lid, resume, then connect dock | All configured displays return |
-| Sleep docked, disconnect dock, resume | Internal panel returns |
 | Home ultrawide, close lid without sleep | Internal panel disables, ultrawide remains active |
+| Work dock, open lid before connecting, then suspend/resume | All configured displays return and unlock works |
+| Sleep docked, disconnect dock, resume | Internal panel returns |
 | Personal desktop | Generic monitor rules work without laptop-specific commands |
 
 If a case fails, record the exact case and collect these logs:
