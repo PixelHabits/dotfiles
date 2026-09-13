@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Restore configured outputs without killing the lock screen or changing sessions.
+set -euo pipefail
+
+fail() { printf 'hypr-rescue: %s\n' "$*" >&2; exit 1; }
+usage() { printf 'Usage: hypr-rescue [INSTANCE_SIGNATURE]\nRestore monitor configuration and wake displays. List instances: hyprctl instances\n'; }
+if [[ ${1:-} == --help || ${1:-} == -h ]]; then usage; exit 0; fi
+[[ $# -le 1 ]] || { usage >&2; exit 2; }
+for tool in hyprctl jq timeout; do
+    command -v "$tool" >/dev/null || fail "missing command: $tool"
+done
+
+# hyprctl discovers instances in the current user's XDG_RUNTIME_DIR.
+instances=$(timeout 5s hyprctl -j instances) || fail 'cannot list Hyprland instances'
+jq -e 'type == "array" and all(.[]; (.instance | type == "string"))' <<<"$instances" >/dev/null || fail 'invalid instance list'
+signature=${1:-${HYPRLAND_INSTANCE_SIGNATURE:-}}
+if [[ -z $signature ]]; then
+    [[ $(jq length <<<"$instances") == 1 ]] || fail 'expected one instance; pass a signature from hyprctl instances'
+    signature=$(jq -r '.[0].instance' <<<"$instances")
+fi
+jq -e --arg signature "$signature" 'any(.[]; .instance == $signature)' <<<"$instances" >/dev/null || fail 'requested instance is not running for this user'
+
+# Hyprctl can return an error string with a successful process exit code.
+request() {
+    local response
+    response=$(timeout 20s hyprctl -i "$signature" "$@") || fail "request failed: $*"
+    [[ $response == ok ]] || fail "request rejected: $response"
+}
+request reload
+request dispatch dpms on
+printf 'Display restore requested. Return to the Hyprland session and unlock normally.\n'

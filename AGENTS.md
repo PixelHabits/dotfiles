@@ -123,3 +123,12 @@ ansible-playbook site.yml --syntax-check
 # Run specific Ansible tags
 ansible-playbook site.yml --tags cli --ask-become-pass
 ```
+
+## Hyprland Recovery
+
+- Evidence + hardware test limits: `suspend-recovery.md`.
+- Monitor values: `.chezmoidata/hyprland.toml`; local override: `data.hyprland.monitors`.
+- No live suspend, lock, session activation, GPU changes, or helper execution during tests.
+- Mock tests: `uv run tests/test_hypr_rescue.py`.
+- Render tests: `uv run tests/test_suspend_templates.py`. Uses temporary config; Hyprland parse-only when available.
+- Driver workaround != verified fix. Preserve lock process; never select another user's session.
