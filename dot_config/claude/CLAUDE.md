@@ -8,7 +8,6 @@
 - Default package manager: Bun. Do not use npm or Yarn unless user asks.
 - Stack defaults when unspecified: Tailwind v4+, TypeScript, native Bun APIs, React with TanStack Router/Start, Vite. Deploy preference: Vercel.
 - Propose simpler solutions. If scope exceeds capacity, state limits clearly.
-- `/graphify`: read installed graphify skill before action. Discover installed location; do not assume home layout.
 
 ## Delegation
 
@@ -30,7 +29,8 @@ Personal cost scores below describe user preference, not public pricing. Higher 
 
 - Preferred handoff: `codex:codex-rescue` Agent subagent. `--write` for implementation; read-only for diagnosis. `--background` for long tasks.
 - Workflow: `agent(prompt, {agentType: 'codex:codex-rescue', label: 'gpt-5.6:...'})`; `schema` for structured results. Label actual Codex model because wrapper UI shows Claude model.
-- Reviews: `/codex:review`, `/codex:adversarial-review`. Jobs: `/codex:status`, `/codex:result`, `/codex:cancel`.
+- Plugin slash commands are user-only. Do not invoke them through Skill. Discover the installed companion script and read its command instructions before using its runtime.
+- Rescue forwards tasks only. Background launch means started, not finished. Parent checks `status <job-id> --json`, then `result <job-id> --json` in the same repo/session. Wait for terminal status; inspect result and errors before claiming success. Empty output, launch exit zero, or wrapper completion proves no task outcome.
 - Follow-up: `--resume` continues repo thread; `--fresh` starts new thread.
 - Quick lookup fallback: `codex exec -s read-only "<self-contained prompt>"`. Include paths, constraints, expected output. Codex has no conversation context.
 - Parallel writers need `isolation: 'worktree'`. Workflow budgets count Claude tokens only, not Codex usage.

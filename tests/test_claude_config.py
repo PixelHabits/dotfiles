@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.14"
+# dependencies = []
+# ///
 """Exercise Claude configuration in disposable homes without starting an agent."""
 import json
 import os
@@ -6,7 +10,6 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
-import tomllib
 import unittest
 
 SOURCE = Path(__file__).resolve().parents[1]
@@ -32,12 +35,11 @@ class ClaudeConfigTest(unittest.TestCase):
             'XDG_STATE_HOME': str(self.home / '.local/state'),
         }
 
-    def configure(self, dev=True, profile='work', agent_home_managed=False):
+    def configure(self, dev=True, profile='work'):
         self.config.write_text(
             '[data]\n' + f'dev = {str(dev).lower()}\nprofile = "{profile}"\n'
             'desktop = "none"\nform_factor = "server"\nhostname = "test"\n'
             'osid = "ubuntu"\nemail = "test@example.invalid"\n'
-            f'agent_home_managed = {str(agent_home_managed).lower()}\n'
         )
 
     def chezmoi(self, *args, stdin=None, check=True):
@@ -68,13 +70,29 @@ class ClaudeConfigTest(unittest.TestCase):
         fresh = json.loads(self.render_settings('').stdout)
         self.assertNotIn('permissions', fresh)
 
+    def test_actual_apply_uses_modify_template_and_preserves_invalid_input(self):
+        target = self.home / '.config/claude/settings.json'
+        target.parent.mkdir(parents=True)
+        target.write_text(json.dumps({'model': 'local-model', 'statusLine': {'type': 'command', 'command': 'echo local'}}))
+        self.chezmoi('apply', '--exclude', 'scripts', str(target))
+        first = target.read_text()
+        self.assertEqual(json.loads(first)['statusLine'], {'type': 'command', 'command': 'echo local'})
+        self.assertEqual(json.loads(first)['attribution']['commit'], '')
+        self.assertEqual(json.loads(first)['model'], 'local-model')
+        self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+        self.chezmoi('apply', '--exclude', 'scripts', str(target))
+        self.assertEqual(target.read_text(), first)
+        target.write_text('{invalid')
+        self.assertNotEqual(self.chezmoi('apply', '--exclude', 'scripts', str(target), check=False).returncode, 0)
+        self.assertEqual(target.read_text(), '{invalid')
+
     def test_symlink_templates_render_shared_paths(self):
         for name in ['CLAUDE.md', 'settings.json']:
             template = (SOURCE / f'dot_local/state/private_claude/symlink_{name}.tmpl').read_text()
             rendered = self.chezmoi('execute-template', template).stdout.strip()
             self.assertEqual(rendered, str(self.home / '.config/claude' / name))
 
-    def test_agent_home_managed_and_non_dev_gating(self):
+    def test_non_dev_gating(self):
         claude_paths = ['.config/claude/CLAUDE.md', '.config/claude/settings.json',
                          '.local/state/claude/settings.json', '.config/zsh/zshenv.d/21-claude.zsh']
 
@@ -84,18 +102,6 @@ class ClaudeConfigTest(unittest.TestCase):
             self.assertNotIn(path, managed)
         self.assertNotIn('claude.md', managed)
         self.assertFalse(any(path.startswith('tests/') for path in managed))
-
-        self.configure(agent_home_managed=True)
-        managed = self.chezmoi('managed').stdout.splitlines()
-        for prefix in ['.config/claude', '.local/state/claude',
-                       '.config/environment.d/20-claude.conf', '.config/zsh/zshenv.d/21-claude.zsh']:
-            self.assertFalse(any(path.startswith(prefix) for path in managed), prefix)
-
-        init = self.chezmoi('execute-template', '--init', (SOURCE / '.chezmoi.toml.tmpl').read_text()).stdout
-        self.assertTrue(tomllib.loads(init)['data']['agent_home_managed'])
-        self.config.write_text(self.config.read_text().replace('agent_home_managed = true\n', ''))
-        init = self.chezmoi('execute-template', '--init', (SOURCE / '.chezmoi.toml.tmpl').read_text()).stdout
-        self.assertFalse(tomllib.loads(init)['data']['agent_home_managed'])
 
     def test_zsh_redirects_and_overrides(self):
         template = (SOURCE / 'dot_config/zsh/zshenv.d/21-claude.zsh.tmpl').read_text()
