@@ -1,4 +1,4 @@
-{{- $apps := includeTemplate "pwa-apps.json" . | fromJson -}}
+{{- $apps := includeTemplate "pwa-apps.json.tmpl" . | fromJson -}}
 {
   "height": 30,
   "spacing": 4,
@@ -159,8 +159,7 @@
     "format": "{player_icon} {dynamic}",
     "dynamic-len": 40,
     "player-icons": {
-      "default": "",
-      "spotify": ""
+      "default": ""
     }
   },
   "custom/power": {

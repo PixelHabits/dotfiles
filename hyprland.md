@@ -75,6 +75,7 @@ chezmoi --source ~/.local/share/chezmoi/hyprland-lua-config --exclude scripts ap
   ~/.config/hypr/hyprland.conf \
   ~/.config/hypr/pwa.conf \
   ~/.config/waybar/config.jsonc \
+  ~/.config/waybar/style.css \
   ~/.local/bin/hypr-workspace-app \
   ~/.local/bin/hypr-rescue \
   ~/.local/bin/omarchy-hyprland-window-pop \
@@ -83,7 +84,7 @@ chezmoi --source ~/.local/share/chezmoi/hyprland-lua-config --exclude scripts ap
 ```
 
 Start a new Hyprland session.
-For later Lua changes, use the routine update steps in [PWA configuration](pwa.md#review-and-deploy).
+For later Lua changes, review and apply only the changed targets from the selected worktree.
 Do not pass `--config hyprland.conf` in a custom startup command.
 
 ## Validation
@@ -91,19 +92,21 @@ Do not pass `--config hyprland.conf` in a custom startup command.
 Run the tests from this worktree:
 
 ```sh
-python3 tests/hyprland.py
-python3 tests/hyprland_deployment.py
-python3 tests/hyprland_ipc.py
-python3 tests/pwa.py
-python3 tests/test_suspend_templates.py
-python3 tests/test_hypr_rescue.py
+uv run tests/hyprland.py
+uv run tests/hyprland_deployment.py
+uv run tests/hyprland_ipc.py
+uv run tests/pwa.py
+uv run tests/pwa_launcher.py
+uv run tests/waybar.py
+uv run tests/test_suspend_templates.py
+uv run tests/test_hypr_rescue.py
 ```
 
-The tests require Python 3.11 or later, Lua, chezmoi, Bash, and jq.
+The tests require uv with Python 3.14 or later, Lua, chezmoi, Bash, and jq.
 When Hyprland is installed, the tests run its parser against temporary files.
 The tests capture Lua declarations without executing their commands.
 They compare all 102 core bindings and their flags with the preserved configuration.
-They also cover provider choices, five PWA bindings, monitor overrides, startup commands, and window rules.
+They also cover provider choices, six PWA bindings and two laptop lid binds, monitor overrides, startup commands, and window rules.
 Helper tests capture IPC requests and pass the dispatcher constructors to the native parser without executing them.
 No test applies configuration to the live home directory or starts a graphical session.
 Native parsing confirms accepted syntax, not display hardware or keyboard behavior.

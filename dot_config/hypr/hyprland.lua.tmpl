@@ -5,6 +5,14 @@
 {{ if not (kindIs "map" .) }}{{ fail "hyprland.monitors must contain tables; see hyprland.md" }}{{ end -}}
 hl.monitor({{ includeTemplate "lua-value" . }})
 {{ end }}
+{{- $internal := get .hyprland "laptop_output" | default (get .hyprland.internal_outputs .hostname) }}
+{{ if and (eq .form_factor "laptop") $internal }}
+-- Keep external displays active with the lid closed. Resume also checks ACPI state.
+hl.bind("switch:on:Lid Switch", function()
+    hl.monitor({ output = {{ includeTemplate "lua-value" $internal }}, disabled = true })
+end, { locked = true })
+hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("hyprctl reload"), { locked = true })
+{{ end }}
 local terminal = "ghostty"
 local fileManager = "nautilus"
 local menu = "hyprlauncher"
@@ -39,7 +47,7 @@ hl.config({
     animations = { enabled = false },
     dwindle = { preserve_split = true },
     master = { new_status = "master" },
-    misc = { force_default_wallpaper = 0, disable_hyprland_logo = false },
+    misc = { force_default_wallpaper = 0, disable_hyprland_logo = false, allow_session_lock_restore = true },
     input = {
         kb_layout = "us", kb_variant = "", kb_model = "", kb_options = "", kb_rules = "",
         follow_mouse = 1, sensitivity = 0, numlock_by_default = true,
@@ -99,7 +107,7 @@ bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("uwsm app -- " .. menu), "App launch
 bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("uwsm app -- " .. browser), "Browser")
 bind(mainMod .. " + SHIFT + F", hl.dsp.exec_cmd("uwsm app -- " .. fileManager), "File manager")
 bind(mainMod .. " + SHIFT + SLASH", hl.dsp.exec_cmd("uwsm app -- 1password"), "Passwords")
-bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("uwsm app -- " .. vimApp), "Vim")
+bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("uwsm app -- " .. vimApp), "Vim")
 bind(mainMod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"), "Lock session")
 bind(mainMod .. " + COMMA", hl.dsp.exec_cmd("makoctl dismiss"), "Dismiss last notification")
 bind(mainMod .. " + SHIFT + COMMA", hl.dsp.exec_cmd("makoctl dismiss --all"), "Dismiss all notifications")

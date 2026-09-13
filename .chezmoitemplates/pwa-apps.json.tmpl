@@ -1,0 +1,25 @@
+{{- $apps := list -}}
+{{- range $id := .pwa.order -}}
+{{- $app := deepCopy (index $.pwa.apps $id) -}}
+{{- $provider := get $ $app.choice | default $app.default_provider -}}
+{{- $providers := index $.pwa.providers $id -}}
+{{- if not (hasKey $providers $provider) -}}
+{{- fail (printf "Unknown %s %q; choose a provider from .chezmoidata/pwa.toml" $app.choice $provider) -}}
+{{- end -}}
+{{- $app = mergeOverwrite $app (index $providers $provider) -}}
+{{- $_ := set $app "workspace" $id -}}
+{{- if eq $id "linear" -}}
+{{- $url := get $ "project_url" -}}
+{{- if and (not $url) (eq $provider "linear") -}}{{- $url = get $ "linear_url" -}}{{- end -}}
+{{- $_ := set $app "url" ($url | default $app.url) -}}
+{{- else if eq $id "github" -}}
+{{- $_ := set $app "url" (get $ "github_url" | default $app.url) -}}
+{{- end -}}
+{{- $host := replace "." "[.]" $app.host -}}
+{{- if not (regexMatch (printf "^https://%s(/[-a-zA-Z0-9_./]*)?$" $host) $app.url) -}}
+{{- fail (printf "%s URL must use https://%s with an optional path, without query parameters" $app.label $app.host) -}}
+{{- end -}}
+{{- $_ := set $app "class" (printf "^chrome-%s__.*$" $host) -}}
+{{- $apps = append $apps $app -}}
+{{- end -}}
+{{- $apps | toJson -}}

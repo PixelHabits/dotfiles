@@ -1,51 +1,105 @@
-# App identity stays the same when a machine chooses a different provider.
+# Shared provider choices contain public sites only. Account and organization choices stay local.
 [pwa]
-order = ["chat", "mail", "music", "linear", "teams"]
-
-[pwa.mailDefaults]
-work = "outlook"
-personal = "gmail"
-
-[pwa.linearDefaults]
-work = "https://linear.app/greenway-automotive"
-personal = "https://linear.app"
-
-[pwa.mailProviders.outlook]
-url = "https://outlook.office.com/mail/"
-class = '^chrome-outlook[.]office[.]com__.*$'
-
-[pwa.mailProviders.gmail]
-url = "https://mail.google.com/mail/u/0/"
-class = '^chrome-mail[.]google[.]com__.*$'
+order = ["chat", "mail", "music", "linear", "teams", "github"]
 
 [pwa.apps.chat]
-label = "T3 Chat"
+label = "AI Chat"
 key = "A"
 icon = ""
+choice = "ai_provider"
+default_provider = "t3"
+
+[pwa.providers.chat.t3]
+host = "t3.chat"
 url = "https://t3.chat"
-class = '^chrome-t3[.]chat__.*$'
+
+[pwa.providers.chat.chatgpt]
+host = "chatgpt.com"
+url = "https://chatgpt.com"
+
+[pwa.providers.chat.claude]
+host = "claude.ai"
+url = "https://claude.ai"
 
 [pwa.apps.mail]
 label = "Mail"
 key = "E"
 icon = ""
+choice = "mail_provider"
+default_provider = "gmail"
+
+[pwa.providers.mail.gmail]
+host = "mail.google.com"
+url = "https://mail.google.com/mail/u/0/"
+
+[pwa.providers.mail.outlook]
+host = "outlook.office.com"
+url = "https://outlook.office.com/mail/"
+
+[pwa.providers.mail.proton]
+host = "mail.proton.me"
+url = "https://mail.proton.me"
 
 [pwa.apps.music]
 label = "Music"
 key = "M"
 icon = ""
+choice = "music_provider"
+default_provider = "youtube"
+
+[pwa.providers.music.youtube]
+host = "music.youtube.com"
 url = "https://music.youtube.com"
-class = '^chrome-music[.]youtube[.]com__.*$'
+
+[pwa.providers.music.spotify]
+host = "open.spotify.com"
+url = "https://open.spotify.com"
+
+[pwa.providers.music.apple]
+host = "music.apple.com"
+url = "https://music.apple.com"
 
 [pwa.apps.linear]
-label = "Linear"
+label = "Projects"
 key = "L"
-icon = "◩"
-class = '^chrome-linear[.]app__.*$'
+icon = ""
+choice = "project_provider"
+default_provider = "linear"
+
+[pwa.providers.linear.linear]
+host = "linear.app"
+url = "https://linear.app"
+
+[pwa.providers.linear.notion]
+host = "www.notion.so"
+url = "https://www.notion.so"
 
 [pwa.apps.teams]
-label = "Teams"
+label = "Messages"
 key = "T"
 icon = ""
+choice = "chat_provider"
+default_provider = "teams"
+
+[pwa.providers.teams.teams]
+host = "teams.microsoft.com"
 url = "https://teams.microsoft.com"
-class = '^chrome-teams[.]microsoft[.]com__.*$'
+
+[pwa.providers.teams.slack]
+host = "app.slack.com"
+url = "https://app.slack.com"
+
+[pwa.providers.teams.discord]
+host = "discord.com"
+url = "https://discord.com/app"
+
+[pwa.apps.github]
+label = "GitHub"
+key = "G"
+icon = ""
+choice = ""
+default_provider = "github"
+
+[pwa.providers.github.github]
+host = "github.com"
+url = "https://github.com"

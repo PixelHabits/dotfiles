@@ -23,7 +23,7 @@ jq -e --arg signature "$signature" 'any(.[]; .instance == $signature)' <<<"$inst
 # Hyprctl can return an error string with a successful process exit code.
 request() {
     local response
-    response=$(timeout 5s hyprctl -i "$signature" "$@") || fail "request failed: $*"
+    response=$(timeout 20s hyprctl -i "$signature" "$@") || fail "request failed: $*"
     [[ $response == ok ]] || fail "request rejected: $response"
 }
 request reload

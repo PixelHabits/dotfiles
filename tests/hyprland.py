@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.14"
+# dependencies = []
+# ///
 """Compare native Lua declarations with the committed pre-migration bindings."""
 import json
 from pathlib import Path
@@ -41,7 +45,7 @@ def expected_action(binding):
 with tempfile.TemporaryDirectory(prefix='hypr-lua-') as directory:
     temp = Path(directory)
     config = temp / 'chezmoi.toml'
-    config.write_text('[data]\nhostname="GAM-DEV001"\nprofile="work"\ndesktop="hyprland"\n')
+    config.write_text('[data]\nhostname="GAM-DEV001"\nprofile="work"\ndesktop="hyprland"\nform_factor="laptop"\n')
     base = ['chezmoi', '--config', str(config), '--source', str(ROOT), 'execute-template', '--file']
     hypr, pwa = [subprocess.check_output(base + [str(ROOT / f'dot_config/hypr/{name}.lua.tmpl')], text=True) for name in ['hyprland', 'pwa']]
     calls = capture(temp, hypr, pwa)
@@ -49,9 +53,11 @@ with tempfile.TemporaryDirectory(prefix='hypr-lua-') as directory:
     by_key = {binding['keys']: binding for binding in calls['binds']}
     assert len(by_key) == len(calls['binds']), 'Duplicate key bindings'
     baseline = json.loads((ROOT / 'tests/hyprland-v1-bindings.json').read_text())
-    assert len(calls['binds']) == len(baseline) + 5
+    assert len(calls['binds']) == len(baseline) + 6 + 2
     for binding in baseline:
-        actual = by_key[binding['keys']]
+        # The PWA parent restored the editor shortcut after the v1 snapshot.
+        key = 'SUPER + SHIFT + N' if binding['options'].get('description') == 'Vim' else binding['keys']
+        actual = by_key[key]
         assert actual['flags'] == binding['options'], (binding, actual)
         assert actual['action'] == expected_action(binding), (binding, actual)
     assert calls['startup'] == ["uwsm app -- ghostty -e zsh -c 'tmux attach || tmux new -s main'", 'uwsm app -- hyprlauncher -d']
@@ -65,13 +71,13 @@ with tempfile.TemporaryDirectory(prefix='hypr-lua-') as directory:
     assert calls['config'][0]['animations']['enabled'] is False
     assert len(calls['curves']) == 5 and len(calls['animations']) == 17
     rules = {rule['name']: rule for rule in calls['rules']}
-    assert len(rules) == 10
+    assert len(rules) == 11
     assert rules['fix-xwayland-drags'] == {'name': 'fix-xwayland-drags', 'match': {'class': '^$', 'title': '^$', 'xwayland': True, 'float': True, 'fullscreen': False, 'pin': False}, 'no_focus': True}
     assert rules['move-hyprland-run']['move'] == '20 monitor_h-120'
     for app in ['localsend', '1password']:
         assert rules['float-' + app]['float'] and rules['float-' + app]['center']
     assert calls['layers'] == [{'name': 'selection-no-animation', 'match': {'namespace': 'selection'}, 'no_anim': True}]
-    print(f"PASS: {len(baseline)} legacy bindings, five PWA bindings, flags, startup, monitor data, and rules")
+    print(f"PASS: {len(baseline)} legacy bindings, six PWA bindings and two laptop lid binds, flags, startup, monitor data, and rules")
 
 # Preserve Unicode, literal escape sequences, quotes, and newlines through chezmoi/Lua.
 for value in ['display\u00a0name', 'literal \\u0041', 'line\nnext', '"; error("injection") --', 'quote\\" and 日本語']:
