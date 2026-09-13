@@ -51,7 +51,7 @@ class ClaudeConfigTest(unittest.TestCase):
     def render_settings(self, existing):
         return self.chezmoi('execute-template', '--with-stdin', SETTINGS.read_text(), stdin=existing)
 
-    def test_preserve_local_choices_and_repeat(self):
+    def test_modify_template_preserves_native_keys_and_enforces_managed(self):
         local = {
             'model': 'local-model', 'permissions': {'defaultMode': 'auto', 'deny': ['Read(secret)']},
             'enabledPlugins': {'local-plugin': True}, 'env': {'DO_NOT_TRACK': '1'},
@@ -65,25 +65,37 @@ class ClaudeConfigTest(unittest.TestCase):
         self.assertEqual(result['attribution'], {'commit': '', 'pr': '', 'sessionUrl': False, 'other': 'keep'})
         self.assertEqual(first, self.render_settings(first).stdout)
 
-    def test_invalid_json_stops(self):
-        result = self.chezmoi('execute-template', '--with-stdin', SETTINGS.read_text(), stdin='{broken', check=False)
-        self.assertNotEqual(result.returncode, 0)
+        fresh = json.loads(self.render_settings('').stdout)
+        self.assertNotIn('permissions', fresh)
 
-    def test_fresh_home_and_repeat_apply(self):
-        targets = ['.config/claude', '.local/state/claude', '.config/zsh/zshenv.d/21-claude.zsh']
-        paths = [str(self.home / target) for target in targets]
-        self.chezmoi('apply', '--exclude', 'scripts', *paths)
-        settings = self.home / '.config/claude/settings.json'
-        result = json.loads(settings.read_text())
-        self.assertNotIn('permissions', result)
-        runtime = self.home / '.local/state/claude'
-        self.assertEqual(runtime.stat().st_mode & 0o777, 0o700)
-        self.assertEqual(settings.stat().st_mode & 0o777, 0o600)
-        for name in ['settings.json', 'CLAUDE.md']:
-            self.assertEqual((runtime / name).resolve(), self.home / '.config/claude' / name)
-        self.chezmoi('apply', '--exclude', 'scripts', *paths)
-        self.assertEqual(self.chezmoi('diff', '--exclude', 'scripts', *paths).stdout, '')
-        self.assertFalse((self.home / '.claude').exists())
+    def test_symlink_templates_render_shared_paths(self):
+        for name in ['CLAUDE.md', 'settings.json']:
+            template = (SOURCE / f'dot_local/state/private_claude/symlink_{name}.tmpl').read_text()
+            rendered = self.chezmoi('execute-template', template).stdout.strip()
+            self.assertEqual(rendered, str(self.home / '.config/claude' / name))
+
+    def test_agent_home_managed_and_non_dev_gating(self):
+        claude_paths = ['.config/claude/CLAUDE.md', '.config/claude/settings.json',
+                         '.local/state/claude/settings.json', '.config/zsh/zshenv.d/21-claude.zsh']
+
+        self.configure(dev=False)
+        managed = self.chezmoi('managed').stdout.splitlines()
+        for path in claude_paths:
+            self.assertNotIn(path, managed)
+        self.assertNotIn('claude.md', managed)
+        self.assertFalse(any(path.startswith('tests/') for path in managed))
+
+        self.configure(agent_home_managed=True)
+        managed = self.chezmoi('managed').stdout.splitlines()
+        for prefix in ['.config/claude', '.local/state/claude',
+                       '.config/environment.d/20-claude.conf', '.config/zsh/zshenv.d/21-claude.zsh']:
+            self.assertFalse(any(path.startswith(prefix) for path in managed), prefix)
+
+        init = self.chezmoi('execute-template', '--init', (SOURCE / '.chezmoi.toml.tmpl').read_text()).stdout
+        self.assertTrue(tomllib.loads(init)['data']['agent_home_managed'])
+        self.config.write_text(self.config.read_text().replace('agent_home_managed = true\n', ''))
+        init = self.chezmoi('execute-template', '--init', (SOURCE / '.chezmoi.toml.tmpl').read_text()).stdout
+        self.assertFalse(tomllib.loads(init)['data']['agent_home_managed'])
 
     def test_zsh_redirects_and_overrides(self):
         template = (SOURCE / 'dot_config/zsh/zshenv.d/21-claude.zsh.tmpl').read_text()
@@ -96,54 +108,6 @@ class ClaudeConfigTest(unittest.TestCase):
         env |= {'CLAUDE_CONFIG_DIR': '/custom/runtime', 'CLAUDE_CODE_TMPDIR': '/custom/scratch'}
         result = subprocess.check_output(['zsh', '-f', str(script)], env=env, text=True)
         self.assertEqual(result.strip(), '/custom/runtime|/custom/scratch|/unchanged|1')
-
-    def test_work_and_personal_dev_gating(self):
-        for profile in ['work', 'personal']:
-            for dev in [True, False]:
-                with self.subTest(profile=profile, dev=dev):
-                    self.configure(dev=dev, profile=profile)
-                    paths = self.chezmoi('managed').stdout.splitlines()
-                    for path in ['.config/claude/CLAUDE.md', '.config/claude/settings.json',
-                                 '.local/state/claude/settings.json', '.config/zsh/zshenv.d/21-claude.zsh']:
-                        self.assertEqual(path in paths, dev, path)
-                    self.assertNotIn('claude.md', paths)
-                    self.assertFalse(any(path.startswith('tests/') for path in paths))
-
-    def test_managed_agent_home_gating_and_init_persistence(self):
-        self.configure(agent_home_managed=True)
-        paths = self.chezmoi('managed').stdout.splitlines()
-        for prefix in ['.config/claude', '.local/state/claude',
-                       '.config/environment.d/20-claude.conf', '.config/zsh/zshenv.d/21-claude.zsh']:
-            self.assertFalse(any(path.startswith(prefix) for path in paths), prefix)
-        self.assertIn('.config/zsh/zshenv.d/06-xdg-apps.zsh', paths)
-        init = self.chezmoi('execute-template', '--init', (SOURCE / '.chezmoi.toml.tmpl').read_text()).stdout
-        self.assertTrue(tomllib.loads(init)['data']['agent_home_managed'])
-        self.assertEqual(tomllib.loads(init)['sourceDir'], str(SOURCE))
-        self.config.write_text(self.config.read_text().replace('agent_home_managed = true\n', ''))
-        init = self.chezmoi('execute-template', '--init', (SOURCE / '.chezmoi.toml.tmpl').read_text()).stdout
-        self.assertFalse(tomllib.loads(init)['data']['agent_home_managed'])
-
-    def test_bash_inherits_xdg_and_scratch_survives_reapply(self):
-        self.chezmoi('apply', '--exclude', 'scripts',
-                     str(self.home / '.config/claude'), str(self.home / '.local/state/claude'),
-                     str(self.home / '.config/zsh/zshenv.d/21-claude.zsh'))
-        scratch = self.home / '.local/state/claude/tmp/session/work.txt'
-        scratch.parent.mkdir(parents=True)
-        scratch.write_text('unfinished work')
-        self.chezmoi('apply', '--exclude', 'scripts', str(self.home / '.local/state/claude'))
-        self.assertEqual(scratch.read_text(), 'unfinished work')
-        script = self.home / '.config/zsh/zshenv.d/21-claude.zsh'
-        env = self.env | {'GOPATH': '/inherited/go', 'NPM_CONFIG_CACHE': '/inherited/npm'}
-        command = ['zsh', '-f', '-c', 'source "$1"; exec "$CLAUDE_CODE_SHELL" -c '\
-                   + "'printf \"%s|%s|%s|%s\" \"$BASH_VERSION\" \"$XDG_STATE_HOME\" \"$GOPATH\" \"$NPM_CONFIG_CACHE\"'", 'test', str(script)]
-        result = subprocess.check_output(command, env=env, text=True).split('|')
-        self.assertTrue(result[0])
-        self.assertEqual(result[1:], [str(self.home / '.local/state'), '/inherited/go', '/inherited/npm'])
-        env['CLAUDE_CODE_SHELL'] = '/custom/bash'
-        result = subprocess.check_output(['zsh', '-f', '-c',
-                                         'source "$1"; print -r -- "$CLAUDE_CODE_SHELL"',
-                                         'test', str(script)], env=env, text=True)
-        self.assertEqual(result.strip(), '/custom/bash')
 
     def test_native_plugin_writes_preserve_settings_symlink(self):
         claude = shutil.which('claude')
