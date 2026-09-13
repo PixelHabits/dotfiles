@@ -62,7 +62,7 @@ class TemplateTests(unittest.TestCase):
                         if pwa.exists():
                             (hypr / "pwa.conf").write_text(subprocess.check_output(
                                 command + [str(pwa)], text=True, env=env))
-                        result = subprocess.run(["Hyprland", "--verify-config", "--config", str(conf)], env=env, capture_output=True, text=True, env=env)
+                        result = subprocess.run(["Hyprland", "--verify-config", "--config", str(conf)], env=env, capture_output=True, text=True)
                         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 

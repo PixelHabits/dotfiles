@@ -56,12 +56,12 @@ zwarn "missing: $tool"
 ## Chezmoi
 
 ### PWA Apps
-- Catalog: `.chezmoidata/pwa.toml`. Machine choices: `mail_provider`, `linear_url` in local chezmoi `[data]`.
-- Resolver: `.chezmoitemplates/pwa-apps.json`. Hyprland bindings/rules + Waybar icons consume same result.
+- Catalog: `.chezmoidata/pwa.toml`. Machine choices: `*_provider`, `project_url`, `github_url` in local chezmoi `[data]`.
+- Resolver: `.chezmoitemplates/pwa-apps.json.tmpl`. Hyprland bindings/rules + Waybar icons consume same result.
 - Provider URL + class travel together. Match domain + any app path/profile. Do not embed account slugs in rules.
 - Keep named workspace IDs stable. App launch uses Chromium `--app`, current `$browser` profile.
 - Gate helper + desktop files in `.chezmoiignore`. No desktop checks inside helper.
-- Run `python3 tests/pwa.py`. Tests use temp files + fake desktop commands; no live apply.
+- Run `uv run tests/pwa.py`. Tests use temp files + fake desktop commands; no live apply.
 
 ### Templates
 - Use `.tmpl` suffix for templated files

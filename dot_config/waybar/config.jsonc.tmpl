@@ -1,4 +1,4 @@
-{{- $apps := includeTemplate "pwa-apps.json" . | fromJson -}}
+{{- $apps := includeTemplate "pwa-apps.json.tmpl" . | fromJson -}}
 // -*- mode: jsonc -*-
 {
     // "layer": "top", // Waybar at top layer
