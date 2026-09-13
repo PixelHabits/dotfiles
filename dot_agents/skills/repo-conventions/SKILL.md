@@ -81,3 +81,5 @@ Every repository exposes the same task names, whatever the language runs them:
 - `gh pr list --state open` and `git worktree list`: know what is in flight.
 - Sweep the branch for fold candidates. Rebase onto `dev`. Verify the tip: frozen install, typecheck, test, check.
 - PR body says what and why in plain English. No attribution footer.
+- New tests answer one question: what does this change make true that a later commit can break?
+- Feature work starts from the tests that state the outcome, written once the facts are known.

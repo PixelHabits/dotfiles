@@ -6,6 +6,8 @@ Read this first. Domain detail lives in skills under `~/.agents/skills`: `repo-c
 
 - Fix the cause. A workaround that needs a paragraph to justify it means the code is wrong.
 - Code, comments, and docs carry no history. Git holds history. Never write "previously", "used to", "legacy", "migrated from", or describe old behavior in new code. A comment states a present constraint the code cannot show. Nothing else.
+- Tests pin behavior that ships. A regression test guards something live that a later change can break. A test written inside a change proves what the change makes true, never what it undid. Docs describe the tip the same way.
+- When the facts for a feature are known, write its tests first, then the code that makes them pass. Tests written after the code describe the code, not the requirement. Tests added during implementation cover details the design surfaces; they never replace the ones set at the start.
 - No lint overrides. No `biome-ignore`, `eslint-disable`, `@ts-expect-error`, or rule downgrades to pass a gate. Use the framework preset or fix the code. Removing an override is a win: report it.
 - A library with a bug or bad handling gets patched (`bun patch`, committed under `patches/`), never worked around. A workaround is debt.
 - No `any`. `unknown` when the type is unknown. Narrow, never assert.
