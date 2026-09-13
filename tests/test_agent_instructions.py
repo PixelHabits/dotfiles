@@ -1,6 +1,11 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.14"
+# dependencies = []
+# ///
 """Guards for the shared agent instructions and skills.
 
-Run: python3 tests/test_agent_instructions.py
+Run: uv run tests/test_agent_instructions.py
 """
 
 import pathlib

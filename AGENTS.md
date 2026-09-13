@@ -33,7 +33,7 @@
 - Shared core: `dot_config/agents/AGENTS.md`. One file for every agent. Invariants only: no versions, PR numbers, or dates.
 - Claude: `dot_config/claude/CLAUDE.md` = `@~/.config/agents/AGENTS.md` import + Claude-only appendix. Codex: `.config/codex/AGENTS.md` symlink to the core.
 - Skills: `dot_agents/skills/<name>/SKILL.md`, agentskills layout, read by Claude, Codex, pi. Domain detail lives here, loaded on demand. Field-note skills read as history, not law.
-- Guard: `python3 tests/test_agent_instructions.py` (import line, size budget, frontmatter, stale-token lint).
+- Guard: `uv run tests/test_agent_instructions.py` (import line, size budget, frontmatter, stale-token lint).
 
 ## Shell Scripts (zsh)
 
