@@ -1,3 +1,8 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.14"
+# dependencies = []
+# ///
 """Render representative machines with temporary chezmoi configuration."""
 from pathlib import Path
 import json
@@ -26,10 +31,10 @@ class TemplateTests(unittest.TestCase):
                 with self.subTest(hostname=hostname):
                     config = temp / "chezmoi.toml"
                     data = {"email": "test@example.invalid", "desktop": desktop, "hostname": hostname,
-                            "form_factor": "laptop", "profile": "personal", "dev": True, "osid": "arch"}
+                            "form_factor": "laptop" if hostname in ["GAM-DEV001", "custom"] else "desktop", "profile": "personal", "dev": True, "osid": "arch"}
                     content = "[data]\n" + "\n".join(f"{key} = {json.dumps(value)}" for key, value in data.items()) + "\n"
                     if override is not None:
-                        content += "[data.hyprland]\nmonitors = " + json.dumps(override) + "\n"
+                        content += '[data.hyprland]\nlaptop_output = "desc:Custom panel"\nmonitors = ' + json.dumps(override) + "\n"
                     config.write_text(content)
                     command = ["chezmoi", "--config", str(config), "--source", str(ROOT), "execute-template", "--file"]
                     rendered = subprocess.check_output(command + [str(ROOT / "dot_config/hypr/hyprland.conf.tmpl")], text=True, env=env)
@@ -37,10 +42,15 @@ class TemplateTests(unittest.TestCase):
                     self.assertEqual(len(monitors), 6 if hostname == "GAM-DEV001" else 1)
                     if override is not None:
                         self.assertEqual(monitors, ["monitor = " + override[0]])
-                    self.assertNotIn("switch:on:Lid Switch", rendered)
+                    self.assertEqual("switch:on:Lid Switch" in rendered, hostname in ["GAM-DEV001", "custom"])
+                    self.assertEqual("switch:off:Lid Switch" in rendered, hostname in ["GAM-DEV001", "custom"])
+                    idle = subprocess.check_output(command + [str(ROOT / "dot_config/hypr/hypridle.conf.tmpl")], text=True, env=env)
+                    self.assertEqual("grep -q open /proc/acpi/button/lid/*/state" in idle, data["form_factor"] == "laptop")
+                    self.assertIn("allow_session_lock_restore = true", rendered)
                     regenerated = tomllib.loads(subprocess.check_output(command + ["--init", str(ROOT / ".chezmoi.toml.tmpl")], text=True, env=env))
                     if override is not None:
                         self.assertEqual(regenerated["data"]["hyprland"]["monitors"], override)
+                        self.assertEqual(regenerated["data"]["hyprland"]["laptop_output"], "desc:Custom panel")
                     ignore = subprocess.check_output(command + [str(ROOT / ".chezmoiignore")], text=True, env=env)
                     self.assertEqual(".local/bin/hypr-rescue" in ignore, desktop != "hyprland")
                     self.assertIn("suspend-recovery.md", ignore)
@@ -52,7 +62,7 @@ class TemplateTests(unittest.TestCase):
                         if pwa.exists():
                             (hypr / "pwa.conf").write_text(subprocess.check_output(
                                 command + [str(pwa)], text=True, env=env))
-                        result = subprocess.run(["Hyprland", "--verify-config", "--config", str(conf)], env=env, capture_output=True, text=True)
+                        result = subprocess.run(["Hyprland", "--verify-config", "--config", str(conf)], env=env, capture_output=True, text=True, env=env)
                         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 

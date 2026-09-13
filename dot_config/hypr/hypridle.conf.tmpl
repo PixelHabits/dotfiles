@@ -2,7 +2,11 @@
 general {
     lock_cmd = pidof hyprlock || hyprlock       # avoid starting multiple hyprlock instances.
     before_sleep_cmd = loginctl lock-session
+{{- if eq .form_factor "laptop" }}
+    after_sleep_cmd = grep -q open /proc/acpi/button/lid/*/state && hyprctl reload; hyprctl dispatch dpms on
+{{- else }}
     after_sleep_cmd = hyprctl dispatch dpms on
+{{- end }}
     inhibit_sleep = 3 # Wait for the session lock before sleep.
 }
 
