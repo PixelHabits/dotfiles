@@ -2,15 +2,17 @@ import {
 	lstat,
 	mkdir,
 	readlink,
+	realpath,
 	rename,
 	rm,
 	symlink,
 	unlink,
 } from "node:fs/promises";
-import { dirname, isAbsolute, join, relative } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import {
 	errorCode,
 	errorMessage,
+	inSequence,
 	isRecord,
 	millisSince,
 	nowIso,
@@ -19,13 +21,19 @@ import {
 } from "./fs.ts";
 import { firstLine, git, SHA_PATTERN } from "./git.ts";
 import { acquireLockWithRetry } from "./lock.ts";
-import { type Entry, parseRepository, type Remote } from "./manifest.ts";
+import {
+	type Entry,
+	parseRepository,
+	type Remote,
+	validAlias,
+} from "./manifest.ts";
 import { aliasPath, type Paths, treePath } from "./paths.ts";
 import {
 	type AliasState,
 	type AliasStatus,
 	emptyAliasState,
 	type RefKind,
+	type Retired,
 	type State,
 } from "./state.ts";
 
@@ -34,6 +42,7 @@ const MARKER_TTL_MS = 24 * 60 * 60_000;
 const MARKERS = new Bun.Glob("*.json");
 const SYMREF_LINE = /^ref: refs\/heads\/(\S+)\tHEAD$/m;
 const HEAD_LINE = /^([0-9a-f]{40})\tHEAD$/m;
+const FULL_SHA = /^[0-9a-f]{40}$/;
 
 export interface StoreOptions {
 	offline: boolean;
@@ -184,6 +193,42 @@ function fail(current: AliasState, status: AliasStatus, error: string): void {
 	current.checkedAt = nowIso();
 }
 
+// A tree is removable only when this tool created it: it sits directly under
+// trees/, is a real directory, and the clone under repos/ lists it as a worktree.
+async function registeredTree(
+	paths: Paths,
+	tree: string
+): Promise<string | null> {
+	const target = resolve(tree);
+	const [alias = "", sha = "", ...extra] = basename(target).split("@");
+	if (
+		dirname(target) !== paths.trees ||
+		!validAlias(alias) ||
+		!FULL_SHA.test(sha) ||
+		extra.length > 0
+	) {
+		return null;
+	}
+	const info = await lstat(target).catch(() => null);
+	if (!info?.isDirectory()) {
+		return null;
+	}
+	const common = await git(
+		["rev-parse", "--path-format=absolute", "--git-common-dir"],
+		{ cwd: target }
+	);
+	if (!common.ok || relative(paths.repos, common.stdout).startsWith("..")) {
+		return null;
+	}
+	const listed = await git(["worktree", "list", "--porcelain"], {
+		cwd: common.stdout,
+	});
+	const physical = await realpath(target);
+	return listed.ok && listed.stdout.split("\n").includes(`worktree ${physical}`)
+		? common.stdout
+		: null;
+}
+
 export async function currentTree(
 	paths: Paths,
 	alias: string
@@ -193,8 +238,11 @@ export async function currentTree(
 		if (!(await lstat(link)).isSymbolicLink()) {
 			return null;
 		}
-		const target = await readlink(link);
-		return isAbsolute(target) ? target : join(paths.store, target);
+		const tree = resolve(paths.store, await readlink(link));
+		return dirname(tree) === paths.trees &&
+			basename(tree).startsWith(`${alias}@`)
+			? tree
+			: null;
 	} catch {
 		return null;
 	}
@@ -216,18 +264,27 @@ export async function treeExists(
 }
 
 async function ensureTree(
+	paths: Paths,
 	dir: string,
 	tree: string,
 	sha: string
 ): Promise<string | null> {
-	if (await Bun.file(join(tree, ".git")).exists()) {
+	if (await lstat(tree).catch(() => null)) {
+		const common = await registeredTree(paths, tree);
+		if (common !== (await realpath(dir))) {
+			return `refusing to replace a path this tool did not create: ${tree}`;
+		}
 		const head = await git(["rev-parse", "HEAD"], { cwd: tree });
 		if (head.ok && head.stdout === sha) {
 			return null;
 		}
-		await git(["worktree", "remove", "--force", tree], { cwd: dir });
+		const removed = await git(["worktree", "remove", "--force", tree], {
+			cwd: dir,
+		});
+		if (!removed.ok) {
+			return firstLine(removed.stderr);
+		}
 	}
-	await rm(tree, { force: true, recursive: true });
 	await git(["worktree", "prune"], { cwd: dir });
 	await mkdir(dirname(tree), { recursive: true });
 	const add = await git(["worktree", "add", "--detach", "--quiet", tree, sha], {
@@ -293,7 +350,7 @@ export async function applyAlias(
 		}
 	}
 	const tree = treePath(paths, alias, target);
-	const treeError = await ensureTree(dir, tree, target);
+	const treeError = await ensureTree(paths, dir, tree, target);
 	if (treeError) {
 		return treeError;
 	}
@@ -486,16 +543,15 @@ async function referencedTrees(
 	return new Set(trees.flat());
 }
 
-async function removeTree(tree: string): Promise<void> {
-	if (await Bun.file(join(tree, ".git")).exists()) {
-		const common = await git(["rev-parse", "--git-common-dir"], { cwd: tree });
-		if (common.ok) {
-			await git(["worktree", "remove", "--force", tree], {
-				cwd: common.stdout,
-			});
-		}
+async function removeTree(paths: Paths, tree: string): Promise<boolean> {
+	const common = await registeredTree(paths, tree);
+	if (!common) {
+		return false;
 	}
-	await rm(tree, { force: true, recursive: true });
+	const result = await git(["worktree", "remove", "--force", tree], {
+		cwd: common,
+	});
+	return result.ok;
 }
 
 export async function prune(
@@ -514,13 +570,19 @@ export async function prune(
 				item.head ? treePath(paths, alias, item.head) : ""
 			)
 		);
-		const kept = state.retired.filter(
-			(item) => !live.has(item.tree) && referenced.has(item.tree)
-		);
-		const removed = state.retired
-			.filter((item) => !(live.has(item.tree) || referenced.has(item.tree)))
-			.map((item) => item.tree);
-		await Promise.all(removed.map(removeTree));
+		const kept: Retired[] = [];
+		const removed: string[] = [];
+		await inSequence(state.retired, async (item) => {
+			if (
+				live.has(item.tree) ||
+				referenced.has(item.tree) ||
+				!(await removeTree(paths, item.tree))
+			) {
+				kept.push(item);
+			} else {
+				removed.push(item.tree);
+			}
+		});
 		state.retired = kept;
 		return removed;
 	} finally {
