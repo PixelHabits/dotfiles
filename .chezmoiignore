@@ -6,7 +6,6 @@ post-install/
 AGENTS.md
 README.md
 worktrees.md
-tmux.md
 tests/
 codex.md
 zsh-dotfile-architecture.md
