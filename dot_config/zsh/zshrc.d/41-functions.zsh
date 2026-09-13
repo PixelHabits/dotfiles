@@ -32,12 +32,41 @@ fi
 # Git log browser — browse commits with diff preview
 if require_cmd git && require_cmd fzf; then
   fgl() {
-    git log --oneline --graph --color=always --all |
-      fzf --height=100% --ansi --no-sort \
+    local -a log_args path_args
+    local arg after_separator=false
+    for arg in "$@"; do
+      if [[ $after_separator == true ]]; then
+        path_args+=("$arg")
+      elif [[ $arg == -- ]]; then
+        after_separator=true
+        path_args+=(--)
+      elif [[ $arg == -a ]]; then
+        log_args+=(--all)
+      else
+        log_args+=("$arg")
+      fi
+    done
+
+    # The graph is field 1, the full commit ID is field 2, and the label is field 3.
+    # Connector-only rows stay visible but cannot preview or open a commit.
+    local valid_hash='printf %s {2} | grep -Eq "^[0-9a-f]{40}([0-9a-f]{24})?$"'
+
+    setopt localoptions pipefail
+    if git log "${log_args[@]}" --graph --color=always --no-patch \
+      --format='%x09%H%x09%C(auto)%h %s%d' "${path_args[@]}" |
+      fzf --height=100% --ansi --no-sort --delimiter=$'\t' --with-nth=1,3.. \
         --prompt='commit > ' \
-        --header 'enter: view diff in popup, esc: quit' \
-        --preview 'git show --color=always --stat $(echo {} | grep -oE "[a-f0-9]{7,}" | head -1)' \
-        --bind 'enter:execute(git show --color=always $(echo {} | grep -oE "[a-f0-9]{7,}" | head -1) | less -R)'
+        --header 'enter: view diff in popup, esc: quit, --all: include all refs' \
+        --preview "$valid_hash && git show --color=always --stat {2} --" \
+        --bind "enter:execute($valid_hash && git show --color=always {2} -- | less -R)"; then
+      return 0
+    else
+      local -a results=("${pipestatus[@]}")
+      # Cancellation can interrupt Git or close its pipe. Other failures remain errors.
+      (( results[1] != 0 && results[1] != 141 && results[1] != 130 )) && return "$results[1]"
+      (( results[2] == 1 || results[2] == 130 )) && return 0
+      return "$results[2]"
+    fi
   }
 fi
 
