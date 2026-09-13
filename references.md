@@ -65,7 +65,9 @@ A line can also say `upstream +3 commits, run refs apply effect-ts`, `fetch fail
 
 ## Hooks
 
-Every hook reads `state.json` and returns in a few milliseconds. No hook touches the network.
+Hooks read local state and return in a few milliseconds. Background sync handles every network call.
+A render publishes the session marker under a short marker lock. Prune takes the same lock, so it cannot remove a tree between a render and its marker write.
+A running sync never delays a render.
 
 Claude Code reads them from `~/.claude/settings.json`. The chezmoi modify template adds them.
 

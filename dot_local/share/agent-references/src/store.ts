@@ -18,6 +18,7 @@ import {
 	readJson,
 } from "./fs.ts";
 import { firstLine, git, SHA_PATTERN } from "./git.ts";
+import { acquireLockWithRetry } from "./lock.ts";
 import { type Entry, parseRepository, type Remote } from "./manifest.ts";
 import { aliasPath, type Paths, treePath } from "./paths.ts";
 import {
@@ -502,19 +503,27 @@ export async function prune(
 	state: State,
 	now = Temporal.Now.instant()
 ): Promise<string[]> {
-	const referenced = await referencedTrees(paths.sessions, now);
-	const live = new Set(
-		Object.entries(state.aliases).map(([alias, item]) =>
-			item.head ? treePath(paths, alias, item.head) : ""
-		)
-	);
-	const kept = state.retired.filter(
-		(item) => !live.has(item.tree) && referenced.has(item.tree)
-	);
-	const removed = state.retired
-		.filter((item) => !(live.has(item.tree) || referenced.has(item.tree)))
-		.map((item) => item.tree);
-	await Promise.all(removed.map(removeTree));
-	state.retired = kept;
-	return removed;
+	const lock = await acquireLockWithRetry(paths.markerLock);
+	if (!lock) {
+		return [];
+	}
+	try {
+		const referenced = await referencedTrees(paths.sessions, now);
+		const live = new Set(
+			Object.entries(state.aliases).map(([alias, item]) =>
+				item.head ? treePath(paths, alias, item.head) : ""
+			)
+		);
+		const kept = state.retired.filter(
+			(item) => !live.has(item.tree) && referenced.has(item.tree)
+		);
+		const removed = state.retired
+			.filter((item) => !(live.has(item.tree) || referenced.has(item.tree)))
+			.map((item) => item.tree);
+		await Promise.all(removed.map(removeTree));
+		state.retired = kept;
+		return removed;
+	} finally {
+		await lock.release();
+	}
 }

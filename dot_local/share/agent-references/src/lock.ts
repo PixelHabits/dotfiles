@@ -76,3 +76,16 @@ export async function lockHeld(dir: string): Promise<boolean> {
 		return false;
 	}
 }
+
+export async function acquireLockWithRetry(
+	dir: string,
+	attempts = 50,
+	intervalMs = 20
+): Promise<Lock | null> {
+	const lock = await acquireLock(dir);
+	if (lock || attempts === 0) {
+		return lock;
+	}
+	await Bun.sleep(intervalMs);
+	return acquireLockWithRetry(dir, attempts - 1, intervalMs);
+}
