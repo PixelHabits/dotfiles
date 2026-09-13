@@ -1,8 +1,14 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.14"
+# dependencies = []
+# ///
 """Run recovery checks with a fake hyprctl; never contact the live compositor."""
 import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -15,7 +21,7 @@ class RescueTests(unittest.TestCase):
             root = Path(directory)
             log = root / "calls"
             tool = root / "hyprctl"
-            tool.write_text("""#!/usr/bin/env python3
+            tool.write_text("#!" + sys.executable + "\n" + """
 import json, os, sys
 with open(os.environ['CALLS'], 'a') as f:
     f.write(json.dumps(sys.argv[1:]) + '\\n')
@@ -26,7 +32,12 @@ command = ' '.join(sys.argv[3:])
 print('error: rejected' if command == os.environ['FAILURE'] else 'ok')
 """)
             tool.chmod(0o755)
+            timeout_log = root / "timeouts"
+            timeout = root / "timeout"
+            timeout.write_text('#!/bin/sh\nprintf "%s\\n" "$1" >> "$TIMEOUTS"\nshift\nexec "$@"\n')
+            timeout.chmod(0o755)
             env = os.environ | {
+                "TIMEOUTS": str(timeout_log),
                 "PATH": f"{root}:/usr/bin:/bin",
                 "CALLS": str(log),
                 "INSTANCES": json.dumps([{"instance": "mine"}] if instances is None else instances),
@@ -36,6 +47,8 @@ print('error: rejected' if command == os.environ['FAILURE'] else 'ok')
             }
             result = subprocess.run(["bash", str(SCRIPT), *args], env=env, capture_output=True, text=True)
             calls = [json.loads(line) for line in log.read_text().splitlines()] if log.exists() else []
+            deadlines = timeout_log.read_text().splitlines() if timeout_log.exists() else []
+            self.assertEqual(deadlines, ["5s", "20s", "20s"][:len(calls)])
             return result, calls
 
     def test_single_instance_restores_without_session_or_process_mutation(self):

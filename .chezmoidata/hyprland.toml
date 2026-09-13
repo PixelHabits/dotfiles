@@ -11,3 +11,6 @@ GAM-DEV001 = [
   "desc:LG Electronics LG TV SSCR2 0x01010101, 1920x1080@60.00, auto-center-up, auto",
   ", preferred, auto, auto",
 ]
+
+[hyprland.internal_outputs]
+GAM-DEV001 = "desc:Samsung Display Corp. ATNA60KA02"

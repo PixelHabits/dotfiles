@@ -23,8 +23,13 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
   profile = {{ $profile | quote }}
   dev = {{ $dev }}
 
-{{- if and (hasKey . "hyprland") (hasKey .hyprland "monitors") }}
+{{- if and (hasKey . "hyprland") (or (hasKey .hyprland "monitors") (hasKey .hyprland "laptop_output")) }}
 
 [data.hyprland]
+{{ if hasKey .hyprland "monitors" }}
   monitors = {{ .hyprland.monitors | toJson }}
+{{ end }}
+{{ if hasKey .hyprland "laptop_output" }}
+  laptop_output = {{ .hyprland.laptop_output | quote }}
+{{ end }}
 {{- end }}
