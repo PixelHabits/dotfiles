@@ -68,10 +68,13 @@ workstation-bootstrap.md
 
 {{- if not .dev }}
 .config/zsh/zshrc.d/22-fnm.zsh
+.config/agents/
+.agents/
 {{- end }}
 
 {{- if not .dev }}
 .config/claude/
+.config/codex/AGENTS.md
 .config/environment.d/20-claude.conf
 .config/zsh/zshenv.d/21-claude.zsh
 .local/state/claude/
