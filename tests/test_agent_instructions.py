@@ -22,7 +22,7 @@ STALE = {
 }
 
 # Rough budget: about four characters per token.
-AGENTS_MAX_CHARS = 7_000
+AGENTS_MAX_CHARS = 9_000
 SKILL_MAX_CHARS = 9_000
 
 
