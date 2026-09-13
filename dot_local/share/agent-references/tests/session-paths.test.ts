@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
 import { join } from "node:path";
+import { acquireLock } from "../src/lock.ts";
 import { buildLines, renderDelta, renderFull } from "../src/render.ts";
 import { readState } from "../src/state.ts";
 import { prune } from "../src/store.ts";
@@ -41,4 +42,45 @@ test("advertised paths and session pins survive another session applying updates
 	expect(await prune(sandbox.paths, state)).toEqual([]);
 	expect(await Bun.file(join(first.tree, "README.md")).text()).toBe("old");
 	expect(await renderDelta(sandbox.paths, "session-a")).toBeNull();
+});
+
+test("render publishes the session marker while a sync holds the store lock", async () => {
+	const remote = await makeRemote(sandbox, "library");
+	expect(
+		(await refs(sandbox, ["add", remote.bare, "--alias", "library"])).code
+	).toBe(0);
+	const sync = await acquireLock(sandbox.paths.lock);
+	if (!sync) {
+		throw new Error("sync lock missing");
+	}
+	try {
+		expect(await renderFull(sandbox.paths, "session-a")).toContain("- library");
+		expect(
+			await Bun.file(join(sandbox.paths.sessions, "session-a.json")).exists()
+		).toBe(true);
+		expect(await renderDelta(sandbox.paths, "session-a")).toBeNull();
+	} finally {
+		await sync.release();
+	}
+});
+
+test("render waits for a held marker lock, then publishes the marker", async () => {
+	const remote = await makeRemote(sandbox, "library");
+	expect(
+		(await refs(sandbox, ["add", remote.bare, "--alias", "library"])).code
+	).toBe(0);
+	const held = await acquireLock(sandbox.paths.markerLock);
+	if (!held) {
+		throw new Error("marker lock missing");
+	}
+	const rendering = renderFull(sandbox.paths, "session-a");
+	await Bun.sleep(100);
+	expect(
+		await Bun.file(join(sandbox.paths.sessions, "session-a.json")).exists()
+	).toBe(false);
+	await held.release();
+	expect(await rendering).toContain("- library");
+	expect(
+		await Bun.file(join(sandbox.paths.sessions, "session-a.json")).exists()
+	).toBe(true);
 });
