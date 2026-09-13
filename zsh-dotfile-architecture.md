@@ -111,6 +111,18 @@ When `ZDOTDIR` is already set, zsh reads that directory's `.zshenv` directly.
 Both paths therefore receive the same defaults.
 Application defaults use the rendered home directory. A custom base variable does not relocate every application automatically.
 
+| Launch path | Environment source |
+| --- | --- |
+| Terminal or ordinary zsh script on Linux or macOS | The full `.zshenv` and its drop-ins |
+| SSH shell or command when the remote account uses zsh | The same zsh startup files |
+| Linux systemd user service | `environment.d/10-xdg.conf` |
+| Linux desktop application | The parent process or the desktop's import of the systemd user environment |
+
+Zsh startup files do not configure applications that macOS starts outside a shell.
+The LaunchAgent described below supplies their environment through launchd.
+Existing processes retain their previous environment.
+Programs that ignore XDG variables still need their own directory configuration.
+
 Run `uv run tests/xdg/test_defaults.py` to test both startup paths and the shared renderers in temporary homes.
 These tests do not establish live SSH behavior or native macOS session behavior.
 
@@ -121,19 +133,20 @@ These tests do not establish live SSH behavior or native macOS session behavior.
 | `XDG_CACHE_HOME`  | Regenerable cache    | zsh/zcompdump-*, npm/               |
 | `XDG_STATE_HOME`  | Persistent state     | zsh/history, less/history           |
 
-### Session Coverage
+### macOS applications
 
-Three files carry the same variable map from `.chezmoitemplates/xdg-env.toml.tmpl`.
+The LaunchAgent at `Library/LaunchAgents/com.pixelhabits.xdg-env.plist` renders the same map as the shell and Linux service files.
+It runs `launchctl setenv` for each variable at login.
+Applications that launchd starts afterwards inherit these values.
+The `xdg-launchagent.sh` script reloads the agent after `chezmoi apply` changes the map.
+If there is no GUI session, the reload waits for the next login.
 
-| File | Covers |
-| --- | --- |
-| `environment.d/10-xdg.conf` | Linux systemd user session, including the graphical session and its apps |
-| `zshenv.d/06-xdg-apps.zsh` | Every zsh shell on all platforms, including SSH logins |
-| `Library/LaunchAgents/com.pixelhabits.xdg-env.plist` | Dock and Spotlight apps on macOS |
+Applications that are already running retain their previous environment.
+Restart them after the LaunchAgent loads.
+macOS lists the agent under Login Items as a background item.
 
-The LaunchAgent runs `launchctl setenv` for each variable at login. Apps that launchd starts later inherit the values. The `xdg-launchagent.sh` script reloads the agent after `chezmoi apply` changes the map.
-
-Two limits apply on macOS. Apps that are already running when the agent loads do not see new values. Restart them. macOS lists the agent under Login Items as a background item.
+Run `uv run tests/xdg/test_env_renderers.py` to test rendering and reload behavior with a temporary launchctl substitute.
+These tests do not establish native macOS login or GUI inheritance.
 
 ## Per-Host File Presence
 
@@ -149,3 +162,7 @@ See `workstation-bootstrap.md` for the gating matrix.
 | Add XDG redirect          | Add the path to `.chezmoitemplates/xdg-env.toml.tmpl`; update `site.yml` only if Ansible needs it |
 | Disable script            | Rename: `mv foo.zsh foo.zsh.disabled`                  |
 | Debug slow startup        | `ZSH_BOOT_DEBUG=1 zsh`                                 |
+
+Run `uv run tests/xdg/test_env_renderers.py` to test all three renderers and the reload script with temporary homes.
+The script requires Python 3.14 or later, chezmoi, and zsh. It has no Python package dependencies.
+The tests use a local `launchctl` substitute. Actual macOS login and GUI inheritance require a Mac.

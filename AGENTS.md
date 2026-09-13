@@ -125,3 +125,10 @@ ansible-playbook site.yml --syntax-check
 # Run specific Ansible tags
 ansible-playbook site.yml --tags cli --ask-become-pass
 ```
+
+## macOS XDG
+
+- LaunchAgent derives the shared XDG map. Zsh base defaults and app redirects use separate renderers.
+- Reload skips absent GUI domain. Real bootstrap errors fail apply.
+- Tests: `uv run tests/xdg/test_env_renderers.py`. PEP 723 Python >=3.14, no packages. Temporary HOME and launchctl shim only.
+- Linux test pass does not prove macOS login or GUI inheritance.
