@@ -5,6 +5,7 @@ import type { Paths } from "./paths.ts";
 import { renderDelta, renderFull } from "./render.ts";
 import { readState, writeState } from "./state.ts";
 import { applyAlias, DEFAULT_DEPTH } from "./store.ts";
+import { renderWorktrees } from "./worktrees.ts";
 
 export const HARNESSES = ["claude", "codex"] as const;
 export type Harness = (typeof HARNESSES)[number];
@@ -129,7 +130,14 @@ async function sessionStart(
 	if (BOUNDARY_SOURCES.has(input.source ?? "")) {
 		await applyPending(paths);
 	}
-	const result = output("SessionStart", await renderFull(paths, session));
+	const blocks = [
+		await renderFull(paths, session),
+		await renderWorktrees(input.cwd ?? process.cwd()),
+	].filter((item) => item !== null);
+	const result = output(
+		"SessionStart",
+		blocks.length === 0 ? null : blocks.join("\n")
+	);
 	spawnDetachedSync();
 	return result;
 }
