@@ -1,5 +1,28 @@
 {{- /* chezmoi:modify-template */ -}}
 {{- $settings := fromJson (default "{}" .chezmoi.stdin) -}}
+{{- $refs := "~/.local/bin/refs hook claude" -}}
+{{- $managed := dict
+  "SessionStart" (dict "matcher" "startup|resume|clear|compact" "hooks" (list (dict "type" "command" "command" (printf "%s SessionStart" $refs) "timeout" 20)))
+  "UserPromptSubmit" (dict "hooks" (list (dict "type" "command" "command" (printf "%s UserPromptSubmit" $refs) "timeout" 5)))
+  "PostToolUse" (dict "matcher" "Bash" "hooks" (list (dict "type" "command" "command" (printf "%s PostToolUse" $refs) "timeout" 5)))
+-}}
+{{- $hooks := get $settings "hooks" | default dict -}}
+{{- range $event, $entry := $managed -}}
+{{-   $kept := list -}}
+{{-   range (get $hooks $event | default list) -}}
+{{-     $ours := false -}}
+{{-     range (get . "hooks" | default list) -}}
+{{-       if hasPrefix $refs (get . "command" | default "") -}}
+{{-         $ours = true -}}
+{{-       end -}}
+{{-     end -}}
+{{-     if not $ours -}}
+{{-       $kept = append $kept . -}}
+{{-     end -}}
+{{-   end -}}
+{{-   $_ := set $hooks $event (append $kept $entry) -}}
+{{- end -}}
+{{- $_ := set $settings "hooks" $hooks -}}
 {{- $settings
   | setValueAtPath "attribution.commit" ""
   | setValueAtPath "attribution.pr" ""
