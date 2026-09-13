@@ -29,6 +29,7 @@ Verify names in the docs; the list grows. Images (`Bun.Image`), headless browser
 - `bun run --parallel a b` inside a package. Turbo owns cross-package graphs.
 - `bun test --isolate` per package, `--preload` for one shared setup file, `mock.module` at boundaries.
 - `bun --bun <cli>` runs a Node CLI under Bun and does not load `.env`. Pass `--env-file` when the script needs it.
+- Compile hooks and CLIs with `bun build --compile --minify --bytecode --format=esm`. Bytecode skips parse and compile at startup; it is tied to the Bun version, so rebuild on a Bun upgrade.
 
 ## Runtime facts that bite
 
