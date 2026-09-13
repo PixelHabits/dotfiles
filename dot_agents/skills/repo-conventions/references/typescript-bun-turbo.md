@@ -26,7 +26,7 @@ Root `package.json` runs turbo; a root-only twin handles files outside any works
 
 - Root twins `_check`, `_fix`, `_clean`. `_fix` also runs `sherif --fix`.
 - `postinstall`: `sherif`. `prepare`: `lefthook install` plus any compiler patch step.
-- lefthook pre-commit: `bun x ultracite fix {staged_files}` with `stage_fixed` and `skip: [rebase]`. Never a whole-tree task in the hook, never `LEFTHOOK=0`, never `--no-verify`. The whole tree is checked by `bun run check` in CI.
+- lefthook pre-commit: `bun x ultracite fix {staged_files}` with `stage_fixed` and `skip: [rebase]`, plus `bun x sherif` when a `package.json` is staged. Never a whole-tree task in the hook. The whole tree is checked by `bun run check` in CI.
 - Hooks call `bun x ultracite fix <file>` directly, not the turbo wrapper.
 - `bun run --parallel a b` for fan-out inside one package. Turbo owns the cross-package graph.
 - Ultracite on Biome with the framework preset per package. No rule disables. Formatter: tabs.
