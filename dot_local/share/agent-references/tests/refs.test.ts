@@ -18,7 +18,7 @@ import {
 } from "./helpers.ts";
 
 const ADDED_LINE =
-	/^- lib {2}\S+\/references\/lib {2}main@[0-9a-f]{7} {2}fetched just now {2}A test library$/;
+	/^- lib {2}\S+\/references\/trees\/lib@[0-9a-f]{40} {2}main@[0-9a-f]{7} {2}fetched just now {2}A test library$/;
 const TREE_LINK = /^trees\/lib@[0-9a-f]{40}$/;
 const FULL_SHA = /^[0-9a-f]{40}$/;
 const FAILED_LINE =

@@ -86,11 +86,16 @@ export async function buildLine(
 	const state =
 		current ?? emptyAliasState(aliasPath(paths, alias), entry.repository);
 	const present = await treeExists(paths, alias, state.head);
+	const tree =
+		present && state.head ? treePath(paths, alias, state.head) : null;
+	const visible = { ...state, path: tree ?? state.path };
 	return {
 		alias,
-		key: describe(alias, entry, state, present, () => AGE_PLACEHOLDER),
-		text: describe(alias, entry, state, present, (iso) => formatAge(iso, now)),
-		tree: present && state.head ? treePath(paths, alias, state.head) : null,
+		key: describe(alias, entry, visible, present, () => AGE_PLACEHOLDER),
+		text: describe(alias, entry, visible, present, (iso) =>
+			formatAge(iso, now)
+		),
+		tree,
 	};
 }
 
@@ -142,16 +147,21 @@ async function readMarker(
 	};
 }
 
-function writeMarker(
+async function writeMarker(
 	paths: Paths,
 	session: string,
 	lines: Line[]
 ): Promise<void> {
-	const marker: Marker = { lines: {}, trees: {}, updatedAt: nowIso() };
+	const previous = await readMarker(paths, session);
+	const marker: Marker = {
+		lines: {},
+		trees: { ...previous?.trees },
+		updatedAt: nowIso(),
+	};
 	for (const line of lines) {
 		marker.lines[line.alias] = line.key;
 		if (line.tree) {
-			marker.trees[line.alias] = line.tree;
+			marker.trees[line.tree] = line.tree;
 		}
 	}
 	return writeJsonAtomic(markerPath(paths, session), marker);
