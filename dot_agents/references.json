@@ -1,0 +1,42 @@
+{
+  "effect-ts": {
+    "repository": "Effect-TS/effect",
+    "ref": "main",
+    "description": "Use when build with or referencing effect v4 a library for typescript"
+  },
+  "nitro": {
+    "repository": "nitrojs/nitro",
+    "ref": "main",
+    "description": "Use when bundling / building vite applications that need a server"
+  },
+  "tanstack-table": {
+    "repository": "TanStack/table",
+    "ref": "main",
+    "description": "Use when building with TanStack Table."
+  },
+  "tanstack-router": {
+    "repository": "TanStack/router",
+    "ref": "main",
+    "description": "Use when building with TanStack Start/Router."
+  },
+  "tanstack-query": {
+    "repository": "TanStack/query",
+    "ref": "main",
+    "description": "Use when building with TanStack Query."
+  },
+  "tanstack-virtual": {
+    "repository": "TanStack/virtual",
+    "ref": "main",
+    "description": "Use when building with TanStack Virtual."
+  },
+  "tanstack-form": {
+    "repository": "TanStack/form",
+    "ref": "main",
+    "description": "Use when building with TanStack Form."
+  },
+  "ultracite": {
+    "repository": "haydenbleasel/ultracite",
+    "ref": "main",
+    "description": "Use when building when you need to understand Biome linting / formatting configuration."
+  }
+}
