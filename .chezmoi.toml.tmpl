@@ -11,6 +11,33 @@
 {{- $profile := promptStringOnce . "profile" "Machine profile (work/personal)" -}}
 {{- $dev := promptBoolOnce . "dev" "Development machine" -}}
 
+{{- $pwa := (include ".chezmoidata/pwa.toml" | fromToml).pwa -}}
+{{- $selected := dict -}}
+{{- range $id := $pwa.order -}}
+{{- $app := index $pwa.apps $id -}}
+{{- if $app.choice -}}
+{{- $choices := list -}}
+{{- range $name, $_ := index $pwa.providers $id -}}{{- $choices = append $choices $name -}}{{- end -}}
+{{- $value := get $ $app.choice | default $app.default_provider -}}
+{{- if eq $desktop "hyprland" -}}
+{{- $value = promptChoiceOnce $ $app.choice (printf "%s provider" $app.label) $choices $value -}}
+{{- end -}}
+{{- if not (hasKey (index $pwa.providers $id) $value) -}}{{- fail (printf "Unknown %s %q" $app.choice $value) -}}{{- end -}}
+{{- $_ := set $selected $app.choice $value -}}
+{{- end -}}
+{{- end -}}
+{{- $projectDefault := (index $pwa.providers.linear $selected.project_provider).url -}}
+{{- if eq $selected.project_provider "linear" -}}{{- $projectDefault = get . "linear_url" | default $projectDefault -}}{{- end -}}
+{{- $projectURL := get . "project_url" | default $projectDefault -}}
+{{- $githubURL := get . "github_url" | default "https://github.com" -}}
+{{- if eq $desktop "hyprland" -}}
+{{- $projectURL = promptStringOnce . "project_url" "Projects landing URL" $projectURL -}}
+{{- $githubURL = promptStringOnce . "github_url" "GitHub landing URL" $githubURL -}}
+{{- end -}}
+{{- $_ := set $selected "project_url" $projectURL -}}
+{{- $_ := set $selected "github_url" $githubURL -}}
+{{- $_ := includeTemplate "pwa-apps.json.tmpl" (mergeOverwrite (deepCopy .) (dict "pwa" $pwa) $selected) -}}
+
 # Keep the worktree selected by --source when this file is regenerated.
 sourceDir = {{ .chezmoi.sourceDir | quote }}
 
@@ -22,6 +49,9 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
   form_factor = {{ $formFactor | quote }}
   profile = {{ $profile | quote }}
   dev = {{ $dev }}
+{{ range $key, $value := $selected }}
+  {{ $key }} = {{ $value | quote }}
+{{ end }}
 
 {{- if and (hasKey . "hyprland") (or (hasKey .hyprland "monitors") (hasKey .hyprland "laptop_output")) }}
 

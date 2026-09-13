@@ -39,6 +39,7 @@ $terminal = ghostty
 $fileManager = nautilus
 $menu = hyprlauncher
 $browser = helium-browser --force-dark-mode
+$vimApp = $terminal -e nvim
 
 #################
 ### AUTOSTART ###
@@ -277,10 +278,12 @@ bindd = $mainMod ALT, RETURN, Terminal, exec, uwsm app -- $terminal
 bindd = $mainMod, SPACE, App launcher, exec, uwsm app -- $menu
 bindd = $mainMod SHIFT, B, Browser, exec, uwsm app -- $browser
 bindd = $mainMod SHIFT, F, File manager, exec, uwsm app -- $fileManager
-bindd = $mainMod SHIFT, N, Editor, exec, uwsm app -- $terminal -e nvim
-bindd = $mainMod SHIFT, M, Music, exec, xdg-open https://music.youtube.com
 bindd = $mainMod SHIFT, SLASH, Passwords, exec, uwsm app -- 1password
+bindd = $mainMod SHIFT, N, Vim, exec, uwsm app -- $vimApp
 bindd = $mainMod, L, Lock session, exec, loginctl lock-session
+
+# Named web apps share their definitions with Waybar.
+source = {{ .chezmoi.homeDir }}/.config/hypr/pwa.conf
 
 # Notifications (mako)
 bindd = $mainMod, COMMA, Dismiss last notification, exec, makoctl dismiss
