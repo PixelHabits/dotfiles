@@ -30,7 +30,7 @@ Read this first. Domain detail lives in skills under `~/.agents/skills`: `repo-c
 - The history of `dev` and `main` is never rewritten and never force-pushed. PR state (close, reopen, retarget, merge) and pushes to a shared branch change only on my explicit request.
 - When another branch is stacked on yours, do not rewrite history below the stack point. Append fixes, autosquash once at the end, and tell the owner the new tip before you push.
 - Probes, benchmarks, one-off scripts, generated output, and first-run config stay out of commits. Scratch lives in the scratchpad.
-- When git fails on signing, credentials, or a hook, stop and report the exact error. Never add environment variables, timeouts, `--no-verify`, `LEFTHOOK=0`, or unsigned commits to get past it. Never save a shell workaround to memory.
+- When git fails on signing, credentials, or a hook, stop and report the exact error. Never add environment variables, timeouts, hook bypass flags, or unsigned commits to get past it. Never save a shell workaround to memory.
 
 ## Tooling
 
