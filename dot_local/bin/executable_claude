@@ -7,15 +7,17 @@ self=$(realpath "$0")
 
 if [ -n "$CLAUDE_CONFIG_DIR" ] && [ -z "$CLAUDE_CODE_PROJECT_DIR_NAME" ]; then
   common=
-  if common=$(git rev-parse --git-common-dir 2>/dev/null); then
-    common=$(realpath "$common")
-  elif [ -d "$PWD/.bare" ]; then
+  if [ -d "$PWD/.bare" ] && [ "$(git --git-dir="$PWD/.bare" rev-parse --is-bare-repository 2>/dev/null)" = true ]; then
     common=$(realpath "$PWD/.bare")
+  elif common=$(git rev-parse --git-common-dir 2>/dev/null); then
+    common=$(realpath "$common")
   fi
 
   if [ -n "$common" ] && identity=$(printf '%s' "$common" | git --git-dir="$common" hash-object --stdin 2>/dev/null); then
     name=$(basename "$(dirname "$common")")
-    name=$(printf '%s' "$name" | LC_ALL=C tr -c 'A-Za-z0-9_-' '-' | cut -c 1-48)
+    name=$(printf '%s' "$name" | LC_ALL=C tr -c 'A-Za-z0-9_-' '-' | cut -c 1-31)
+    # Claude accepts at most 64 characters. Keep 128 bits of repository identity.
+    identity=$(printf '%s' "$identity" | cut -c 1-32)
     export CLAUDE_CODE_PROJECT_DIR_NAME="$name-$identity"
   fi
 fi

@@ -34,9 +34,10 @@ Memory written in one worktree stays invisible in the others.
 
 `~/.local/bin/claude` is a small launcher in front of the real `claude` binary.
 It resolves the canonical Git common directory and hashes that path with Git.
-The store name combines a readable repository basename with the full digest.
+The store name combines a readable repository basename with 128 bits of the digest.
 Names use only letters, digits, hyphens, and underscores.
-The readable part is limited to 48 characters.
+The readable part is limited to 31 characters so the full name fits Claude's 64-character limit.
+A valid `.bare` directory in the current container takes precedence over an outer Git repository.
 Git computes the digest without writing an object or changing the repository.
 When `CLAUDE_CONFIG_DIR` is set, the launcher exports `CLAUDE_CODE_PROJECT_DIR_NAME` and then runs the next `claude` on `PATH`.
 Every worktree of one repository then shares one project directory.
