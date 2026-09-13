@@ -67,7 +67,7 @@ Every hook reads `state.json` and returns in a few milliseconds. No hook touches
 
 Claude Code reads them from `~/.claude/settings.json`. The chezmoi modify template adds them.
 
-- `SessionStart` on startup, resume, clear, or compact: prints the full block. On startup and resume it first applies fetched updates. Then it starts one background `refs sync`.
+- `SessionStart` on startup, resume, clear, or compact: prints the full block. On startup and resume it first applies fetched updates. Then it starts one background `refs sync`. When the working directory is a git worktree or holds a `.bare` directory, the hook adds a `<worktrees>` block with one line per worktree from `git worktree list`, at most 40 lines. A git error or a plain directory produces no block.
 - `UserPromptSubmit`: prints the delta. When the last sync is older than one hour, it starts one background `refs sync`.
 - `PostToolUse` for Bash: when the command was `refs add`, `refs apply`, `refs sync`, or `refs remove`, prints the delta. Otherwise prints nothing.
 

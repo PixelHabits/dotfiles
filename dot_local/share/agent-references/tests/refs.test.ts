@@ -23,6 +23,8 @@ const TREE_LINK = /^trees\/lib@[0-9a-f]{40}$/;
 const FULL_SHA = /^[0-9a-f]{40}$/;
 const FAILED_LINE =
 	/- lib {2}\S+ {2}main@[0-9a-f]{7} {2}fetch failed just now: .+/;
+const NESTED_LINE = /^- main\/\.worktrees\/nested {2}detached@[0-9a-f]{7}$/;
+const DETACHED_HERE = /- \. {2}detached@[0-9a-f]{7}/;
 
 let sandbox: Sandbox;
 
@@ -455,4 +457,104 @@ describe("hooks", () => {
 		expect(empty.code).toBe(0);
 		expect(empty.stdout).toBe("");
 	});
+});
+
+describe("worktrees block", () => {
+	test("SessionStart lists the worktrees of a bare container and a nested .worktrees checkout", async () => {
+		const remote = await makeRemote(sandbox, "lib");
+		await refs(sandbox, ["add", remote.bare, "--alias", "lib"]);
+		const container = join(sandbox.root, "container");
+		await mkdir(container, { recursive: true });
+		const bare = join(container, ".bare");
+		await git(sandbox, sandbox.root, [
+			"clone",
+			"--quiet",
+			"--bare",
+			remote.bare,
+			bare,
+		]);
+		await git(sandbox, container, [
+			"--git-dir",
+			bare,
+			"worktree",
+			"add",
+			"--quiet",
+			join(container, "main"),
+			"main",
+		]);
+		await git(sandbox, container, [
+			"--git-dir",
+			bare,
+			"worktree",
+			"add",
+			"--quiet",
+			"-b",
+			"feat",
+			join(container, "feat"),
+			"main",
+		]);
+		const nested = join(container, "main", ".worktrees", "nested");
+		await git(sandbox, join(container, "main"), [
+			"worktree",
+			"add",
+			"--quiet",
+			"--detach",
+			nested,
+			"main",
+		]);
+
+		const fromContainer = await refs(
+			sandbox,
+			["hook", "claude", "SessionStart"],
+			{
+				stdin: hookInput("SessionStart", "w1", {
+					cwd: container,
+					source: "startup",
+				}),
+			}
+		);
+		const context = parseHook(fromContainer.stdout).additionalContext;
+		expect(context).toStartWith(HEADER);
+		const block = context.slice(context.indexOf("<worktrees>"));
+		expect(block.split("\n")).toEqual([
+			"<worktrees>",
+			"- feat  feat",
+			"- main  main",
+			expect.stringMatching(NESTED_LINE),
+			"</worktrees>",
+		]);
+
+		const fromNested = await refs(sandbox, ["hook", "codex", "SessionStart"], {
+			stdin: hookInput("SessionStart", "w2", {
+				cwd: nested,
+				source: "startup",
+			}),
+		});
+		const nestedContext = parseHook(fromNested.stdout).additionalContext;
+		expect(nestedContext).toContain(`- ${join(container, "main")}  main`);
+		expect(nestedContext).toContain(`- ${join(container, "feat")}  feat`);
+		expect(nestedContext).toMatch(DETACHED_HERE);
+	});
+
+	test.each(["plain", "missing"])(
+		"a %s directory produces no worktrees block",
+		async (kind) => {
+			const remote = await makeRemote(sandbox, "lib");
+			await refs(sandbox, ["add", remote.bare, "--alias", "lib"]);
+			const plain = join(sandbox.root, "plain");
+			if (kind === "plain") {
+				await mkdir(plain, { recursive: true });
+			}
+			const result = await refs(sandbox, ["hook", "claude", "SessionStart"], {
+				stdin: hookInput("SessionStart", "w3", {
+					cwd: plain,
+					source: "startup",
+				}),
+			});
+			const context = parseHook(result.stdout).additionalContext;
+			expect(context).toStartWith(HEADER);
+			expect(context).toEndWith("</available_references>");
+			expect(context).not.toContain("<worktrees>");
+		}
+	);
 });
