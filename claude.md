@@ -9,14 +9,6 @@ Claude Code reads these paths:
 | `~/.local/state/claude/` | Private runtime files, history, credentials, and installed plugins |
 | `~/.local/state/claude/tmp/` | Active scratch work that survives reboots and cache cleanup |
 
-## Agent-managed hosts
-
-When a host image already manages the agent directories, set `agent_home_managed = true` in the local chezmoi `[data]` table.
-This skips the Claude configuration, runtime links, and redirects so provider updates keep reaching the files Claude reads.
-The default is `false`.
-Choose this before the first apply on such a host.
-Flipping it later does not clean up files an earlier apply already wrote.
-
 ## Design
 
 Claude stores several file types in one directory.
@@ -27,3 +19,7 @@ Two symlinks bridge that directory back to the shared configuration above: one f
 Claude appends its own per-user subdirectory below this path.
 
 See the official [environment variables](https://code.claude.com/docs/en/env-vars) and [directory reference](https://code.claude.com/docs/en/claude-directory) pages.
+
+## Test
+
+Run `uv run tests/test_claude_config.py` to test settings in a temporary home.

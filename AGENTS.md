@@ -18,7 +18,6 @@
 ## Claude Code
 
 - Human guide: `claude.md`. Dev machines only; gate paths in `.chezmoiignore`.
-- `agent_home_managed = true`: provider owns agent dirs. Skip Claude config/runtime/redirects. Local data; init preserves, no prompt.
 - Shared config: `.config/claude`. Runtime: `.local/state/claude`; config symlinks only.
 - Runtime auth/history/plugins stay local. Never import runtime directory into source.
 - `modify_private_settings.json`: preserve local keys; manage attribution only.
@@ -27,7 +26,7 @@
 - Claude tool shell: `/bin/bash`; interactive shell unchanged. Inherited XDG exports survive shell change.
 - Memory directory: per project only. No global project-name override, auto-sync hook, or company memory in public repo.
 - Preserve privacy opt-outs. No bypass alias. No guessed settings keys.
-- Validate: `python3 tests/test_claude_config.py`.
+- Validate: `uv run tests/test_claude_config.py`.
 
 ## Shell Scripts (zsh)
 
