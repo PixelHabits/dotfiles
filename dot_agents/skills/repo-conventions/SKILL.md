@@ -38,6 +38,10 @@ Rules:
 - One writer per worktree. Parallel agents get parallel worktrees.
 - Remove a worktree with `git --git-dir=.bare worktree remove <dir>` after its branch merges.
 - Older repositories use `<repo>/.worktrees/<name>` inside a normal checkout. The same rules apply.
+- Launch habit: a build session starts inside the worktree it edits, `cd <root>/<feature> && claude`. Orchestration or cross-branch review starts at the container, `cd <root> && claude`.
+- The `claude` launcher names the project store after the container, so every worktree shares one transcript and memory store.
+- The container holds a `CLAUDE.md` with the single line `@AGENTS.md`, created once per machine (`printf '@AGENTS.md\n' > <root>/CLAUDE.md`). It loads the container rules from any worktree.
+- Relative paths resolve from the session root. Never a bare relative `cd`.
 
 ## Git flow
 
