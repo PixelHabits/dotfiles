@@ -38,12 +38,11 @@ class ReferencesTest(unittest.TestCase):
             'XDG_STATE_HOME': str(self.home / '.local/state'),
         }
 
-    def configure(self, dev=True, agent_home_managed=False):
+    def configure(self, dev=True):
         self.config.write_text(
             '[data]\n' + f'dev = {str(dev).lower()}\nprofile = "work"\n'
             'desktop = "none"\nform_factor = "server"\nhostname = "test"\n'
             'osid = "ubuntu"\nemail = "test@example.invalid"\n'
-            f'agent_home_managed = {str(agent_home_managed).lower()}\n'
         )
 
     def chezmoi(self, *args, stdin=None, check=True):
@@ -140,14 +139,6 @@ class ReferencesTest(unittest.TestCase):
                 for path in expected:
                     self.assertEqual(path in managed, dev, path)
                 self.assertEqual('agent-references.sh' in scripts, dev)
-
-    def test_managed_agent_home_keeps_the_tool_but_not_the_codex_hooks(self):
-        self.configure(agent_home_managed=True)
-        managed = self.chezmoi('managed', '--include', 'files').stdout.splitlines()
-        self.assertIn('.local/share/agent-references/src/cli.ts', managed)
-        self.assertIn('.agents/references.json', managed)
-        self.assertNotIn('.config/codex/hooks.json', managed)
-        self.assertNotIn('.config/claude/settings.json', managed)
 
     def test_build_script_hashes_every_source_file(self):
         script = self.chezmoi('execute-template', '--file', str(BUILD_SCRIPT)).stdout
