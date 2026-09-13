@@ -1,5 +1,5 @@
 * {
-    font-family: FontAwesome, Roboto, Helvetica, Arial, sans-serif;
+    font-family: "Noto Sans", "JetBrainsMono Nerd Font", "Noto Color Emoji", sans-serif;
     font-size: 13px;
 }
 
@@ -214,14 +214,6 @@ label:focus {
     background-color: #66cc99;
     color: #2a5c45;
     min-width: 100px;
-}
-
-#mpris.spotify {
-    background-color: #66cc99;
-}
-
-#mpris.vlc {
-    background-color: #ffa000;
 }
 
 #temperature {

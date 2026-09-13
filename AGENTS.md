@@ -140,3 +140,9 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 - Mock tests: `uv run tests/test_hypr_rescue.py`.
 - Render tests: `uv run tests/test_suspend_templates.py`. Uses temporary config; Hyprland parse-only when available.
 - Driver workaround != verified fix. Preserve lock process; never select another user's session.
+
+## Waybar
+
+- Text/icons: provisioned Noto Sans, JetBrainsMono Nerd Font, Noto Color Emoji. No assumed system fonts.
+- Native MPRIS: shared style + default icon. No unused player-specific overrides.
+- Run `uv run tests/waybar.py`: laptop/desktop render + installed font glyph coverage.
