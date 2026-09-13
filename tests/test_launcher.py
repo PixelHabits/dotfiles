@@ -144,6 +144,30 @@ class LauncherTest(unittest.TestCase):
         self.assertEqual(len(name), 64)
         self.assertEqual(self.launch(directory, preset='chosen'), ('chosen', []))
 
+    def test_empty_path_components_search_cwd_without_adding_it(self):
+        utils = self.root / 'utils'
+        utils.mkdir()
+        (utils / 'realpath').symlink_to(shutil.which('realpath'))
+        real = self.repo / 'claude'
+        real.write_text(FAKE)
+        real.chmod(0o755)
+        paths = [
+            f'{self.shim_dir}:{utils}:',
+            f':{self.shim_dir}:{utils}',
+            f'{self.shim_dir}::{utils}',
+            f'{self.shim_dir}:{utils}',
+        ]
+        for path in paths:
+            with self.subTest(path=path):
+                result = subprocess.run([str(self.shim_dir / 'claude'), 'argument'],
+                                        cwd=self.repo, env={'PATH': path, 'HOME': str(self.root)},
+                                        capture_output=True, text=True, timeout=30)
+                if path == paths[-1]:
+                    self.assertEqual(result.returncode, 127)
+                else:
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(result.stdout.split('\0')[:-1], ['unset', str(self.repo), 'argument'])
+
     def test_missing_real_binary_fails_loudly(self):
         env = {'PATH': str(self.shim_dir), 'HOME': str(self.root)}
         result = subprocess.run(['claude'], cwd=self.repo, env=env, capture_output=True, text=True, timeout=30)
