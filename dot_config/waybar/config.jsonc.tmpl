@@ -1,4 +1,4 @@
-{{- $apps := includeTemplate "pwa-apps.json" . | fromJson -}}
+{{- $apps := includeTemplate "pwa-apps.json.tmpl" . | fromJson -}}
 {
   "height": 30,
   "spacing": 4,

@@ -27,13 +27,16 @@ visible_monitor=$(
 )
 
 if [[ -n "$visible_monitor" ]]; then
-    hyprctl dispatch focusmonitor "$visible_monitor" >/dev/null
+    response=$(hyprctl dispatch focusmonitor "$visible_monitor")
 else
-    hyprctl dispatch focusworkspaceoncurrentmonitor "name:$workspace" >/dev/null
+    response=$(hyprctl dispatch focusworkspaceoncurrentmonitor "name:$workspace")
 fi
+[[ $response == ok ]] || { printf 'Hyprland rejected focus: %s\n' "$response" >&2; exit 1; }
 
-if ! hyprctl clients -j | jq -e --arg workspace "$workspace" --arg class_regex "$class_regex" '
+clients=$(hyprctl clients -j)
+matched=$(jq -r --arg workspace "$workspace" --arg class_regex "$class_regex" '
     any(.[]; .workspace.name == $workspace and (.class | test($class_regex)))
-' >/dev/null; then
+' <<<"$clients")
+if [[ $matched != true ]]; then
     "${launch_cmd[@]}"
 fi
