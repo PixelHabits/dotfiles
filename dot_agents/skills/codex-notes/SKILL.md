@@ -10,7 +10,8 @@ Each note was measured on the installed CLI when written. Re-check on a new vers
 ## Sandbox
 
 - Read-only mode denies `/tmp` and `$TMPDIR` too. Nothing that compiles, tests, regenerates, or opens a shell heredoc can run. Pass `--write` for any task that runs `go build`, `go vet`, `go test`, `bun test`, `bun run generate`, `bun run check`, or `bun run typecheck`. Reserve read-only for prompts that only run `git`, `rg`, `cat`, and `sed`.
-- Workspace-write grants the workspace root, `/tmp`, and `$TMPDIR`. XDG-redirected caches under `~/.cache` and `~/.local/share` are read-only, so `bun install`, `go build`, and tree-sitter fail on their first cache write. Add those cache roots to `[sandbox_workspace_write] writable_roots` in the Codex config.
+- The writable root is the directory the thread starts in, which the codex-rescue plugin takes from the Claude session's cwd. In the bare layout every other worktree is a sibling, so it is outside the root and writes there are refused. Start the thread in the worktree it edits: `codex-companion.mjs task --cwd <worktree>` or `codex exec -C <worktree>`. Never point a thread at a container or a parent directory to reach several worktrees.
+- Workspace-write grants that root, `/tmp`, and `$TMPDIR`. XDG-redirected caches under `~/.cache` and `~/.local/share` are read-only, so `bun install`, `go build`, and tree-sitter fail on their first cache write. Add those cache roots to `[sandbox_workspace_write] writable_roots` in the Codex config.
 - Workspace-write marks the checkout's `.git` read-only by design, and in a worktree the resolved `gitdir` as well. Codex cannot `git add` or `git commit` there. Let Codex edit; do the commit from Claude or the terminal afterward.
 - A read-only run that needs a build ends with the deliverable blocked. State the mode in the prompt.
 
