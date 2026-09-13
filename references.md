@@ -40,9 +40,11 @@ The tool keeps keys it does not know.
 └── state.json                        what the tool knows about every alias
 ```
 
-Agents see only the `<alias>` path. The link changes in one atomic step, so a reader never sees a half-moved tree.
+Agents receive the commit-specific `trees/<alias>@<sha>` path. Its contents stay fixed when another session applies an update.
+The `<alias>` link follows the current commit for terminal use.
 A background sync only fetches. It never moves a link.
-`refs apply` moves a link to the fetched commit. The old tree stays until no session younger than 24 hours refers to it. The next `refs sync` removes it.
+`refs apply` moves a link to the fetched commit. A session retains every tree it receives until its marker is 24 hours old.
+The next `refs sync` removes retired trees that no active marker retains.
 
 ## The prompt block
 
@@ -54,7 +56,7 @@ Read the friendly manual. Before you build with or answer about a library below,
 its source and its own docs (README, docs/, examples, changelog) in the path given.
 These libraries move faster than training data. Do not infer an API from patterns you
 remember or from other repositories. Cite the file and line you read.
-- effect-ts  /home/me/.local/share/references/effect-ts  main@1a2b3c4  fetched 12m ago  Use when building with Effect
+- effect-ts  /home/me/.local/share/references/trees/effect-ts@<full-commit-sha>  main@1a2b3c4  fetched 12m ago  Use when building with Effect
 </available_references>
 ```
 

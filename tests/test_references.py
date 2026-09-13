@@ -105,6 +105,21 @@ class ReferencesTest(unittest.TestCase):
         self.assertEqual(hooks['SessionStart'][0]['matcher'], 'startup|resume|clear|compact')
         self.assertEqual(hooks['PostToolUse'][0]['matcher'], 'Bash')
 
+    def test_settings_keep_foreign_hooks_inside_a_managed_matcher_group(self):
+        foreign = [
+            {'type': 'command', 'command': 'echo preserve-me'},
+            {'type': 'command', 'command': f'{REFS}-other SessionStart'},
+            {'type': 'prompt', 'prompt': 'Keep this local prompt'},
+        ]
+        group = {'matcher': 'startup', 'localMetadata': 'keep', 'hooks': [
+            {'type': 'command', 'command': f'{REFS} SessionStart --old-flag'}, *foreign,
+        ]}
+        local = {'hooks': {'SessionStart': [group]}}
+        settings = self.render_settings(json.dumps(local))
+        self.assertEqual(settings['hooks']['SessionStart'][0], {**group, 'hooks': foreign})
+        self.assertEqual(len(settings['hooks']['SessionStart']), 2)
+        self.assertEqual(settings, self.render_settings(json.dumps(settings)))
+
     def test_manifest_is_a_valid_alias_record(self):
         manifest = json.loads(MANIFEST.read_text())
         self.assertTrue(manifest)

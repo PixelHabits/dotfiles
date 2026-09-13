@@ -10,14 +10,15 @@
 {{- range $event, $entry := $managed -}}
 {{-   $kept := list -}}
 {{-   range (get $hooks $event | default list) -}}
-{{-     $ours := false -}}
+{{-     $group := . -}}
+{{-     $foreign := list -}}
 {{-     range (get . "hooks" | default list) -}}
-{{-       if hasPrefix $refs (get . "command" | default "") -}}
-{{-         $ours = true -}}
+{{-       if not (hasPrefix (printf "%s " $refs) (get . "command" | default "")) -}}
+{{-         $foreign = append $foreign . -}}
 {{-       end -}}
 {{-     end -}}
-{{-     if not $ours -}}
-{{-       $kept = append $kept . -}}
+{{-     if $foreign -}}
+{{-       $kept = append $kept (set $group "hooks" $foreign) -}}
 {{-     end -}}
 {{-   end -}}
 {{-   $_ := set $hooks $event (append $kept $entry) -}}
