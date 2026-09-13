@@ -33,8 +33,11 @@ A repository with many worktrees therefore gets one project directory per worktr
 Memory written in one worktree stays invisible in the others.
 
 `~/.local/bin/claude` is a small launcher in front of the real `claude` binary.
-It finds the repository container with `git rev-parse --git-common-dir` and names the project after that container.
-A bare layout gives the container name, and a normal checkout gives the checkout name.
+It resolves the canonical Git common directory and hashes that path with Git.
+The store name combines a readable repository basename with the full digest.
+Names use only letters, digits, hyphens, and underscores.
+The readable part is limited to 48 characters.
+Git computes the digest without writing an object or changing the repository.
 When `CLAUDE_CONFIG_DIR` is set, the launcher exports `CLAUDE_CODE_PROJECT_DIR_NAME` and then runs the next `claude` on `PATH`.
 Every worktree of one repository then shares one project directory.
 Outside a repository, or when `CLAUDE_CONFIG_DIR` is unset, the launcher changes nothing.
@@ -58,23 +61,10 @@ Claude reads `CLAUDE.md` from parent directories.
 A container `CLAUDE.md` with the single line `@AGENTS.md` loads the container rules from any worktree.
 `worktrees.md` shows the command.
 
-### Merge old project directories once
-
-Sessions from before the launcher live under one directory per worktree path.
-Move them into the shared name once, with no Claude session open.
-This example merges the `platform` repository:
-
-```sh
-cd ~/.claude/projects
-mkdir -p platform
-for dir in ./-home-devinalsup-Developer-Greenway-platform*; do
-  find "$dir" -mindepth 1 -maxdepth 1 ! -name memory -exec mv -n {} platform/ \;
-done
-mv -n ./-home-devinalsup-Developer-Greenway-platform/memory platform/
-rmdir ./-home-devinalsup-Developer-Greenway-platform*
-```
-
-The loop moves every transcript and every session directory, which holds `subagents`, `tool-results`, and `workflows`.
-The root path directory also holds `memory`, which moves as a whole.
-`rmdir` fails on a directory that still holds files, so nothing is lost silently.
-After the shared configuration applies, the store lives under `$CLAUDE_CONFIG_DIR/projects` and the same commands apply there.
+Unrelated repositories with matching basenames receive different automatic store names.
+Symbolic links to the same repository resolve to the same identity.
+Moving a repository or changing its Git object format changes its automatic store name.
+An explicit `CLAUDE_CODE_PROJECT_DIR_NAME` keeps a chosen name stable across such changes.
+The launcher does not move existing transcripts or memory.
+Keep a private backup and close Claude before moving any existing project files.
+Choose each source directory explicitly and preserve files with matching names for manual comparison.

@@ -9,7 +9,7 @@ import unittest
 
 SOURCE = Path(__file__).resolve().parents[1]
 LAUNCHER = SOURCE / 'dot_local/bin/executable_claude'
-FAKE = '#!/bin/sh\nprintf "%s\\n" "${CLAUDE_CODE_PROJECT_DIR_NAME-unset}" "$@"\n'
+FAKE = '#!/bin/sh\nprintf "%s\\0" "${CLAUDE_CODE_PROJECT_DIR_NAME-unset}" "$PWD" "$@"\n'
 GIT = ['git', '-c', 'user.email=test@example.invalid', '-c', 'user.name=test']
 
 
@@ -40,7 +40,8 @@ class LauncherTest(unittest.TestCase):
             env['CLAUDE_CODE_PROJECT_DIR_NAME'] = preset
         result = subprocess.run(['claude', *args], cwd=cwd, env=env, capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
-        name, *argv = result.stdout.splitlines()
+        name, actual_cwd, *argv = result.stdout.split("\0")[:-1]
+        self.assertEqual(actual_cwd, str(Path(cwd).resolve()))
         return name, argv
 
     def test_bare_container_worktree_names_the_container(self):
@@ -49,24 +50,29 @@ class LauncherTest(unittest.TestCase):
         subprocess.run(['git', '--git-dir', str(container / '.bare'), 'worktree', 'add', '-q', '--detach',
                         str(container / 'main')], check=True, capture_output=True)
         (container / 'main/sub').mkdir()
-        self.assertEqual(self.launch(container / 'main', '--resume', 'x'), ('container', ['--resume', 'x']))
-        self.assertEqual(self.launch(container / 'main/sub'), ('container', []))
+        name, args = self.launch(container / 'main', '--resume', 'x')
+        self.assertRegex(name, r'^container-[0-9a-f]{40}$')
+        self.assertEqual(args, ['--resume', 'x'])
+        self.assertEqual(self.launch(container / 'main/sub'), (name, []))
+        self.assertEqual(self.launch(container), (name, []))
 
     def test_nested_worktree_names_the_checkout(self):
         nested = self.repo / '.worktrees/feature'
         subprocess.run(['git', '-C', str(self.repo), 'worktree', 'add', '-q', '-b', 'feature', str(nested)],
                        check=True, capture_output=True)
-        self.assertEqual(self.launch(nested), ('repo', []))
+        self.assertEqual(self.launch(nested), self.launch(self.repo))
 
     def test_plain_clone_names_the_checkout(self):
         (self.repo / 'sub').mkdir()
-        self.assertEqual(self.launch(self.repo), ('repo', []))
-        self.assertEqual(self.launch(self.repo / 'sub'), ('repo', []))
+        name, args = self.launch(self.repo)
+        self.assertRegex(name, r'^repo-[0-9a-f]{40}$')
+        self.assertEqual(args, [])
+        self.assertEqual(self.launch(self.repo / 'sub'), (name, []))
 
     def test_container_root_uses_the_bare_directory(self):
         container = self.root / 'container'
         subprocess.run(['git', 'clone', '-q', '--bare', str(self.repo), str(container / '.bare')], check=True)
-        self.assertEqual(self.launch(container), ('container', []))
+        self.assertRegex(self.launch(container)[0], r'^container-[0-9a-f]{40}$')
 
     def test_non_git_directory_sets_nothing(self):
         plain = self.root / 'plain'
@@ -80,8 +86,40 @@ class LauncherTest(unittest.TestCase):
         self.assertEqual(self.launch(self.repo, config_dir=None), ('unset', []))
 
     def test_real_binary_found_whatever_the_path_order(self):
-        self.assertEqual(self.launch(self.repo, '-p', 'hi', shim_first=True), ('repo', ['-p', 'hi']))
+        name, args = self.launch(self.repo, '-p', 'hi', shim_first=True)
+        self.assertRegex(name, r'^repo-[0-9a-f]{40}$')
+        self.assertEqual(args, ['-p', 'hi'])
         self.assertEqual(self.launch(self.repo, '-p', 'hi', shim_first=False), ('unset', ['-p', 'hi']))
+
+    def test_same_basename_repositories_use_distinct_stores(self):
+        other = self.root / 'other/repo'
+        subprocess.run(['git', 'clone', '-q', str(self.repo), str(other)], check=True)
+        first, _ = self.launch(self.repo)
+        second, _ = self.launch(other)
+        self.assertRegex(second, r'^repo-[0-9a-f]{40}$')
+        self.assertNotEqual(first, second)
+        self.assertEqual(self.launch(other, preset='chosen'), ('chosen', []))
+
+    def test_symlinked_repository_and_arguments_keep_identity(self):
+        alias = self.root / 'repo alias'
+        alias.symlink_to(self.repo, target_is_directory=True)
+        args = ['--resume', 'value with spaces', 'line\nbreak', '', '*']
+        name, actual = self.launch(alias, *args)
+        self.assertEqual(name, self.launch(self.repo)[0])
+        self.assertEqual(actual, args)
+
+    def test_sha256_bare_container_and_worktree_share_identity(self):
+        container = self.root / 'repo with dots.and spaces'
+        common = container / '.bare'
+        source = self.root / 'sha256-source'
+        subprocess.run(['git', 'init', '-q', '--object-format=sha256', str(source)], check=True)
+        subprocess.run([*GIT, '-C', str(source), 'commit', '-q', '--allow-empty', '-m', 'init'], check=True)
+        subprocess.run(['git', 'clone', '-q', '--bare', str(source), str(common)], check=True)
+        subprocess.run(['git', '--git-dir', str(common), 'worktree', 'add', '-q',
+                        '--detach', str(container / 'main')], check=True, capture_output=True)
+        name, _ = self.launch(container)
+        self.assertRegex(name, r'^repo-with-dots-and-spaces-[0-9a-f]{64}$')
+        self.assertEqual(self.launch(container / 'main'), (name, []))
 
     def test_missing_real_binary_fails_loudly(self):
         env = {'PATH': str(self.shim_dir), 'HOME': str(self.root)}
