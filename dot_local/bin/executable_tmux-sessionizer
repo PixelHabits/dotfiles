@@ -2,7 +2,8 @@
 # Select a Git checkout, then create or focus its tmux session.
 # Usage: tmux-sessionizer [path]   (no path: fzf picker over discovered checkouts)
 # Search roots: ~/Developer and the chezmoi worktree directory, four levels deep,
-# including git worktrees. Override the roots in ~/.config/tmux/project-roots
+# including git worktrees. Override the roots in $XDG_CONFIG_HOME/tmux/project-roots
+# (default: ~/.config/tmux/project-roots)
 # (one path per line, ~/ allowed, # comments) - machine-local, not managed.
 set -euo pipefail
 
