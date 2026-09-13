@@ -1,5 +1,9 @@
-#!/usr/bin/env python3
-"""Offline tests with temporary homes. Requires Python 3.11+, chezmoi, and zsh."""
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.14"
+# dependencies = []
+# ///
+"""Offline tests with temporary homes. Requires uv, chezmoi, and zsh."""
 import hashlib
 import os
 from pathlib import Path
@@ -50,7 +54,8 @@ class EnvRenderersTest(unittest.TestCase):
         return self.chezmoi("execute-template", "--file", str(Path(self.command[2]) / path))
 
     def defaults(self):
-        return tomllib.loads(self.render(PARTIAL))
+        table = tomllib.loads(self.render(PARTIAL))
+        return table["base"] | table["apps"]
 
     def plist_assignments(self):
         plist = plistlib.loads(self.chezmoi("cat", str(self.home / PLIST)).encode())
@@ -93,6 +98,41 @@ class EnvRenderersTest(unittest.TestCase):
         actual = dict(item.decode().split("=", 1) for item in output.split(b"\0") if item)
         for name in exported:
             self.assertEqual(actual[name], assignments[name], name)
+
+    def test_systemd_values_match_the_shared_map(self):
+        self.use_os("linux")
+        rendered = self.render("dot_config/environment.d/10-xdg.conf.tmpl")
+        actual = dict(line.split("=", 1) for line in rendered.splitlines()
+                      if line and not line.startswith("#"))
+        self.assertEqual(actual, self.defaults())
+
+    def test_reload_skips_missing_gui_and_propagates_bootstrap_errors(self):
+        shim = self.root / "bin"
+        shim.mkdir()
+        log = self.root / "reload.log"
+        (shim / "launchctl").write_text(
+            '#!/bin/sh\nprintf "%s\\n" "$1" >> "$LAUNCHCTL_LOG"\n'
+            'case "$1" in\n'
+            '  print) exit "$GUI_RESULT" ;;\n'
+            '  bootstrap) exit "$BOOTSTRAP_RESULT" ;;\n'
+            'esac\n')
+        (shim / "launchctl").chmod(0o755)
+        script = self.render(RELOAD)
+        for gui, bootstrap, expected, calls in (
+            (1, 0, 0, ["print"]),
+            (0, 0, 0, ["print", "bootout", "bootstrap", "kickstart"]),
+            (0, 9, 9, ["print", "bootout", "bootstrap"]),
+        ):
+            log.write_text("")
+            env = self.env | {"PATH": f"{shim}:{self.env['PATH']}",
+                              "LAUNCHCTL_LOG": str(log), "GUI_RESULT": str(gui),
+                              "BOOTSTRAP_RESULT": str(bootstrap)}
+            result = subprocess.run(["/bin/sh"], input=script, env=env,
+                                    cwd=self.home, text=True, capture_output=True)
+            self.assertEqual(result.returncode, expected, result.stderr)
+            self.assertEqual(log.read_text().splitlines(), calls)
+            if gui:
+                self.assertIn("skipping reload", result.stderr)
 
     def test_ignore_follows_the_operating_system(self):
         managed = self.managed()

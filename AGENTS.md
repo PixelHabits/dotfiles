@@ -135,3 +135,10 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 - Codex home env: `.chezmoitemplates/codex/home-env.toml.tmpl` renders `environment.d/22-codex.conf` and `zshenv.d/20-codex.zsh`. Dev-gate config and redirects together.
 - Tests: `uv run tests/codex/test_config.py`. Python >=3.14 via PEP 723; temporary HOME only; no credentials or external MCP servers.
 - Human guide: `codex.md`.
+
+## macOS XDG
+
+- LaunchAgent derives the shared XDG map. Zsh base defaults and app redirects use separate renderers.
+- Reload skips absent GUI domain. Real bootstrap errors fail apply.
+- Tests: `uv run tests/xdg/test_env_renderers.py`. PEP 723 Python >=3.14, no packages. Temporary HOME and launchctl shim only.
+- Linux test pass does not prove macOS login or GUI inheritance.
