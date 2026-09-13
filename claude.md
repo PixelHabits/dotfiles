@@ -69,3 +69,5 @@ An explicit `CLAUDE_CODE_PROJECT_DIR_NAME` keeps a chosen name stable across suc
 The launcher does not move existing transcripts or memory.
 Keep a private backup and close Claude before moving any existing project files.
 Choose each source directory explicitly and preserve files with matching names for manual comparison.
+
+Run `uv run tests/test_launcher.py` for temporary Git layouts and a fake Claude binary.

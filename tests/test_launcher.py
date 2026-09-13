@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.14"
+# dependencies = []
+# ///
 """Run the claude launcher against a fake binary in temporary git layouts."""
 import os
 from pathlib import Path
