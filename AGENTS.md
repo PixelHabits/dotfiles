@@ -20,8 +20,8 @@
 - Human guide: `claude.md`. Dev machines only; gate paths in `.chezmoiignore`.
 - Shared config: `.config/claude`. Runtime: `.local/state/claude`; config symlinks only.
 - Runtime auth/history/plugins stay local. Never import runtime directory into source.
-- `modify_private_settings.json`: preserve local keys; manage attribution, `refs` hooks, `env.CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR`, `permissions.deny` `EnterWorktree` only.
-- Launcher `dot_local/bin/executable_claude`: names the project store after the repo container (`CLAUDE_CODE_PROJECT_DIR_NAME`), then execs the next `claude` on PATH. Container `CLAUDE.md` = `@AGENTS.md`, untracked. Validate: `python3 tests/test_launcher.py`.
+- `modify_private_settings.json`: preserve local keys; manage attribution, `refs` hooks, `env.CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR`, and `permissions.deny` `EnterWorktree`.
+- Launcher `dot_local/bin/executable_claude`: names project store with sanitized repo basename + full Git digest of canonical common-dir path (`CLAUDE_CODE_PROJECT_DIR_NAME`). Same repo worktrees share; unrelated paths differ. Explicit name wins. Hash writes no object. Exec next `claude` on PATH. Container `CLAUDE.md` = `@AGENTS.md`, untracked. Validate: `python3 tests/test_launcher.py`.
 - Claude redirects: dedicated `environment.d/20-claude.conf` + `zshenv.d/21-claude.zsh` for dev gating.
 - Claude scratch: `.local/state/claude/tmp`; active work, user-cleans. No automatic deletion or global `TMPDIR`.
 - Claude tool shell: `/bin/bash`; interactive shell unchanged. Inherited XDG exports survive shell change.

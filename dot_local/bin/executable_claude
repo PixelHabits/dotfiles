@@ -1,19 +1,23 @@
 #!/bin/sh
 # Start Claude Code with one project store per repository.
-# The store is named after the repository container, so every worktree of a
-# repository shares transcripts and auto memory. Then run the real binary.
+# Worktrees share the canonical Git common directory. Hash its path without
+# writing a Git object, so unrelated repositories with the same name stay apart.
 
 self=$(realpath "$0")
-name=
 
-if common=$(git rev-parse --git-common-dir 2>/dev/null); then
-  name=$(basename "$(dirname "$(realpath "$common")")")
-elif [ -d "$PWD/.bare" ]; then
-  name=$(basename "$PWD")
-fi
+if [ -n "$CLAUDE_CONFIG_DIR" ] && [ -z "$CLAUDE_CODE_PROJECT_DIR_NAME" ]; then
+  common=
+  if common=$(git rev-parse --git-common-dir 2>/dev/null); then
+    common=$(realpath "$common")
+  elif [ -d "$PWD/.bare" ]; then
+    common=$(realpath "$PWD/.bare")
+  fi
 
-if [ -n "$name" ] && [ -n "$CLAUDE_CONFIG_DIR" ] && [ -z "$CLAUDE_CODE_PROJECT_DIR_NAME" ]; then
-  export CLAUDE_CODE_PROJECT_DIR_NAME="$name"
+  if [ -n "$common" ] && identity=$(printf '%s' "$common" | git --git-dir="$common" hash-object --stdin 2>/dev/null); then
+    name=$(basename "$(dirname "$common")")
+    name=$(printf '%s' "$name" | LC_ALL=C tr -c 'A-Za-z0-9_-' '-' | cut -c 1-48)
+    export CLAUDE_CODE_PROJECT_DIR_NAME="$name-$identity"
+  fi
 fi
 
 set -f
