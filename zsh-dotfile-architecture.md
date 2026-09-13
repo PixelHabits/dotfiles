@@ -121,6 +121,20 @@ These tests do not establish live SSH behavior or native macOS session behavior.
 | `XDG_CACHE_HOME`  | Regenerable cache    | zsh/zcompdump-*, npm/               |
 | `XDG_STATE_HOME`  | Persistent state     | zsh/history, less/history           |
 
+### Session Coverage
+
+Three files carry the same variable map from `.chezmoitemplates/xdg-env.toml.tmpl`.
+
+| File | Covers |
+| --- | --- |
+| `environment.d/10-xdg.conf` | Linux systemd user session, including the graphical session and its apps |
+| `zshenv.d/06-xdg-apps.zsh` | Every zsh shell on all platforms, including SSH logins |
+| `Library/LaunchAgents/com.pixelhabits.xdg-env.plist` | Dock and Spotlight apps on macOS |
+
+The LaunchAgent runs `launchctl setenv` for each variable at login. Apps that launchd starts later inherit the values. The `xdg-launchagent.sh` script reloads the agent after `chezmoi apply` changes the map.
+
+Two limits apply on macOS. Apps that are already running when the agent loads do not see new values. Restart them. macOS lists the agent under Login Items as a background item.
+
 ## Per-Host File Presence
 
 Chezmoi controls which files exist via `.chezmoiignore`. If a file is deployed, it runs unconditionally. No inline OS detection in shell scripts.
