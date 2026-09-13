@@ -41,16 +41,6 @@ if require_cmd git && require_cmd fzf; then
         ;;
     esac
 
-    local arg paths_only=0
-    for arg in "$@"; do
-      (( paths_only )) && continue
-      case "$arg" in
-        --) paths_only=1 ;;
-        -<->|--all|--first-parent|--no-merges|--merges|--reverse) ;;
-        -*) print -u2 -- "fgl: unsupported option: $arg (use revisions, -N, --all, or -- paths)"; return 2 ;;
-      esac
-    done
-
     setopt localoptions pipefail
     if git log "${log_args[@]}" "$@" |
       fzf --height=100% --ansi --no-sort --delimiter=$'\t' --with-nth=2.. \
