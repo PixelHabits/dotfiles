@@ -14,7 +14,7 @@ require('mason-tool-installer').setup({
 		'basedpyright',
 		'bashls',
 		'clangd',
-		-- 'copilot-language-server',
+		'copilot-language-server',
 		'cssls',
 		'docker_compose_language_service',
 		'dockerls',
