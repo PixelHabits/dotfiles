@@ -9,11 +9,12 @@ A modular, XDG-compliant zsh configuration using Unix drop-in directory conventi
 ## Bootstrap Chain
 
 ```
-~/.zshenv                         (always, all shells)
- └─ exports XDG, sets ZDOTDIR
+~/.zshenv                         (when ZDOTDIR is unset)
+ └─ defaults XDG_CONFIG_HOME, sets ZDOTDIR
  └─ sources $ZDOTDIR/.zshenv
 
-$ZDOTDIR/.zshenv                  (always, all shells)
+$ZDOTDIR/.zshenv                  (also a direct entry when ZDOTDIR is inherited)
+ └─ defaults all four XDG base directories from the shared map
  └─ defines source_dir() helper
  └─ sources zshenv.d/*.zsh
 
@@ -27,10 +28,10 @@ $ZDOTDIR/.zshrc                   (interactive shells only)
 ## Directory Structure
 
 ```
-~/.zshenv                              <- bootstrap only (XDG + ZDOTDIR)
+~/.zshenv                              <- bootstrap only (XDG_CONFIG_HOME + ZDOTDIR)
 
 ~/.config/zsh/
-├── .zshenv                            <- defines source_dir, loads zshenv.d/
+├── .zshenv                            <- sets base defaults, loads zshenv.d/
 ├── .zprofile                          <- loads zprofile.d/
 ├── .zshrc                             <- loads zshrc.d/
 ├── zshenv.d/                          <- ALL shells (env vars, PATH)
@@ -99,7 +100,19 @@ Never use a late file to repair an early file.
 
 ## XDG Conventions
 
-Linux systemd sessions get primary XDG app redirects from `environment.d/10-xdg.conf` with absolute paths. `zshenv.d/06-xdg-apps.zsh` mirrors those values only as `${VAR:-/absolute/path}` fallback for shells that did not inherit them. Other zsh files use bare `$XDG_*` values with no local fallbacks.
+The shared map in `.chezmoitemplates/xdg-env.toml.tmpl` has two tables.
+`base` holds the four XDG directories and `ZDOTDIR`. `apps` holds tool paths.
+The full `.zshenv` renders `base` before it loads any drop-ins.
+`zshenv.d/06-xdg-apps.zsh` renders `apps`. `environment.d/10-xdg.conf` renders both.
+Shell defaults fill unset or empty values and preserve existing nonempty values.
+
+The home bootstrap only locates the full configuration.
+When `ZDOTDIR` is already set, zsh reads that directory's `.zshenv` directly.
+Both paths therefore receive the same defaults.
+Application defaults use the rendered home directory. A custom base variable does not relocate every application automatically.
+
+Run `uv run tests/xdg/test_defaults.py` to test both startup paths and the shared renderers in temporary homes.
+These tests do not establish live SSH behavior or native macOS session behavior.
 
 | Variable          | Purpose              | Example contents                    |
 |-------------------|----------------------|-------------------------------------|
@@ -119,6 +132,6 @@ See `workstation-bootstrap.md` for the gating matrix.
 | Task                      | How                                                    |
 |---------------------------|--------------------------------------------------------|
 | Add tool integration      | Create `zshrc.d/2x-tool.zsh`, guard with `require_cmd` |
-| Add XDG redirect          | Add absolute path to `environment.d/10-xdg.conf`; mirror as fallback in `06-xdg-apps.zsh`; update `site.yml` only if Ansible needs it|
+| Add XDG redirect          | Add the path to `.chezmoitemplates/xdg-env.toml.tmpl`; update `site.yml` only if Ansible needs it |
 | Disable script            | Rename: `mv foo.zsh foo.zsh.disabled`                  |
 | Debug slow startup        | `ZSH_BOOT_DEBUG=1 zsh`                                 |

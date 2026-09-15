@@ -1,14 +1,11 @@
 # ~/.config/zsh/.zshenv
-# Runs for ALL shells (interactive, login, non-interactive)
+# Zsh enters here directly when ZDOTDIR is inherited, or through ~/.zshenv.
 
-# XDG base directory defaults. Keep these here as well as ~/.zshenv so
-# shells that inherit ZDOTDIR still get the base XDG variables.
-export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
-export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
-export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-export ZDOTDIR="${ZDOTDIR:-$XDG_CONFIG_HOME/zsh}"
-
+# Shared base defaults. Keep existing environment values.
+{{ $env := includeTemplate "xdg-env.toml.tmpl" . | fromToml -}}
+{{ range $name, $value := $env.base -}}
+export {{ $name }}={{ printf "${%s:-%s}" $name ($value | shellQuote) }}
+{{ end }}
 # Helper to source numbered drop-ins.
 source_dir() {
   for f in "$1"/*.zsh(N-.r); do
