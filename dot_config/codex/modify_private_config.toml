@@ -1,6 +1,10 @@
 {{- /* chezmoi:modify-template */ -}}
 {{- /* Shared keys overwrite local ones. Codex writes trust, notices, and
        plugin state into this file at runtime; those keys stay local. */ -}}
+{{- $codexHome := joinPath .chezmoi.homeDir ".config/codex" -}}
+{{- if and (env "CODEX_HOME") (ne (clean (env "CODEX_HOME")) $codexHome) -}}
+{{-   fail "CODEX_HOME differs from the managed ~/.config/codex directory. Use agent_home_managed = true for an externally managed home, or unset CODEX_HOME before applying this configuration." -}}
+{{- end -}}
 {{- $config := .chezmoi.stdin | fromToml -}}
 {{- $shared := includeTemplate "codex/shared.toml.tmpl" . | fromToml -}}
 {{- $servers := get $config "mcp_servers" | default dict -}}
