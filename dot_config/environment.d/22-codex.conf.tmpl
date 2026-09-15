@@ -1,0 +1,4 @@
+# Codex directories. Source: .chezmoitemplates/codex/home-env.toml.tmpl.
+{{ range $name, $value := includeTemplate "codex/home-env.toml.tmpl" . | fromToml -}}
+{{ $name }}={{ $value }}
+{{ end -}}
