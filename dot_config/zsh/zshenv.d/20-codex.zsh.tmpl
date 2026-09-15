@@ -1,0 +1,4 @@
+# environment.d is primary; preserve explicit process overrides.
+{{ range $name, $value := includeTemplate "codex/home-env.toml.tmpl" . | fromToml -}}
+export {{ $name }}={{ printf "${%s:-%s}" $name ($value | shellQuote) }}
+{{ end }}
