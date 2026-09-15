@@ -125,3 +125,13 @@ ansible-playbook site.yml --syntax-check
 # Run specific Ansible tags
 ansible-playbook site.yml --tags cli --ask-become-pass
 ```
+
+## Codex
+
+- Shared keys: `.chezmoitemplates/codex/shared.toml.tmpl`. `modify_private_config.toml` merges them over the destination. Codex runtime writes (trust, notices, plugin state) stay local, never in Git.
+- Shared MCP servers replace the destination table whole. Local-only servers survive.
+- Stdio MCP servers get a fixed env whitelist from Codex. Forward XDG names with `env_vars`; never inline absolute paths.
+- No trusted parent roots. No credentials, sessions, databases, or profile files in Git. No `chezmoi add/re-add` of Codex config.
+- Codex home env: `.chezmoitemplates/codex/home-env.toml.tmpl` renders `environment.d/22-codex.conf` and `zshenv.d/20-codex.zsh`. Dev-gate config and redirects together.
+- Tests: `uv run tests/codex/test_config.py`. Python >=3.14 via PEP 723; temporary HOME only; no credentials or external MCP servers.
+- Human guide: `codex.md`.
