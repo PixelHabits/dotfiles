@@ -20,7 +20,7 @@
 - Human guide: `claude.md`. Dev machines only; gate paths in `.chezmoiignore`.
 - Shared config: `.config/claude`. Runtime: `.local/state/claude`; config symlinks only.
 - Runtime auth/history/plugins stay local. Never import runtime directory into source.
-- `modify_private_settings.json`: preserve local keys; manage attribution only.
+- `modify_private_settings.json`: preserve local keys; manage attribution + `refs` hooks only.
 - Claude redirects: dedicated `environment.d/20-claude.conf` + `zshenv.d/21-claude.zsh` for dev gating.
 - Claude scratch: `.local/state/claude/tmp`; active work, user-cleans. No automatic deletion or global `TMPDIR`.
 - Claude tool shell: `/bin/bash`; interactive shell unchanged. Inherited XDG exports survive shell change.

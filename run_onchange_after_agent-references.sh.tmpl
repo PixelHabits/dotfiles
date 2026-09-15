@@ -1,0 +1,24 @@
+#!/bin/sh
+set -eu
+
+# Rebuild the refs binary when the tool source changes.
+# https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/#run-a-script-when-the-contents-of-another-file-changes
+{{- range glob (joinPath .chezmoi.sourceDir "dot_local/share/agent-references/src/*.ts") }}
+# {{ base . }} hash: {{ include . | sha256sum }}
+{{- end }}
+# package.json hash: {{ include "dot_local/share/agent-references/package.json" | sha256sum }}
+# bun.lock hash: {{ include "dot_local/share/agent-references/bun.lock" | sha256sum }}
+
+source={{ printf "%s/.local/share/agent-references" .chezmoi.homeDir | shellQuote }}
+target={{ printf "%s/.local/bin/refs" .chezmoi.homeDir | shellQuote }}
+
+if ! command -v bun >/dev/null 2>&1; then
+  echo "[chezmoi] bun not found, skipping refs build" >&2
+  exit 0
+fi
+
+bun install --cwd "$source" --frozen-lockfile
+
+mkdir -p "$(dirname "$target")"
+bun build --compile --minify --sourcemap=none --bytecode --format=esm "$source/src/cli.ts" --outfile "$target"
+echo "[chezmoi] built refs $("$target" --version) at $target"
