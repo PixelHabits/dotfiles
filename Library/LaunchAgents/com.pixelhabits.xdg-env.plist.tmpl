@@ -1,0 +1,22 @@
+{{- /* Shared XDG defaults for the launchd user session. Source: .chezmoitemplates/xdg-env.toml.tmpl. */ -}}
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.pixelhabits.xdg-env</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/sh</string>
+		<string>-c</string>
+		<string>
+{{- $env := includeTemplate "xdg-env.toml.tmpl" . | fromToml }}
+{{- range $name, $value := merge $env.base $env.apps }}
+launchctl setenv {{ $name }} {{ $value | shellQuote | replace "&" "&amp;" | replace "<" "&lt;" | replace ">" "&gt;" }}
+{{- end }}
+</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+</dict>
+</plist>
