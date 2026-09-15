@@ -25,3 +25,49 @@ See the official [environment variables](https://code.claude.com/docs/en/env-var
 ## Test
 
 Run `uv run tests/test_claude_config.py` to test settings in a temporary home.
+
+## One project per repository
+
+Claude stores transcripts and auto memory under a project directory named after the working directory.
+A repository with many worktrees therefore gets one project directory per worktree.
+Memory written in one worktree stays invisible in the others.
+
+`~/.local/bin/claude` is a small launcher in front of the real `claude` binary.
+It resolves the canonical Git common directory and hashes that path with Git.
+The store name combines a readable repository basename with 128 bits of the digest.
+Names use only letters, digits, hyphens, and underscores.
+The readable part is limited to 31 characters so the full name fits Claude's 64-character limit.
+A valid `.bare` directory in the current container takes precedence over an outer Git repository.
+Git computes the digest without writing an object or changing the repository.
+When `CLAUDE_CONFIG_DIR` is set, the launcher exports `CLAUDE_CODE_PROJECT_DIR_NAME` and then runs the next `claude` on `PATH`.
+Every worktree of one repository then shares one project directory.
+Outside a repository, or when `CLAUDE_CONFIG_DIR` is unset, the launcher changes nothing.
+A name you export yourself wins.
+Claude accepts names made of letters, digits, hyphens, and underscores only, and falls back to the derived name otherwise.
+See the official [session storage](https://code.claude.com/docs/en/sessions#name-the-project-directory-yourself) notes.
+
+Two launch habits follow from this:
+
+| Work | Start here |
+| --- | --- |
+| Build or edit one branch | `cd <root>/<feature> && claude` |
+| Orchestrate or review across branches | `cd <root> && claude` |
+
+A session started inside a worktree keeps that worktree as its root.
+The shared configuration sets `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1`, so every tool shell call starts at that root.
+It also denies the `EnterWorktree` tool, whose command guard refuses ordinary shell syntax.
+Start a new session in the other worktree instead.
+
+Claude reads `CLAUDE.md` from parent directories.
+A container `CLAUDE.md` with the single line `@AGENTS.md` loads the container rules from any worktree.
+`worktrees.md` shows the command.
+
+Unrelated repositories with matching basenames receive different automatic store names.
+Symbolic links to the same repository resolve to the same identity.
+Moving a repository or changing its Git object format changes its automatic store name.
+An explicit `CLAUDE_CODE_PROJECT_DIR_NAME` keeps a chosen name stable across such changes.
+The launcher does not move existing transcripts or memory.
+Keep a private backup and close Claude before moving any existing project files.
+Choose each source directory explicitly and preserve files with matching names for manual comparison.
+
+Run `uv run tests/test_launcher.py` for temporary Git layouts and a fake Claude binary.
