@@ -102,3 +102,10 @@ workstation-bootstrap.md
 # {{- if ne .hostname "prod-1" }}
 # .config/zsh/zshrc.d/43-prod-monitoring.zsh
 # {{- end }}
+
+# Codex configuration and redirects are for development machines.
+{{- if not .dev }}
+.config/codex/
+.config/environment.d/22-codex.conf
+.config/zsh/zshenv.d/20-codex.zsh
+{{- end }}
