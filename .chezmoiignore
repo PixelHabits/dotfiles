@@ -8,6 +8,7 @@ README.md
 worktrees.md
 tests/
 codex.md
+exe-dev-prep.md
 zsh-dotfile-architecture.md
 workstation-bootstrap.md
 .config/nvim/nvim-pack-lock.json
@@ -104,9 +105,14 @@ workstation-bootstrap.md
 # .config/zsh/zshrc.d/43-prod-monitoring.zsh
 # {{- end }}
 
-# Codex configuration and redirects are for development machines.
-{{- if not .dev }}
+# Agent homes can remain owned by the host image or another manager.
+{{- if or (not .dev) (get . "agent_home_managed" | default false) }}
 .config/codex/
 .config/environment.d/22-codex.conf
 .config/zsh/zshenv.d/20-codex.zsh
+.config/claude/
+.config/environment.d/20-claude.conf
+.config/zsh/zshenv.d/21-claude.zsh
+.local/state/claude/
+.local/bin/claude
 {{- end }}
