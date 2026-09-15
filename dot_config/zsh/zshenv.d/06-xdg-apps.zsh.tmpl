@@ -1,43 +1,5 @@
-{{- $home := .chezmoi.homeDir -}}
-# zshenv.d/06-xdg-apps.zsh - fallback XDG app redirects
-# environment.d is primary where available; this fills unset values only.
-
-# GPG
-export GNUPGHOME="${GNUPGHOME:-{{ $home }}/.local/share/gnupg}"
-
-# Rust
-export CARGO_HOME="${CARGO_HOME:-{{ $home }}/.local/share/cargo}"
-export RUSTUP_HOME="${RUSTUP_HOME:-{{ $home }}/.local/share/rustup}"
-
-# Go
-export GOPATH="${GOPATH:-{{ $home }}/.local/share/go}"
-export GOMODCACHE="${GOMODCACHE:-{{ $home }}/.cache/go/mod}"
-
-# Node / npm
-export NPM_CONFIG_USERCONFIG="${NPM_CONFIG_USERCONFIG:-{{ $home }}/.config/npm/npmrc}"
-export NPM_CONFIG_CACHE="${NPM_CONFIG_CACHE:-{{ $home }}/.cache/npm}"
-export NODE_REPL_HISTORY="${NODE_REPL_HISTORY:-{{ $home }}/.local/state/node/node_repl_history}"
-
-# Bun
-export BUN_INSTALL="${BUN_INSTALL:-{{ $home }}/.local/share/bun}"
-
-# .NET
-export DOTNET_CLI_HOME="${DOTNET_CLI_HOME:-{{ $home }}/.local/share/dotnet}"
-
-# Docker
-export DOCKER_CONFIG="${DOCKER_CONFIG:-{{ $home }}/.config/docker}"
-
-# Ansible
-export ANSIBLE_HOME="${ANSIBLE_HOME:-{{ $home }}/.local/share/ansible}"
-
-# Less
-export LESSHISTFILE="${LESSHISTFILE:-{{ $home }}/.local/state/less/history}"
-
-# Wakatime
-export WAKATIME_HOME="${WAKATIME_HOME:-{{ $home }}/.config/wakatime}"
-
-# SQLite
-export SQLITE_HISTORY="${SQLITE_HISTORY:-{{ $home }}/.local/state/sqlite/history}"
-
-# Java
-export _JAVA_OPTIONS="${_JAVA_OPTIONS:--Djava.util.prefs.userRoot={{ $home }}/.local/share/java}"
+# Shared XDG app redirects. Keep existing environment values.
+{{ $env := includeTemplate "xdg-env.toml.tmpl" . | fromToml -}}
+{{ range $name, $value := $env.apps -}}
+export {{ $name }}={{ printf "${%s:-%s}" $name ($value | shellQuote) }}
+{{ end -}}

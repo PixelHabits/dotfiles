@@ -1,0 +1,52 @@
+{{- $home := .chezmoi.homeDir -}}
+# Shared XDG defaults for shells and user services.
+# base: set by the full .zshenv before drop-ins. apps: set by zshenv.d/06-xdg-apps.zsh.
+
+[base]
+XDG_CONFIG_HOME = {{ printf "%s/.config" $home | quote }}
+XDG_CACHE_HOME = {{ printf "%s/.cache" $home | quote }}
+XDG_DATA_HOME = {{ printf "%s/.local/share" $home | quote }}
+XDG_STATE_HOME = {{ printf "%s/.local/state" $home | quote }}
+ZDOTDIR = {{ printf "%s/.config/zsh" $home | quote }}
+
+[apps]
+# GPG
+GNUPGHOME = {{ printf "%s/.local/share/gnupg" $home | quote }}
+
+# Rust
+CARGO_HOME = {{ printf "%s/.local/share/cargo" $home | quote }}
+RUSTUP_HOME = {{ printf "%s/.local/share/rustup" $home | quote }}
+
+# Go
+GOPATH = {{ printf "%s/.local/share/go" $home | quote }}
+GOMODCACHE = {{ printf "%s/.cache/go/mod" $home | quote }}
+
+# Node / npm
+NPM_CONFIG_USERCONFIG = {{ printf "%s/.config/npm/npmrc" $home | quote }}
+NPM_CONFIG_CACHE = {{ printf "%s/.cache/npm" $home | quote }}
+NODE_REPL_HISTORY = {{ printf "%s/.local/state/node/node_repl_history" $home | quote }}
+
+# Bun
+BUN_INSTALL = {{ printf "%s/.local/share/bun" $home | quote }}
+BUN_INSTALL_CACHE_DIR = {{ printf "%s/.cache/bun/install" $home | quote }}
+
+# .NET
+DOTNET_CLI_HOME = {{ printf "%s/.local/share/dotnet" $home | quote }}
+
+# Docker
+DOCKER_CONFIG = {{ printf "%s/.config/docker" $home | quote }}
+
+# Ansible
+ANSIBLE_HOME = {{ printf "%s/.local/share/ansible" $home | quote }}
+
+# Less
+LESSHISTFILE = {{ printf "%s/.local/state/less/history" $home | quote }}
+
+# Wakatime
+WAKATIME_HOME = {{ printf "%s/.config/wakatime" $home | quote }}
+
+# SQLite
+SQLITE_HISTORY = {{ printf "%s/.local/state/sqlite/history" $home | quote }}
+
+# Java
+_JAVA_OPTIONS = {{ printf "-Djava.util.prefs.userRoot=%s/.local/share/java" $home | quote }}

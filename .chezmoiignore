@@ -6,6 +6,7 @@ post-install/
 AGENTS.md
 README.md
 worktrees.md
+tests/
 zsh-dotfile-architecture.md
 workstation-bootstrap.md
 .config/nvim/nvim-pack-lock.json
