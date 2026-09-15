@@ -1,0 +1,11 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- /* Shared keys overwrite local ones. Codex writes trust, notices, and
+       plugin state into this file at runtime; those keys stay local. */ -}}
+{{- $config := .chezmoi.stdin | fromToml -}}
+{{- $shared := includeTemplate "codex/shared.toml.tmpl" . | fromToml -}}
+{{- $servers := get $config "mcp_servers" | default dict -}}
+{{- range $name, $server := $shared.mcp_servers -}}
+{{-   $_ := set $servers $name $server -}}
+{{- end -}}
+{{- $_ := set $shared "mcp_servers" $servers -}}
+{{ mergeOverwrite $config $shared | toToml }}
