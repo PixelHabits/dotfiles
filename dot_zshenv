@@ -1,16 +1,10 @@
 # ~/.zshenv (bootstrap only - managed by chezmoi)
+# Zsh reads this file only when ZDOTDIR is unset.
+# Only find ZDOTDIR here. The full .zshenv sets the XDG defaults.
 
-# Set XDG base directory defaults if they are unset.
-# This helps normalize zsh config layout on platforms like macOS, where these variables are usually not predefined.
 export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
-export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
-export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-
-# Point zsh to its configuration directory under XDG_CONFIG_HOME
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
 
-#Chain into "real" zshenv inside ZDOTDIR if it exists
 if [[ -r "$ZDOTDIR/.zshenv" ]]; then
   source "$ZDOTDIR/.zshenv"
 fi

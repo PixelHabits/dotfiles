@@ -81,10 +81,12 @@ Prefer: `profile` > `dev` > `desktop` > `os` > `hostname`
 | `XDG_STATE_HOME`  | Persistent non-config      | Config, data, cache    |
 
 ### Adding a New XDG Redirect
-1. Add absolute path to `environment.d/10-xdg.conf` as the primary runtime value
-2. Add matching fallback to `zshenv.d/06-xdg-apps.zsh` using `${VAR:-/absolute/path}`
-3. Add to `xdg_environment` in `ansible/site.yml` only when Ansible invokes that tool
-4. If tool has `bin/`, add PATH entry in `zshenv.d/10-path.zsh`
+1. Add absolute tool path under `[apps]` in `.chezmoitemplates/xdg-env.toml.tmpl`.
+2. `.config/zsh/.zshenv` renders `[base]`, `zshenv.d/06-xdg-apps.zsh` renders `[apps]`, `environment.d/10-xdg.conf` renders both. Shell keeps existing values.
+3. Bootstrap `~/.zshenv` only locates ZDOTDIR. Full zshenv sets base defaults before drop-ins, including inherited-ZDOTDIR starts.
+4. Add to `xdg_environment` in `ansible/site.yml` only when Ansible invokes that tool.
+5. If tool has `bin/`, add PATH entry in `zshenv.d/10-path.zsh`.
+6. Validate: `uv run tests/xdg/test_defaults.py`. Temporary homes only; no live apply or SSH/macOS runtime claim.
 
 ## Documentation
 
