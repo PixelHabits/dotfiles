@@ -30,14 +30,19 @@ NODE_REPL_HISTORY = {{ printf "%s/.local/state/node/node_repl_history" $home | q
 BUN_INSTALL = {{ printf "%s/.local/share/bun" $home | quote }}
 BUN_INSTALL_CACHE_DIR = {{ printf "%s/.cache/bun/install" $home | quote }}
 
+# Yarn. Replaces ~/.yarnrc.yml, whose only content was this opt-out.
+YARN_ENABLE_TELEMETRY = "0"
+
 # .NET
 DOTNET_CLI_HOME = {{ printf "%s/.local/share/dotnet" $home | quote }}
 
 # Docker
 DOCKER_CONFIG = {{ printf "%s/.config/docker" $home | quote }}
 
-# Ansible
+# Ansible. remote_tmp defaults to ~/.ansible/tmp on the target, and the
+# target is localhost, so ANSIBLE_HOME alone does not move it.
 ANSIBLE_HOME = {{ printf "%s/.local/share/ansible" $home | quote }}
+ANSIBLE_REMOTE_TMP = {{ printf "%s/.local/share/ansible/tmp" $home | quote }}
 
 # Less
 LESSHISTFILE = {{ printf "%s/.local/state/less/history" $home | quote }}
