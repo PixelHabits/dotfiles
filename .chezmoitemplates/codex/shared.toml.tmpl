@@ -1,0 +1,52 @@
+{{- $home := .chezmoi.homeDir -}}
+# Shared Codex preferences. Codex adds machine-local keys to the destination file.
+model = "gpt-6-astra"
+model_reasoning_effort = "high"
+# Allow Astra's note-taking to run before CLI-level compaction fires.
+# Astra's 922K input limit leaves ~850K usable tokens with typical
+# system prompt overhead.
+model_auto_compact_token_limit = 850000
+# on-request with full access runs ordinary commands without asking and
+# prompts only for commands Codex flags as dangerous. "never" would forbid
+# those outright. codex exec forces "never" on its own.
+approval_policy = "on-request"
+sandbox_mode = "danger-full-access"
+log_dir = {{ printf "%s/.local/state/codex/log" $home | quote }}
+sqlite_home = {{ printf "%s/.local/state/codex" $home | quote }}
+
+[notice]
+hide_full_access_warning = true
+
+[analytics]
+enabled = false
+
+[feedback]
+enabled = false
+
+[marketplaces.caveman-repo]
+source_type = "git"
+source = "https://github.com/JuliusBrussee/caveman.git"
+
+[plugins."caveman@caveman-repo"]
+enabled = true
+
+[features]
+memories = true
+
+# "approve" lets every tool on the server run without an approval prompt.
+[mcp_servers.Bun]
+url = "https://bun.com/docs/mcp"
+default_tools_approval_mode = "approve"
+
+# Codex starts stdio servers with a fixed environment whitelist.
+# env_vars forwards these names from the Codex process so bunx and npm
+# honor the XDG redirects instead of writing under $HOME.
+[mcp_servers.chrome-devtools]
+command = "bunx"
+args = ["chrome-devtools-mcp@latest"]
+default_tools_approval_mode = "approve"
+env_vars = [
+  "XDG_CACHE_HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME",
+  "BUN_INSTALL", "BUN_INSTALL_CACHE_DIR",
+  "NPM_CONFIG_CACHE", "NPM_CONFIG_USERCONFIG",
+]
