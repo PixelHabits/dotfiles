@@ -135,3 +135,13 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 - Codex home env: `.chezmoitemplates/codex/home-env.toml.tmpl` renders `environment.d/22-codex.conf` and `zshenv.d/20-codex.zsh`. Dev-gate config and redirects together.
 - Tests: `uv run tests/codex/test_config.py`. Python >=3.14 via PEP 723; temporary HOME only; no credentials or external MCP servers.
 - Human guide: `codex.md`.
+
+## External Agent Homes
+
+- When Codex config is included, reject a conflicting process CODEX_HOME before rendering.
+
+- Optional exe.dev preparation: `agent_home_managed = true` leaves agent homes externally owned. Default false. Local data; init preserves it without a prompt.
+- Gate Codex config/instructions/hooks/redirects/profile alias and Claude config/runtime/redirects/launcher together. Shared XDG defaults and reference tools remain available.
+- Ignore is not removal. Existing deployed redirects remain until explicitly removed. No automatic relocation or cleanup.
+- Human guide: `exe-dev-prep.md`. Tests: `uv run tests/agent_homes/test_ownership.py`.
+- Tests use temporary homes and representative agent files. No exe.dev provisioning or live provider integration claim.
