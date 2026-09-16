@@ -1,55 +1,77 @@
 #!/usr/bin/env bash
-# tmux-sessionizer — FZF-powered project session switcher
-# Inspired by ThePrimeagen's tmux-sessionizer.
-#
-# Usage:
-#   tmux-sessionizer          # interactive FZF picker
-#   tmux-sessionizer <path>   # jump directly to path
-#
-# Searches project roots for directories and presents them via FZF.
-# Creates or switches to a tmux session named after the selected directory.
+# Select a Git checkout, then create or focus its tmux session.
+# Usage: tmux-sessionizer [path]   (no path: fzf picker over discovered checkouts)
+# Search roots: ~/Developer and the chezmoi worktree directory, four levels deep,
+# including git worktrees. Override the roots in $XDG_CONFIG_HOME/tmux/project-roots
+# (default: ~/.config/tmux/project-roots)
+# (one path per line, ~/ allowed, # comments) - machine-local, not managed.
+set -euo pipefail
 
-# Project roots to search
-# Add/remove directories here as your project layout evolves.
-# fd searches one level deep in each root for project directories.
-SEARCH_ROOTS=(
-    ~/repos
-    ~/dotfiles-upgrade-project
-    ~/.local/share/chezmoi
-)
+for tool in tmux cksum; do
+    command -v "$tool" >/dev/null || { printf 'Missing command: %s\n' "$tool" >&2; exit 1; }
+done
 
-# Select directory
-if [[ -n "$1" ]]; then
-    selected="$1"
+if [[ $# -gt 1 ]]; then
+    printf 'Usage: tmux-sessionizer [directory]\n' >&2
+    exit 2
+fi
+selected=${1:-}
+if [[ $# == 0 ]]; then
+    command -v fzf >/dev/null || { printf 'Missing command: fzf\n' >&2; exit 1; }
+    if command -v fd >/dev/null; then finder=fd
+    elif command -v fdfind >/dev/null; then finder=fdfind
+    else printf 'Missing command: fd or fdfind\n' >&2; exit 1
+    fi
+    roots_file="${XDG_CONFIG_HOME:-$HOME/.config}/tmux/project-roots"
+    roots=("$HOME/Developer" "${XDG_DATA_HOME:-$HOME/.local/share}/chezmoi")
+    if [[ -f $roots_file ]]; then
+        roots=()
+        while IFS= read -r root || [[ -n $root ]]; do
+            [[ -z $root || $root == \#* ]] && continue
+            [[ $root == '~/'* ]] && root="$HOME/${root:2}"
+            roots+=("$root")
+        done < "$roots_file"
+    fi
+    candidates=$(
+        for root in "${roots[@]}"; do
+            [[ $root == /* ]] || { printf 'Project root must be absolute: %s\n' "$root" >&2; exit 2; }
+            [[ -d $root ]] || continue
+            [[ -e $root/.git ]] && printf '%s\n' "$root"
+            directories=$("$finder" --hidden --no-ignore --type d --max-depth 4 \
+                --exclude .git --exclude .bare --exclude node_modules --exclude vendor . "$root") || exit $?
+            while IFS= read -r directory; do
+                [[ -e $directory/.git ]] || continue
+                printf '%s\n' "$directory"
+            done <<< "$directories"
+        done
+    ) || exit $?
+    if selected=$(printf '%s\n' "$candidates" | sort -u | fzf --prompt='project> ' --reverse --border); then
+        :
+    else
+        picker_result=$?
+        case $picker_result in 1|130|141) exit 0 ;; esac
+        exit "$picker_result"
+    fi
+fi
+[[ -n $selected ]] || exit 0
+[[ -d $selected ]] || { printf 'Not a directory: %s\n' "$selected" >&2; exit 1; }
+selected=$(cd -- "$selected" && pwd -P)
+checksum=$(printf '%s' "$selected" | cksum)
+label=$(printf '%s' "${selected##*/}" | tr -c '[:alnum:]_-' '-')
+session_name="${label:-project}-${checksum%% *}"
+
+if tmux has-session -t "=$session_name" 2>/dev/null; then
+    session_id=$(tmux display-message -p -t "=$session_name:" '#{session_id}')
+    [[ $session_id == \$* ]] || { printf 'Cannot resolve session: %s\n' "$session_name" >&2; exit 1; }
+    existing=$(tmux show-options -v -t "$session_id" @project_path 2>/dev/null || true)
+    [[ $existing == "$selected" ]] || { printf 'Session name collision: %s\n' "$session_name" >&2; exit 1; }
 else
-    # Build list: the roots themselves + one level of subdirectories
-    selected=$(
-        {
-            for root in "${SEARCH_ROOTS[@]}"; do
-                root="${root/#\~/$HOME}"
-                [[ -d "$root" ]] && echo "$root"
-                [[ -d "$root" ]] && fd --type d --max-depth 1 --base-directory "$root" \
-                    --exclude .git | while read -r dir; do
-                        echo "$root/$dir"
-                    done
-            done
-        } | fzf --prompt="project> " --reverse --border
-    )
+    session_id=$(tmux new-session -P -F '#{session_id}' -ds "$session_name" -c "$selected")
+    tmux set-option -t "$session_id" @project_path "$selected"
 fi
 
-[[ -z "$selected" ]] && exit 0
-
-# Derive session name
-session_name=$(basename "$selected" | tr '.:/\\' '----')
-
-# Create or switch session
-if ! tmux has-session -t="$session_name" 2>/dev/null; then
-    tmux new-session -ds "$session_name" -c "$selected"
-fi
-
-# If we're inside tmux, switch client. Otherwise, attach.
-if [[ -n "$TMUX" ]]; then
-    tmux switch-client -t "$session_name"
+if [[ -n ${TMUX:-} ]]; then
+    tmux switch-client -t "$session_id"
 else
-    tmux attach-session -t "$session_name"
+    tmux attach-session -t "$session_id"
 fi
