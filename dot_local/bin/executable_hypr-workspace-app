@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ $# -lt 3 ]]; then
+    printf 'Usage: %s <workspace> <class-regex> <command...>\n' "${0##*/}" >&2
+    exit 1
+fi
+
+for cmd in hyprctl jq; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        printf 'Missing required command: %s\n' "$cmd" >&2
+        exit 1
+    fi
+done
+
+workspace="$1"
+class_regex="$2"
+shift 2
+launch_cmd=("$@")
+
+# Named app workspaces are soft-gated: the workspace is the source of truth.
+visible_monitor=$(
+    hyprctl monitors -j | jq -r --arg workspace "$workspace" '
+        first(.[] | select(.activeWorkspace.name == $workspace) | .name) // empty
+    '
+)
+
+if [[ -n "$visible_monitor" ]]; then
+    response=$(hyprctl dispatch focusmonitor "$visible_monitor")
+else
+    response=$(hyprctl dispatch focusworkspaceoncurrentmonitor "name:$workspace")
+fi
+[[ $response == ok ]] || { printf 'Hyprland rejected focus: %s\n' "$response" >&2; exit 1; }
+
+clients=$(hyprctl clients -j)
+matched=$(jq -r --arg workspace "$workspace" --arg class_regex "$class_regex" '
+    any(.[]; .workspace.name == $workspace and (.class | test($class_regex)))
+' <<<"$clients")
+if [[ $matched != true ]]; then
+    "${launch_cmd[@]}"
+fi
