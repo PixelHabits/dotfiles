@@ -4,7 +4,9 @@ Claude Code reads these paths:
 
 | Path | Purpose |
 | --- | --- |
-| `~/.config/claude/CLAUDE.md` | Shared instructions loaded for each conversation |
+| `~/.config/agents/AGENTS.md` | Instructions shared by every agent. Claude imports it, Codex reads it through a link |
+| `~/.config/claude/CLAUDE.md` | The import plus Claude-only instructions, loaded for each conversation |
+| `~/.agents/skills/` | Skill folders that every agent loads on demand |
 | `~/.config/claude/settings.json` | Shared configuration merged with local choices |
 | `~/.local/state/claude/` | Private runtime files, history, credentials, and installed plugins |
 | `~/.local/state/claude/tmp/` | Active scratch work that survives reboots and cache cleanup |
