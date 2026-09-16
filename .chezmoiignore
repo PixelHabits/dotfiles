@@ -6,6 +6,7 @@ post-install/
 AGENTS.md
 README.md
 worktrees.md
+claude.md
 tests/
 codex.md
 zsh-dotfile-architecture.md
@@ -68,6 +69,13 @@ workstation-bootstrap.md
 
 {{- if not .dev }}
 .config/zsh/zshrc.d/22-fnm.zsh
+{{- end }}
+
+{{- if not .dev }}
+.config/claude/
+.config/environment.d/20-claude.conf
+.config/zsh/zshenv.d/21-claude.zsh
+.local/state/claude/
 {{- end }}
 
 # ════════════════════════════════════════════════════════════
