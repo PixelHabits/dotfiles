@@ -82,6 +82,7 @@ agent-references.sh
 .config/codex/hooks.json
 .config/environment.d/20-claude.conf
 .config/zsh/zshenv.d/21-claude.zsh
+.local/bin/claude
 .local/state/claude/
 {{- end }}
 

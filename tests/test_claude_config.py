@@ -23,7 +23,7 @@ class ClaudeConfigTest(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.home = self.root / 'home'
         self.home.mkdir()
-        for directory in ['.config/zsh/zshenv.d', '.local/state']:
+        for directory in ['.config/zsh/zshenv.d', '.local/bin', '.local/state']:
             (self.home / directory).mkdir(parents=True)
         self.config = self.root / 'chezmoi.toml'
         self.configure()
@@ -62,13 +62,16 @@ class ClaudeConfigTest(unittest.TestCase):
         }
         first = self.render_settings(json.dumps(local)).stdout
         result = json.loads(first)
-        for key in ['model', 'permissions', 'enabledPlugins', 'env', 'statusLine']:
+        for key in ['model', 'enabledPlugins', 'statusLine']:
             self.assertEqual(result[key], local[key])
+        self.assertEqual(result['env'], local['env'] | {'CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR': '1'})
+        self.assertEqual(result['permissions'], local['permissions'] | {'deny': ['Read(secret)', 'EnterWorktree']})
         self.assertEqual(result['attribution'], {'commit': '', 'pr': '', 'sessionUrl': False, 'other': 'keep'})
         self.assertEqual(first, self.render_settings(first).stdout)
 
         fresh = json.loads(self.render_settings('').stdout)
-        self.assertNotIn('permissions', fresh)
+        self.assertEqual(fresh['permissions'], {'deny': ['EnterWorktree']})
+        self.assertEqual(fresh['env'], {'CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR': '1'})
 
     def test_actual_apply_uses_modify_template_and_preserves_invalid_input(self):
         target = self.home / '.config/claude/settings.json'
@@ -86,6 +89,20 @@ class ClaudeConfigTest(unittest.TestCase):
         self.assertNotEqual(self.chezmoi('apply', '--exclude', 'scripts', str(target), check=False).returncode, 0)
         self.assertEqual(target.read_text(), '{invalid')
 
+    def test_working_dir_env_and_worktree_deny_merge_once(self):
+        local = {
+            'env': {'DO_NOT_TRACK': '1', 'EDITOR': 'nvim'},
+            'permissions': {'defaultMode': 'auto', 'allow': ['Bash(ls *)'], 'deny': ['Read(secret)']},
+        }
+        first = self.render_settings(json.dumps(local)).stdout
+        result = json.loads(first)
+        self.assertEqual(result['env'], local['env'] | {'CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR': '1'})
+        self.assertEqual(result['permissions'], local['permissions'] | {'deny': ['Read(secret)', 'EnterWorktree']})
+        self.assertEqual(first, self.render_settings(first).stdout)
+        self.assertEqual(json.loads(self.render_settings(first).stdout)['permissions']['deny'].count('EnterWorktree'), 1)
+        preset = json.loads(self.render_settings(json.dumps({'permissions': {'deny': ['EnterWorktree']}})).stdout)
+        self.assertEqual(preset['permissions'], {'deny': ['EnterWorktree']})
+
     def test_symlink_templates_render_shared_paths(self):
         for name in ['CLAUDE.md', 'settings.json']:
             template = (SOURCE / f'dot_local/state/private_claude/symlink_{name}.tmpl').read_text()
@@ -94,7 +111,7 @@ class ClaudeConfigTest(unittest.TestCase):
 
     def test_non_dev_gating(self):
         claude_paths = ['.config/claude/CLAUDE.md', '.config/claude/settings.json',
-                         '.local/state/claude/settings.json', '.config/zsh/zshenv.d/21-claude.zsh']
+                         '.local/state/claude/settings.json', '.config/zsh/zshenv.d/21-claude.zsh', '.local/bin/claude']
 
         self.configure(dev=False)
         managed = self.chezmoi('managed').stdout.splitlines()
