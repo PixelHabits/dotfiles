@@ -36,6 +36,7 @@
       - ttf-jetbrains-mono-nerd
 
       # Desktop utilities
+      - jq
       - mako
       - wl-clipboard
       - brightnessctl
