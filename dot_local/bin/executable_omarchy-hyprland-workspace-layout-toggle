@@ -1,19 +1,16 @@
-#!/bin/bash
-# Source: https://github.com/basecamp/omarchy
-# File:   bin/omarchy-hyprland-workspace-layout-toggle
-# Commit: 42a437ad481f9829c3f07298ed2b5fbeaf92bccd (2026-02-28)
-#
-# Local changes: renamed, removed emoji from notify-send
-
-# Toggle the layout on the current active workspace between dwindle and scrolling
-
-ACTIVE_WORKSPACE=$(hyprctl activeworkspace -j | jq -r '.id')
-CURRENT_LAYOUT=$(hyprctl activeworkspace -j | jq -r '.tiledLayout')
-
-case "$CURRENT_LAYOUT" in
-  dwindle) NEW_LAYOUT=scrolling ;;
-  *) NEW_LAYOUT=dwindle ;;
-esac
-
-hyprctl keyword workspace $ACTIVE_WORKSPACE, layout:$NEW_LAYOUT
-notify-send "Workspace layout set to $NEW_LAYOUT"
+#!/usr/bin/env bash
+# Toggle the active workspace layout using Hyprland's native Lua API.
+set -euo pipefail
+workspace=$(hyprctl activeworkspace -j)
+id=$(jq -er '.id | select(type == "number")' <<<"$workspace")
+[[ $id =~ ^-?[0-9]+$ ]] || exit 1
+selector=$(jq -er '
+    (if .id > 0 then (.id | tostring) else
+        .name | if startswith("special:") then . else "name:" + . end
+    end) | if (explode | any(. < 32 or . == 127)) then error("Invalid workspace name") else @json end
+' <<<"$workspace")
+layout=$(jq -r '.tiledLayout' <<<"$workspace")
+if [[ $layout == dwindle ]]; then next=scrolling; else next=dwindle; fi
+response=$(hyprctl eval "hl.workspace_rule({ workspace = $selector, layout = \"$next\" })")
+[[ $response == ok ]] || { printf '%s\n' "$response" >&2; exit 1; }
+notify-send "Workspace layout set to $next"

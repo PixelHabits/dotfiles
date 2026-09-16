@@ -27,5 +27,5 @@ request() {
     [[ $response == ok ]] || fail "request rejected: $response"
 }
 request reload
-request dispatch dpms on
+request dispatch 'hl.dsp.dpms({ action = "on" })'
 printf 'Display restore requested. Return to the Hyprland session and unlock normally.\n'

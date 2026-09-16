@@ -59,7 +59,7 @@ zwarn "missing: $tool"
 - Catalog: `.chezmoidata/pwa.toml`. Machine choices: `*_provider`, `project_url`, `github_url` in local chezmoi `[data]`.
 - Resolver: `.chezmoitemplates/pwa-apps.json.tmpl`. Hyprland bindings/rules + Waybar icons consume same result.
 - Provider URL + class travel together. Match domain + any app path/profile. Do not embed account slugs in rules.
-- Keep named workspace IDs stable. App launch uses Chromium `--app`, current `$browser` profile.
+- Keep named workspace IDs stable. App launch uses Chromium `--app`, current `browser` profile.
 - Gate helper + desktop files in `.chezmoiignore`. No desktop checks inside helper.
 - Run `uv run tests/pwa.py`. Tests use temp files + fake desktop commands; no live apply.
 
@@ -153,6 +153,17 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 - Render tests: `uv run tests/test_suspend_templates.py`. Uses temporary config; Hyprland parse-only when available.
 - Driver workaround != verified fix. Preserve lock process; never select another user's session.
 
+## Native Hyprland Lua
+
+- Entrypoint: `dot_config/hypr/hyprland.lua.tmpl`. PWA module: `pwa.lua.tmpl`. Native `hl.*` calls only.
+- Match installed Hyprland API. Reference version: 0.56.2. No legacy parser at runtime.
+- Preserve binding flags, direction, follow behavior, descriptions, and lock commands.
+- Tests: `uv run tests/hyprland.py`, `uv run tests/pwa.py`, `uv run tests/test_suspend_templates.py`.
+- Initial format switch: follow `hyprland.md`; no live apply/reload during agent validation.
+- Lua IPC includes helpers, hypridle DPMS, and Waybar scroll. No legacy dispatch/keyword calls.
+- IPC tests: `uv run tests/hyprland_ipc.py`.
+- Waybar 0.15.0-3.1 native clicks lack Lua support. Keep migration draft until compatible build tested.
+- `.chezmoiremove`: exact old Hyprland/PWA files only; gate by desktop. Keep hypridle/hyprlock formats.
 ## Waybar
 
 - Text/icons: provisioned Noto Sans, JetBrainsMono Nerd Font, Noto Color Emoji. No assumed system fonts.

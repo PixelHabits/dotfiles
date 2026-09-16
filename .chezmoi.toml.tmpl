@@ -53,13 +53,16 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
   {{ $key }} = {{ $value | quote }}
 {{ end }}
 
-{{- if and (hasKey . "hyprland") (or (hasKey .hyprland "monitors") (hasKey .hyprland "laptop_output")) }}
-
+{{- if hasKey . "hyprland" }}
 [data.hyprland]
-{{ if hasKey .hyprland "monitors" }}
-  monitors = {{ .hyprland.monitors | toJson }}
-{{ end }}
 {{ if hasKey .hyprland "laptop_output" }}
-  laptop_output = {{ .hyprland.laptop_output | quote }}
+laptop_output = {{ .hyprland.laptop_output | quote }}
+{{ end }}
+{{ if hasKey .hyprland "monitors" }}
+{{ if eq (len .hyprland.monitors) 0 }}monitors = []{{ end }}
+{{ range .hyprland.monitors }}
+{{ if not (kindIs "map" .) }}{{ fail "hyprland.monitors must contain tables; see hyprland.md" }}{{ end -}}
+[[data.hyprland.monitors]]
+{{ . | toToml }}{{ end }}
 {{ end }}
 {{- end }}
