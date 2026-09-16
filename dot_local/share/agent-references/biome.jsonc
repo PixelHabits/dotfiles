@@ -1,0 +1,18 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"extends": ["ultracite/biome/core", "ultracite/biome/type-aware"],
+	"files": {
+		"includes": ["!**/node_modules", "!dist"]
+	},
+	"formatter": {
+		"indentStyle": "tab"
+	},
+	"json": {
+		"formatter": {
+			"indentStyle": "tab"
+		}
+	},
+	"javascript": {
+		"globals": ["Bun"]
+	}
+}

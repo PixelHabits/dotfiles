@@ -1,0 +1,21 @@
+{
+	"name": "agent-references",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Keep local source checkouts of fast-moving libraries and tell coding agents about them.",
+	"type": "module",
+	"scripts": {
+		"build": "bun build --compile --minify --sourcemap=none --bytecode --format=esm src/cli.ts --outfile dist/refs",
+		"check": "ultracite check",
+		"clean": "git clean -Xdf dist node_modules .cache",
+		"fix": "ultracite fix",
+		"test": "bun test --isolate",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.13",
+		"@types/bun": "^1.4.2",
+		"typescript": "^7.0.2",
+		"ultracite": "^7.11.1"
+	}
+}
