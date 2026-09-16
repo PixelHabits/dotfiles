@@ -1,4 +1,4 @@
-{{- $apps := includeTemplate "pwa-apps.json" . | fromJson -}}
+{{- $apps := includeTemplate "pwa-apps.json.tmpl" . | fromJson -}}
 -- Provider URLs, matching rules, shortcuts, and Waybar icons share one catalog.
 return function(mainMod, browser)
 {{ range $apps }}

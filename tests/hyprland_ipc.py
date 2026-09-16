@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.14"
+# dependencies = []
+# ///
 """Capture shell IPC in mocks, then validate dispatcher construction natively."""
 import json
 import os
@@ -6,6 +10,7 @@ from pathlib import Path
 import re
 import shlex
 import subprocess
+import sys
 import tempfile
 from hyprland_tools import native_verify
 
@@ -14,7 +19,7 @@ expressions, rules = [], []
 with tempfile.TemporaryDirectory(prefix='hypr-ipc-') as directory:
     temp = Path(directory)
     binary = temp / 'hyprctl'
-    binary.write_text('''#!/usr/bin/env python3
+    binary.write_text(f'#!{sys.executable}\n' + '''
 import json, os, sys
 with open(os.environ['CALLS'], 'a') as log: log.write(json.dumps(sys.argv[1:]) + '\\n')
 queries = {'activewindow': 'WINDOW', 'clients': 'CLIENTS', 'activeworkspace': 'WORKSPACE'}
@@ -75,7 +80,7 @@ print(os.environ[queries[sys.argv[1]]] if sys.argv[1] in queries else os.environ
 
     # These constructs are parsed only; dispatcher functions are never invoked.
     expressions += ['hl.dsp.focus({ monitor = "DP-1" })', 'hl.dsp.focus({ workspace = "name:mail", on_current_monitor = true })']
-    idle = (ROOT / 'dot_config/hypr/hypridle.conf').read_text()
+    idle = subprocess.check_output(['chezmoi', '--source', str(ROOT), 'execute-template', '--file', str(ROOT / 'dot_config/hypr/hypridle.conf.tmpl')], text=True)
     for command in re.findall(r"hyprctl dispatch '([^']+)'", idle):
         expressions.append(command)
     assert {'hl.dsp.dpms({ action = "on" })', 'hl.dsp.dpms({ action = "off" })'} <= set(expressions)
