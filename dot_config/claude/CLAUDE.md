@@ -8,7 +8,6 @@
 - Default package manager: Bun. Do not use npm or Yarn unless user asks.
 - Stack defaults when unspecified: Tailwind v4+, TypeScript, native Bun APIs, React with TanStack Router/Start, Vite. Deploy preference: Vercel.
 - Propose simpler solutions. If scope exceeds capacity, state limits clearly.
-- `/graphify`: read installed graphify skill before action. Discover installed location; do not assume home layout.
 
 ## Delegation
 
