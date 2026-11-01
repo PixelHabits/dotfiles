@@ -5,11 +5,11 @@
 ----------------
 
 {{ if eq .hostname "GAM-DEV001" -}}
-hl.monitor({ output = "desc:Dell Inc. Dell AW3821DW", mode = "3840x1600x120.00", position = "auto-center-up", scale = "auto", vrr = 1, bitdepth = 10, cm = "auto" })
+hl.monitor({ output = "desc:Dell Inc. Dell AW3821DW", mode = "3840x1600@120.00", position = "auto-center-up", scale = "auto", vrr = 1, bitdepth = 10, cm = "auto" })
 hl.monitor({ output = "desc:Samsung Display Corp. ATNA60KA02", mode = "3200x2000@120.00", position = "auto-center-down", scale = 1.25, vrr = 1, bitdepth = 10, cm = "dcip3" })
 hl.monitor({ output = "desc:Dell Inc. DELL P2422H 1YT5CV3", mode = "preferred", position = "0x0", scale = 1 })
 hl.monitor({ output = "desc:Dell Inc. DELL P2422H 10W9CV3", mode = "preferred", position = "1920x0", scale = 1 })
-hl.monitor({ output = "desc:LG Electronics LG TV SSCR2 0x01010101", mode = "1920x1080x60.00", position = "auto-center-up", scale = "auto" })
+hl.monitor({ output = "desc:LG Electronics LG TV SSCR2 0x01010101", mode = "1920x1080@60.00", position = "auto-center-up", scale = "auto" })
 {{- else -}}
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
 {{- end }}
