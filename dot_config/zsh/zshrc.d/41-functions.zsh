@@ -56,11 +56,12 @@ fi
 # 1Password quick-copy — fuzzy search vault items, copy password to clipboard
 if require_cmd op && require_cmd jq && require_cmd fzf; then
   fp() {
+    setopt local_options pipefail
     local item
-    item=$(op item list --format=json 2>/dev/null | jq -r '.[].title' |
-      fzf --tmux --prompt='1password > ' \
+    item=$(op item list --format=json | jq -r '.[] | [.id, .title] | @tsv' |
+      fzf --tmux --delimiter='\t' --with-nth=2 --prompt='1password > ' \
         --header 'enter: copy password') &&
-    op item get "$item" --fields label=password | wl-copy &&
-    echo "Copied password for: $item"
+    op item get "${item%%$'\t'*}" --fields label=password --reveal | wl-copy -n --sensitive &&
+    echo "Copied password for: ${item#*$'\t'}"
   }
 fi
