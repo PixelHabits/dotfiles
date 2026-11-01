@@ -1,0 +1,24 @@
+#!/bin/sh
+set -eu
+
+# Reload the XDG LaunchAgent when its rendered content changes.
+# https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/#run-a-script-when-the-contents-of-another-file-changes
+# plist template hash: {{ include "Library/LaunchAgents/com.pixelhabits.xdg-env.plist.tmpl" | sha256sum }}
+# xdg-env hash: {{ includeTemplate "xdg-env.toml.tmpl" . | sha256sum }}
+
+label="com.pixelhabits.xdg-env"
+plist={{ printf "%s/Library/LaunchAgents/com.pixelhabits.xdg-env.plist" .chezmoi.homeDir | shellQuote }}
+
+if ! command -v launchctl >/dev/null 2>&1; then
+  echo "[chezmoi] launchctl not found, skipping $label" >&2
+  exit 0
+fi
+
+domain="gui/$(id -u)"
+if ! launchctl print "$domain" >/dev/null 2>&1; then
+  echo "[chezmoi] no $domain session, skipping reload of $plist" >&2
+  exit 0
+fi
+launchctl bootout "$domain/$label" 2>/dev/null || true
+launchctl bootstrap "$domain" "$plist"
+launchctl kickstart -k "$domain/$label"
