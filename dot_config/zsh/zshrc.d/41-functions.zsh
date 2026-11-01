@@ -21,11 +21,12 @@ fi
 if require_cmd git && require_cmd fzf; then
   fgb() {
     local branch
-    branch=$(git branch --all --sort=-committerdate --format='%(refname:short)' |
+    branch=$(git for-each-ref --sort=-committerdate --format='%(refname:short)' \
+        --exclude='refs/remotes/*/HEAD' refs/heads refs/remotes |
       fzf --tmux --prompt='branch > ' \
         --header 'enter: checkout' \
         --preview 'git log --oneline --graph --color=always -20 {}') &&
-    git checkout "$branch"
+    git checkout "${branch#origin/}"
   }
 fi
 
