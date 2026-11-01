@@ -1,0 +1,33 @@
+{{- $apps := includeTemplate "pwa-apps.json.tmpl" . | fromJson -}}
+-- Provider URLs, matching rules, shortcuts, and Waybar icons share one catalog.
+return function(mainMod, browser, dispatch)
+    -- Only window rules match classes by regex, so each rule tags its app's windows.
+    -- Hyprland stores rule-applied tags with a trailing "*".
+    local function tag(name)
+        return "pwa-" .. name .. "*"
+    end
+
+    -- Show the app workspace, then launch the app unless its tagged window is already there.
+    local function open(name, command)
+        return function()
+            local workspace = "name:" .. name
+            local shown = hl.get_workspace(workspace)
+            local focus = shown and shown.visible and { monitor = shown.monitor.name }
+                or { workspace = workspace, on_current_monitor = true }
+            if dispatch(hl.dsp.focus(focus)) and #hl.get_windows({ workspace = workspace, tag = tag(name) }) == 0 then
+                dispatch(hl.dsp.exec_cmd(command))
+            end
+        end
+    end
+{{ range $apps }}
+    hl.bind(mainMod .. {{ printf " + SHIFT + %s" .key | quote }}, open(
+        {{ .workspace | quote }}, "uwsm app -- " .. browser .. {{ printf " %s" (printf "--app=%s" .url | shellQuote) | quote }}
+    ), { description = {{ .label | quote }} })
+    hl.window_rule({
+        name = {{ printf "move-%s-to-%s-workspace" .workspace .workspace | quote }},
+        match = { class = {{ .class | quote }} },
+        workspace = {{ printf "name:%s" .workspace | quote }},
+        tag = "+" .. tag({{ .workspace | quote }}),
+    })
+{{ end -}}
+end

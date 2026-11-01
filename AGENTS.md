@@ -55,6 +55,14 @@ zwarn "missing: $tool"
 
 ## Chezmoi
 
+### PWA Apps
+- Catalog: `.chezmoidata/pwa.toml`. Machine choices: `*_provider`, `project_url`, `github_url` in local chezmoi `[data]`.
+- Resolver: `.chezmoitemplates/pwa-apps.json.tmpl`. Hyprland bindings/rules + Waybar icons consume same result.
+- Provider URL + class travel together. Match domain + any app path/profile. Do not embed account slugs in rules.
+- Keep named workspace IDs stable. App launch uses Chromium `--app`, current `browser` profile.
+- App shortcut = Lua function in `dot_config/hypr/pwa.lua.tmpl`, loaded by `require("pwa")`: focus app workspace, launch unless a window there carries the app's rule tag. Class regex lives only in the window rule.
+- Tests: `uv run tests/pwa.py`. Init prompts + URL validation; temporary config only, no live apply.
+
 ### Templates
 - Use `.tmpl` suffix for templated files
 - Access data via `.chezmoi.os`, `.desktop`, `.form_factor`, `.profile`, `.dev`, `.osid`
