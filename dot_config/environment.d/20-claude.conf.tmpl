@@ -1,0 +1,5 @@
+{{- $home := .chezmoi.homeDir -}}
+# Claude keeps history and credentials alongside its runtime configuration.
+CLAUDE_CONFIG_DIR={{ $home }}/.local/state/claude
+CLAUDE_CODE_TMPDIR={{ $home }}/.local/state/claude/tmp
+CLAUDE_CODE_SHELL=/bin/bash

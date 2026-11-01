@@ -1,0 +1,7 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- $settings := fromJson (default "{}" .chezmoi.stdin) -}}
+{{- $settings
+  | setValueAtPath "attribution.commit" ""
+  | setValueAtPath "attribution.pr" ""
+  | setValueAtPath "attribution.sessionUrl" false
+  | toPrettyJson }}
