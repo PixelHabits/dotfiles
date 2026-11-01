@@ -6,6 +6,7 @@ post-install/
 AGENTS.md
 README.md
 worktrees.md
+suspend-recovery.md
 hyprland.md
 tests/
 codex.md
@@ -45,6 +46,7 @@ workstation-bootstrap.md
 .config/uwsm/
 .config/waybar/
 .local/bin/omarchy-*
+.local/bin/hypr-rescue
 {{- end }}
 
 # ── Any desktop (exclude from CLI/server) ───────────────────

@@ -136,6 +136,14 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 - Tests: `uv run tests/codex/test_config.py`. Python >=3.14 via PEP 723; temporary HOME only; no credentials or external MCP servers.
 - Human guide: `codex.md`.
 
+## Hyprland Recovery
+
+- Guide + hardware acceptance tests: `suspend-recovery.md`.
+- Lid binds + internal panel: GAM-DEV001 monitor block in `hyprland.lua.tmpl`. Resume lid check: `hypridle.conf.tmpl`.
+- No live suspend, lock, session activation, GPU changes, or helper execution during tests.
+- Tests: `uv run tests/test_hypr_rescue.py`. Fake `hyprctl` only.
+- Driver workaround != verified fix. Preserve lock process; never select another user's session.
+
 ## Native Hyprland Lua
 
 - Entrypoint: `dot_config/hypr/hyprland.lua.tmpl`. Native `hl.*` calls only.
