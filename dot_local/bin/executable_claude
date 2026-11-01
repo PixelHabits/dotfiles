@@ -1,0 +1,37 @@
+#!/bin/sh
+# Start Claude Code with one project store per repository.
+# Worktrees share the canonical Git common directory. Hash its path without
+# writing a Git object, so unrelated repositories with the same name stay apart.
+
+self=$(realpath "$0")
+
+if [ -n "$CLAUDE_CONFIG_DIR" ] && [ -z "$CLAUDE_CODE_PROJECT_DIR_NAME" ]; then
+  common=
+  if [ -d "$PWD/.bare" ] && [ "$(git --git-dir="$PWD/.bare" rev-parse --is-bare-repository 2>/dev/null)" = true ]; then
+    common=$(realpath "$PWD/.bare")
+  elif common=$(git rev-parse --git-common-dir 2>/dev/null); then
+    common=$(realpath "$common")
+  fi
+
+  if [ -n "$common" ] && identity=$(printf '%s' "$common" | git --git-dir="$common" hash-object --stdin 2>/dev/null); then
+    name=$(basename "$(dirname "$common")")
+    name=$(printf '%s' "$name" | LC_ALL=C tr -c 'A-Za-z0-9_-' '-' | cut -c 1-31)
+    # Claude accepts at most 64 characters. Keep 128 bits of repository identity.
+    identity=$(printf '%s' "$identity" | cut -c 1-32)
+    export CLAUDE_CODE_PROJECT_DIR_NAME="$name-$identity"
+  fi
+fi
+
+set -f
+IFS=:
+# POSIX splitting drops the last empty field; keep an original trailing colon.
+search_path=$PATH:
+for dir in $search_path; do
+  candidate="${dir:-.}/claude"
+  [ -f "$candidate" ] && [ -x "$candidate" ] || continue
+  [ "$(realpath "$candidate")" = "$self" ] && continue
+  exec "$candidate" "$@"
+done
+
+echo "claude: no other claude binary on PATH" >&2
+exit 127

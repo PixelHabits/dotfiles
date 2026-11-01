@@ -57,6 +57,16 @@ Chezmoi asks for machine choices during initialization.
 The final command deploys files and can run Ansible.
 Do not clone with `chezmoi init <repo>` into the directory that contains all worktrees.
 
+Claude Code reads `CLAUDE.md` from every parent directory of the session directory.
+Create one in the container so the worktree rules load from any worktree and from the container:
+
+```sh
+printf '@AGENTS.md\n' > ~/.local/share/chezmoi/CLAUDE.md
+```
+
+The line imports the container `AGENTS.md`, which holds the worktree rules for agents.
+The container is not a checkout, so Git tracks neither file.
+
 ## Select the live source
 
 Chezmoi uses the top-level `sourceDir` value in `~/.config/chezmoi/chezmoi.toml`.

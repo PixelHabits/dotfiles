@@ -24,7 +24,14 @@
 {{-   $_ := set $hooks $event (append $kept $entry) -}}
 {{- end -}}
 {{- $_ := set $settings "hooks" $hooks -}}
+{{- $permissions := get $settings "permissions" | default dict -}}
+{{- $deny := get $permissions "deny" | default list -}}
+{{- if not (has "EnterWorktree" $deny) -}}
+{{-   $_ := set $permissions "deny" (append $deny "EnterWorktree") -}}
+{{- end -}}
+{{- $_ := set $settings "permissions" $permissions -}}
 {{- $settings
+  | setValueAtPath "env.CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR" "1"
   | setValueAtPath "attribution.commit" ""
   | setValueAtPath "attribution.pr" ""
   | setValueAtPath "attribution.sessionUrl" false
