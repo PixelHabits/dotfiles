@@ -1,6 +1,5 @@
 * {
-    /* `otf-font-awesome` is required to be installed for icons */
-    font-family: FontAwesome, Roboto, Helvetica, Arial, sans-serif;
+    font-family: "Noto Sans", "JetBrainsMono Nerd Font", "Noto Color Emoji", sans-serif;
     font-size: 13px;
 }
 

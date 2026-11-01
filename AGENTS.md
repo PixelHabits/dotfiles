@@ -151,4 +151,5 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 
 ## Waybar
 
+- Text/icons: provisioned Noto Sans, JetBrainsMono Nerd Font, Noto Color Emoji. No assumed system fonts.
 - Media: native `mpris` module, shared style + default player icon. No player-specific overrides.
