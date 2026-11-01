@@ -1,0 +1,6 @@
+[install]
+linker = "isolated"
+minimumReleaseAge = 259200
+
+[test]
+root = "tests"
