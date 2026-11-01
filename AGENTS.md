@@ -135,3 +135,16 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 - Codex home env: `.chezmoitemplates/codex/home-env.toml.tmpl` renders `environment.d/22-codex.conf` and `zshenv.d/20-codex.zsh`. Dev-gate config and redirects together.
 - Tests: `uv run tests/codex/test_config.py`. Python >=3.14 via PEP 723; temporary HOME only; no credentials or external MCP servers.
 - Human guide: `codex.md`.
+
+## Native Hyprland Lua
+
+- Entrypoint: `dot_config/hypr/hyprland.lua.tmpl`. Native `hl.*` calls only.
+- API truth: Hyprland source at the installed version's tag (`Hyprland --version`).
+- Set only values that differ from Hyprland's defaults (`src/config/values/ConfigValues.cpp`).
+- Desktop actions = Lua function binds: `hl.get_*` queries, `dispatch` helper, failures via `hl.notification`. No shell helpers.
+- Float/pin take `enable`, `disable`, or `toggle`. Any other value silently toggles (`parseToggleStr`).
+- `exec_cmd` runs `/bin/sh -c`: `quote` computed values.
+- `hyprctl dispatch` takes Lua expressions (`hl.dsp.*`) everywhere: Hypridle, Waybar, scripts.
+- Hypridle and Hyprlock keep their own formats.
+- `.chezmoiremove`: exact retired files only; gate by desktop.
+- Tests: `uv run tests/hyprland.py`. No config-completeness tests. No live apply or reload during agent validation.

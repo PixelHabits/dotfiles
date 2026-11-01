@@ -97,7 +97,7 @@ A change of worktree can cause that script to run again.
 For a dotfile-only trial, name the files and exclude scripts:
 
 ```sh
-chezmoi --source ~/.local/share/chezmoi/pwa-web-apps --exclude scripts apply ~/.config/hypr/hyprland.conf
+chezmoi --source ~/.local/share/chezmoi/pwa-web-apps --exclude scripts apply ~/.config/waybar/config.jsonc
 ```
 
 Review the diff for those files before you apply them.
