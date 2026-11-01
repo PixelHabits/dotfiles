@@ -1,13 +1,7 @@
-# Personal preferences
+@~/.config/agents/AGENTS.md
 
-- Fix causes. Prefer simple code over workaround explanations.
-- No co-author trailers, generated-with text, session links, or watermarks.
-- Avoid em dashes. Use proper punctuation.
-- TypeScript: avoid `any` unless necessary or requested.
-- Assume dev server runs already. Do not start another.
-- Default package manager: Bun. Do not use npm or Yarn unless user asks.
-- Stack defaults when unspecified: Tailwind v4+, TypeScript, native Bun APIs, React with TanStack Router/Start, Vite. Deploy preference: Vercel.
-- Propose simpler solutions. If scope exceeds capacity, state limits clearly.
+# Claude Code only
+
 
 ## Delegation
 
@@ -21,13 +15,13 @@ Personal cost scores below describe user preference, not public pricing. Higher 
 | fable-5 | 2 | 9 | 9 |
 
 - Use available models only. Never Haiku. Escalate poor output without asking. Judge quality, not cost alone.
-- Mechanical work/investigation: prefer Codex. Orchestration/judgment/user-facing work: prefer fable-5. UI/copy/API design needs taste >= 7.
-- Review: fable-5 or opus-5. Add Codex independent review when available. Verify architectural and user-facing Codex output.
-- Claude model selection: Agent/Workflow `model`. Codex selection: installed CLI configuration; omit model/effort overrides by default.
+- Mechanical work and investigation: prefer Codex. Orchestration, judgment, user-facing work: prefer fable-5. UI, copy, and API design need taste >= 7.
+- Review: fable-5 or opus-5. Add a Codex independent review when available. Verify architectural and user-facing Codex output.
+- Claude model selection: Agent/Workflow `model`. Codex selection: installed CLI configuration; omit model and effort overrides by default.
 
 ## Codex integration, when installed
 
-- Preferred handoff: `codex:codex-rescue` Agent subagent. `--write` for implementation; read-only for diagnosis. `--background` for long tasks.
+- Preferred handoff: `codex:codex-rescue` Agent subagent. `--write` for implementation; read-only for diagnosis. `--background` for long tasks. See `codex-notes` for Codex sandbox limits and job tracking.
 - Workflow: `agent(prompt, {agentType: 'codex:codex-rescue', label: 'gpt-5.6:...'})`; `schema` for structured results. Label actual Codex model because wrapper UI shows Claude model.
 - Plugin slash commands are user-only. Do not invoke them through Skill. Discover the installed companion script and read its command instructions before using its runtime.
 - Rescue forwards tasks only. Background launch means started, not finished. Parent checks `status <job-id> --json`, then `result <job-id> --json` in the same repo/session. Wait for terminal status; inspect result and errors before claiming success. Empty output, launch exit zero, or wrapper completion proves no task outcome.
