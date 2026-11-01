@@ -45,10 +45,10 @@ fi
 if require_cmd fzf; then
   fkill() {
     local pid
-    pid=$(ps -ef | sed 1d |
-      fzf --tmux --multi \
+    pid=$(ps -ef |
+      fzf --tmux --multi --header-lines=1 --accept-nth=2 \
         --prompt='kill > ' \
-        --header 'tab: multi-select, enter: kill' | awk '{print $2}')
+        --header 'tab: multi-select, enter: kill')
     [[ -n "$pid" ]] && echo "$pid" | xargs kill "${1:--15}"
   }
 fi
