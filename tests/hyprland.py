@@ -29,6 +29,8 @@ local function proxy(name)
     })
 end
 hl = proxy("hl")
+-- Like Hyprland, resolve modules next to the config.
+package.path = arg[1]:match(".*/") .. "?.lua;" .. package.path
 dofile(arg[1])
 io.write(binds[arg[2]])
 '''
@@ -57,8 +59,9 @@ with tempfile.TemporaryDirectory(prefix='hypr-test-') as directory:
         config.write_text(f'[data]\nhostname = "{host}"\ndesktop = "hyprland"\n')
         rendered = temp / host / 'hyprland.lua'
         rendered.parent.mkdir()
-        rendered.write_text(subprocess.check_output(
-            ['chezmoi', '--config', str(config), '--source', str(ROOT), 'execute-template', '--file', str(TEMPLATE)], text=True))
+        for template in TEMPLATE.parent.glob('*.lua.tmpl'):
+            (rendered.parent / template.stem).write_text(subprocess.check_output(
+                ['chezmoi', '--config', str(config), '--source', str(ROOT), 'execute-template', '--file', str(template)], text=True))
         env = os.environ | {name: str(rendered.parent) for name in ['XDG_RUNTIME_DIR', 'XDG_STATE_HOME', 'XDG_CACHE_HOME']}
         result = subprocess.run(['Hyprland', '--verify-config', '--config', str(rendered)], env=env, capture_output=True, text=True)
         assert result.returncode == 0 and 'config ok' in result.stdout, f'{host}: {result.stdout}{result.stderr}'

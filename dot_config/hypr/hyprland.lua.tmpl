@@ -187,9 +187,11 @@ bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("uwsm app -- " .. menu), "App launch
 bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("uwsm app -- " .. browser), "Browser")
 bind(mainMod .. " + SHIFT + F", hl.dsp.exec_cmd("uwsm app -- " .. fileManager), "File manager")
 bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("uwsm app -- " .. terminal .. " -e nvim"), "Editor")
-bind(mainMod .. " + SHIFT + M", hl.dsp.exec_cmd("xdg-open https://music.youtube.com"), "Music")
 bind(mainMod .. " + SHIFT + SLASH", hl.dsp.exec_cmd("uwsm app -- 1password"), "Passwords")
 bind(mainMod .. " + CTRL + T", hl.dsp.exec_cmd("uwsm app -- " .. terminal .. " -e btop"), "Activity")
+
+-- Web apps: each opens on its own workspace (pwa.lua)
+require("pwa")(mainMod, browser, dispatch)
 
 -- Session and notifications
 bind(mainMod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"), "Lock session")
