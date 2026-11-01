@@ -23,3 +23,6 @@ prepend_path "$HOME/.local/bin"
 
 # .NET tools
 [[ -n "$DOTNET_CLI_HOME" ]] && prepend_path "$DOTNET_CLI_HOME/tools"
+
+# fzf-preview.sh (Arch)
+prepend_path /usr/share/fzf

@@ -21,11 +21,12 @@ fi
 if require_cmd git && require_cmd fzf; then
   fgb() {
     local branch
-    branch=$(git branch --all --sort=-committerdate --format='%(refname:short)' |
+    branch=$(git for-each-ref --sort=-committerdate --format='%(refname:short)' \
+        --exclude='refs/remotes/*/HEAD' refs/heads refs/remotes |
       fzf --tmux --prompt='branch > ' \
         --header 'enter: checkout' \
         --preview 'git log --oneline --graph --color=always -20 {}') &&
-    git checkout "$branch"
+    git checkout "${branch#origin/}"
   }
 fi
 
@@ -45,10 +46,10 @@ fi
 if require_cmd fzf; then
   fkill() {
     local pid
-    pid=$(ps -ef | sed 1d |
-      fzf --tmux --multi \
+    pid=$(ps -ef |
+      fzf --tmux --multi --header-lines=1 --accept-nth=2 \
         --prompt='kill > ' \
-        --header 'tab: multi-select, enter: kill' | awk '{print $2}')
+        --header 'tab: multi-select, enter: kill')
     [[ -n "$pid" ]] && echo "$pid" | xargs kill "${1:--15}"
   }
 fi
@@ -56,11 +57,12 @@ fi
 # 1Password quick-copy — fuzzy search vault items, copy password to clipboard
 if require_cmd op && require_cmd jq && require_cmd fzf; then
   fp() {
+    setopt local_options pipefail
     local item
-    item=$(op item list --format=json 2>/dev/null | jq -r '.[].title' |
-      fzf --tmux --prompt='1password > ' \
+    item=$(op item list --format=json | jq -r '.[] | [.id, .title] | @tsv' |
+      fzf --tmux --delimiter='\t' --with-nth=2 --prompt='1password > ' \
         --header 'enter: copy password') &&
-    op item get "$item" --fields label=password | wl-copy &&
-    echo "Copied password for: $item"
+    op item get "${item%%$'\t'*}" --fields label=password --reveal | wl-copy -n --sensitive &&
+    echo "Copied password for: ${item#*$'\t'}"
   }
 fi

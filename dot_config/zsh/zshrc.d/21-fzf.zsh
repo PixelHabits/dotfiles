@@ -9,7 +9,7 @@ export FZF_DEFAULT_OPTS=" \
   --color=hl:10,hl+:10,info:4,prompt:4 \
   --color=pointer:4,marker:10,spinner:4,header:#9097a0 \
   --color=border:#9097a0 \
-  --reverse --border --height=60% \
+  --reverse --height=60% \
   --highlight-line --cycle --info=inline-right \
   --bind 'ctrl-/:toggle-preview' \
   --bind 'alt-up:preview-up,alt-down:preview-down'"
@@ -21,9 +21,16 @@ if require_cmd fd; then
   export FZF_ALT_C_COMMAND='fd --type d --hidden --exclude .git'
 fi
 
+# fzf-preview.sh shows text with bat and images with chafa. Ubuntu and Fedora do not ship it.
+if (( $+commands[fzf-preview.sh] )); then
+  fzf_file_preview=fzf-preview.sh
+else
+  fzf_file_preview='bat --color=always --style=numbers'
+fi
+
 # Ctrl+T file picker
 export FZF_CTRL_T_OPTS="--tmux --scheme=path --filepath-word --select-1 --exit-0 \
-  --prompt='file path > ' --preview 'bat --color=always --style=numbers {}'"
+  --prompt='file path > ' --preview '$fzf_file_preview {}'"
 
 # Alt+C directory changer (replaces fcd)
 export FZF_ALT_C_OPTS="--tmux --scheme=path \
