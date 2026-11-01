@@ -30,15 +30,16 @@ if require_cmd git && require_cmd fzf; then
   }
 fi
 
-# Git log browser — browse commits with diff preview
+# Git log browser — current branch with diff preview; arguments go to git log (fgl --all, fgl -- path)
 if require_cmd git && require_cmd fzf; then
   fgl() {
-    git log --oneline --graph --color=always --all |
-      fzf --height=100% --ansi --no-sort \
+    # Field 2 holds the full commit ID, hidden from view. Rows that only draw graph lines leave it empty.
+    git log --graph --color=always --format='%x09%H%x09%C(auto)%h %s%d' "$@" |
+      fzf --height=100% --ansi --no-sort --delimiter='\t' --with-nth=1,3.. \
         --prompt='commit > ' \
-        --header 'enter: view diff in popup, esc: quit' \
-        --preview 'git show --color=always --stat $(echo {} | grep -oE "[a-f0-9]{7,}" | head -1)' \
-        --bind 'enter:execute(git show --color=always $(echo {} | grep -oE "[a-f0-9]{7,}" | head -1) | less -R)'
+        --header 'enter: view diff, esc: quit' \
+        --preview '[ -n {2} ] && git show --color=always --stat {2}' \
+        --bind 'enter:execute([ -n {2} ] && git show --color=always {2} | less -R)'
   }
 fi
 
