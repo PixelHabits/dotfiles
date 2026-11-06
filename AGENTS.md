@@ -148,3 +148,8 @@ ansible-playbook site.yml --tags cli --ask-become-pass
 - Hypridle and Hyprlock keep their own formats.
 - `.chezmoiremove`: exact retired files only; gate by desktop.
 - Tests: `uv run tests/hyprland.py`. No config-completeness tests. No live apply or reload during agent validation.
+
+## Waybar
+
+- Text/icons: provisioned Noto Sans, JetBrainsMono Nerd Font, Noto Color Emoji. No assumed system fonts.
+- Media: native `mpris` module, shared style + default player icon. No player-specific overrides.

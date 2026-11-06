@@ -1,6 +1,5 @@
 * {
-    /* `otf-font-awesome` is required to be installed for icons */
-    font-family: FontAwesome, Roboto, Helvetica, Arial, sans-serif;
+    font-family: "Noto Sans", "JetBrainsMono Nerd Font", "Noto Color Emoji", sans-serif;
     font-size: 13px;
 }
 
@@ -87,13 +86,12 @@ button:hover {
 #network,
 #pulseaudio,
 #wireplumber,
-#custom-media,
+#mpris,
 #tray,
 #mode,
 #idle_inhibitor,
 #scratchpad,
-#power-profiles-daemon,
-#mpd {
+#power-profiles-daemon {
     padding: 0 10px;
     color: #ffffff;
 }
@@ -212,18 +210,10 @@ label:focus {
     background-color: #f53c3c;
 }
 
-#custom-media {
+#mpris {
     background-color: #66cc99;
     color: #2a5c45;
     min-width: 100px;
-}
-
-#custom-media.custom-spotify {
-    background-color: #66cc99;
-}
-
-#custom-media.custom-vlc {
-    background-color: #ffa000;
 }
 
 #temperature {
@@ -254,23 +244,6 @@ label:focus {
 #idle_inhibitor.activated {
     background-color: #ecf0f1;
     color: #2d3436;
-}
-
-#mpd {
-    background-color: #66cc99;
-    color: #2a5c45;
-}
-
-#mpd.disconnected {
-    background-color: #f53c3c;
-}
-
-#mpd.stopped {
-    background-color: #90b1b1;
-}
-
-#mpd.paused {
-    background-color: #51a37a;
 }
 
 #language {
