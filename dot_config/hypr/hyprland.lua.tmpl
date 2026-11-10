@@ -5,11 +5,18 @@
 ----------------
 
 {{ if eq .hostname "GAM-DEV001" -}}
+local laptopPanel = "desc:Samsung Display Corp. ATNA60KA02"
 hl.monitor({ output = "desc:Dell Inc. Dell AW3821DW", mode = "3840x1600@120.00", position = "auto-center-up", scale = "auto", vrr = 1, bitdepth = 10, cm = "auto" })
-hl.monitor({ output = "desc:Samsung Display Corp. ATNA60KA02", mode = "3200x2000@120.00", position = "auto-center-down", scale = 1.25, vrr = 1, bitdepth = 10, cm = "dcip3" })
+hl.monitor({ output = laptopPanel, mode = "3200x2000@120.00", position = "auto-center-down", scale = 1.25, vrr = 1, bitdepth = 10, cm = "dcip3" })
 hl.monitor({ output = "desc:Dell Inc. DELL P2422H 1YT5CV3", mode = "preferred", position = "0x0", scale = 1 })
 hl.monitor({ output = "desc:Dell Inc. DELL P2422H 10W9CV3", mode = "preferred", position = "1920x0", scale = 1 })
 hl.monitor({ output = "desc:LG Electronics LG TV SSCR2 0x01010101", mode = "1920x1080@60.00", position = "auto-center-up", scale = "auto" })
+
+-- A closed lid leaves only the external displays. Opening it reloads the monitor rules; hypridle covers a lid opened during suspend.
+hl.bind("switch:on:Lid Switch", function()
+    hl.monitor({ output = laptopPanel, disabled = true })
+end, { locked = true })
+hl.bind("switch:off:Lid Switch", hl.dsp.reload_config(), { locked = true })
 {{- else -}}
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
 {{- end }}
@@ -56,7 +63,7 @@ hl.config({
     animations = { enabled = false },
     dwindle = { preserve_split = true },
     master = { new_status = "master" },
-    misc = { force_default_wallpaper = 0 },
+    misc = { force_default_wallpaper = 0, allow_session_lock_restore = true },
 })
 
 -- Keep the curves ready if animations are enabled interactively.
