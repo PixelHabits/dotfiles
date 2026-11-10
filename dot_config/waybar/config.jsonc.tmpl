@@ -32,6 +32,12 @@
     "on-scroll-up": "hyprctl dispatch 'hl.dsp.focus({ workspace = \"e+1\" })'",
     "on-scroll-down": "hyprctl dispatch 'hl.dsp.focus({ workspace = \"e-1\" })'"
   },
+  "hyprland/window": {
+    "max-length": 30,
+    "rewrite": {
+      "(.*) - Helium": "$1"
+    }
+  },
   "hyprland/submap": {
     "format": "<span style=\"italic\">{}</span>"
   },
@@ -141,7 +147,12 @@
   },
   "mpris": {
     "format": "{player_icon} {dynamic}",
+    "interval": 1,
+    "title-len": 24,
+    "dynamic-order": ["position", "length", "title", "artist"],
+    "dynamic-importance-order": ["title", "position", "length", "artist"],
     "dynamic-len": 40,
+    "tooltip-format": "{title}\n{artist}",
     "player-icons": {
       "default": ""
     }
