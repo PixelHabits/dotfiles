@@ -1,3 +1,6 @@
+{{- $apps := includeTemplate "apps.json.tmpl" . | fromJson -}}
+{{- $icons := dict -}}
+{{- range $apps }}{{ $_ := set $icons .workspace .icon }}{{ end -}}
 {
   "height": 30,
   "spacing": 4,
@@ -29,6 +32,7 @@
   ],
   "hyprland/workspaces": {
     "format": "{icon}",
+    "format-icons": {{ $icons | toJson }},
     "on-scroll-up": "hyprctl dispatch 'hl.dsp.focus({ workspace = \"e+1\" })'",
     "on-scroll-down": "hyprctl dispatch 'hl.dsp.focus({ workspace = \"e-1\" })'"
   },
