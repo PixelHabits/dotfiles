@@ -1,0 +1,28 @@
+{{- $apps := list -}}
+{{- range $id, $category := .apps -}}
+{{- if and (get $category "dev") (not $.dev) -}}{{- continue -}}{{- end -}}
+{{- $providers := $category.providers -}}
+{{- $key := printf "%s_provider" $id -}}
+{{- $provider := get $ $key -}}
+{{- if eq (len $providers) 1 -}}{{- $provider = keys $providers | first -}}{{- end -}}
+{{- if not $provider -}}{{- fail (printf "%s is not set; run chezmoi init" $key) -}}{{- end -}}
+{{- if not (hasKey $providers $provider) -}}
+{{- fail (printf "Unknown %s %q; choose a provider from .chezmoidata/apps.toml" $key $provider) -}}
+{{- end -}}
+{{- $app := mergeOverwrite (omit $category "providers") (index $providers $provider) (dict "workspace" $id) -}}
+{{- if not (get $app "command") -}}
+{{- $host := (urlParse $app.url).host -}}
+{{- if get $app "landing" -}}
+{{- $key := printf "%s_url" $id -}}
+{{- if not (get $ $key) -}}{{- fail (printf "%s is not set; run chezmoi init" $key) -}}{{- end -}}
+{{- $_ := set $app "url" (get $ $key) -}}
+{{- end -}}
+{{- $pattern := replace "." "[.]" $host -}}
+{{- if not (regexMatch (printf "^https://%s(/[-a-zA-Z0-9_./]*)?$" $pattern) $app.url) -}}
+{{- fail (printf "%s URL must use https://%s with an optional path, without query parameters" $app.label $host) -}}
+{{- end -}}
+{{- $_ := set $app "class" (printf "^chrome-%s__.*$" $pattern) -}}
+{{- end -}}
+{{- $apps = append $apps $app -}}
+{{- end -}}
+{{- $apps | toJson -}}

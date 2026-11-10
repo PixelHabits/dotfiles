@@ -1,0 +1,95 @@
+# Shared provider lists contain public sites only. Account and organization choices stay local.
+# Each category id is its workspace name. A web provider has a `url`; a desktop provider has a `command`
+# and a window `class` regex. Categories with more than one provider save `<id>_provider`; categories with
+# `landing` save `<id>_url`. A provider's `icon` replaces its category's. `dev = true` keeps a category to
+# development machines.
+
+[apps.ai]
+label = "AI chat"
+key = "A"
+icon = ""
+
+[apps.ai.providers.t3]
+url = "https://t3.chat"
+
+[apps.ai.providers.chatgpt]
+url = "https://chatgpt.com"
+
+[apps.ai.providers.claude]
+url = "https://claude.ai"
+
+[apps.mail]
+label = "Mail"
+key = "E"
+icon = ""
+
+[apps.mail.providers.gmail]
+url = "https://mail.google.com/mail/u/0/"
+
+[apps.mail.providers.outlook]
+url = "https://outlook.office.com/mail/"
+
+[apps.mail.providers.proton]
+url = "https://mail.proton.me"
+
+[apps.music]
+label = "Music"
+key = "M"
+icon = ""
+
+[apps.music.providers.youtube]
+url = "https://music.youtube.com"
+
+[apps.music.providers.spotify]
+url = "https://open.spotify.com"
+
+[apps.music.providers.apple]
+url = "https://music.apple.com"
+
+[apps.projects]
+label = "Projects"
+key = "L"
+icon = ""
+landing = true
+
+[apps.projects.providers.linear]
+url = "https://linear.app"
+icon = "◩"
+
+[apps.projects.providers.notion]
+url = "https://www.notion.so"
+
+[apps.messages]
+label = "Messages"
+key = "T"
+icon = ""
+
+[apps.messages.providers.teams]
+url = "https://teams.microsoft.com"
+
+[apps.messages.providers.slack]
+url = "https://app.slack.com"
+
+[apps.messages.providers.discord]
+url = "https://discord.com/app"
+
+[apps.repos]
+label = "Repositories"
+key = "G"
+icon = ""
+landing = true
+
+[apps.repos.providers.github]
+url = "https://github.com"
+icon = ""
+
+[apps.agents]
+label = "Coding agents"
+key = "C"
+icon = "󰚩"
+dev = true
+
+[apps.agents.providers.t3code]
+command = "t3code"
+class = "^com[.]t3tools[.]T3Code$"
+icon = "T3"

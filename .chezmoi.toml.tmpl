@@ -11,6 +11,28 @@
 {{- $profile := promptStringOnce . "profile" "Machine profile (work/personal)" -}}
 {{- $dev := promptBoolOnce . "dev" "Development machine" -}}
 
+{{- $selected := dict -}}
+{{- if eq $desktop "hyprland" -}}
+{{- $catalog := (include ".chezmoidata/apps.toml" | fromToml).apps -}}
+{{- range $id, $category := $catalog -}}
+{{- if and (get $category "dev") (not $dev) -}}{{- continue -}}{{- end -}}
+{{- $providers := $category.providers -}}
+{{- $provider := keys $providers | first -}}
+{{- if gt (len $providers) 1 -}}
+{{- $key := printf "%s_provider" $id -}}
+{{- $choices := list -}}
+{{- range $name, $_ := $providers -}}{{- $choices = append $choices $name -}}{{- end -}}
+{{- $provider = promptChoiceOnce $ $key (printf "%s provider" $category.label) $choices -}}
+{{- $_ := set $selected $key $provider -}}
+{{- end -}}
+{{- if get $category "landing" -}}
+{{- $key := printf "%s_url" $id -}}
+{{- $_ := set $selected $key (promptStringOnce $ $key (printf "%s landing URL" $category.label) (index $providers $provider).url) -}}
+{{- end -}}
+{{- end -}}
+{{- $_ := includeTemplate "apps.json.tmpl" (mergeOverwrite (deepCopy .) (dict "apps" $catalog "dev" $dev) $selected) -}}
+{{- end -}}
+
 # Keep the worktree selected by --source when this file is regenerated.
 sourceDir = {{ .chezmoi.sourceDir | quote }}
 
@@ -22,3 +44,6 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
   form_factor = {{ $formFactor | quote }}
   profile = {{ $profile | quote }}
   dev = {{ $dev }}
+{{ range $key, $value := $selected }}
+  {{ $key }} = {{ $value | quote }}
+{{ end }}

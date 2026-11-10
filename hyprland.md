@@ -1,6 +1,6 @@
 # Hyprland
 
-Hyprland reads `~/.config/hypr/hyprland.lua`.
+Hyprland reads `~/.config/hypr/hyprland.lua` and loads `apps.lua` from the same directory.
 The configuration uses native Lua calls and requires Hyprland 0.57.0 or later.
 
 Hypridle, Hyprlock, and Hyprlauncher keep their own configuration formats.
@@ -22,6 +22,7 @@ Window and region screenshots freeze the screen with `hyprpicker` while you sele
 | File | Purpose |
 | --- | --- |
 | `dot_config/hypr/hyprland.lua.tmpl` | Monitors per machine, appearance, input, application commands, startup, core shortcuts, and desktop actions |
+| `dot_config/hypr/apps.lua.tmpl` | App shortcuts and window rules from the shared app catalog |
 | `.chezmoiremove` | Retire the old Hyprland `.conf` file and the replaced helper scripts on Hyprland desktops |
 
 Lua variables hold application commands.
