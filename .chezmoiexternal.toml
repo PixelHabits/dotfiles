@@ -1,0 +1,14 @@
+# tmux plugins, pinned to upstream master, refreshed weekly by chezmoi apply.
+[".config/tmux/plugins/tmux-resurrect"]
+    type = "archive"
+    url = "https://github.com/tmux-plugins/tmux-resurrect/archive/refs/heads/master.tar.gz"
+    exact = true
+    stripComponents = 1
+    refreshPeriod = "168h"
+
+[".config/tmux/plugins/tmux-continuum"]
+    type = "archive"
+    url = "https://github.com/tmux-plugins/tmux-continuum/archive/refs/heads/master.tar.gz"
+    exact = true
+    stripComponents = 1
+    refreshPeriod = "168h"
